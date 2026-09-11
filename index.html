@@ -4,13 +4,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SpaceScape</title>
+
+    <style>
+        body {
+            margin: 0;
+            background: #080b12;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        #game {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #title-screen {
+            text-align: center;
+        }
+
+        #title-screen h1 {
+            font-size: 64px;
+            margin-bottom: 10px;
+        }
+
+        #title-screen p {
+            color: #9aa4b2;
+            margin-bottom: 35px;
+        }
+
+        #play-button {
+            padding: 15px 45px;
+            font-size: 20px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+        }
+
+        #game-screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        #world {
+            width: 100%;
+            height: 100%;
+            background: #18221b;
+            position: relative;
+        }
+
+        #player {
+            width: 32px;
+            height: 32px;
+            background: #e8e8e8;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 6px;
+        }
+    </style>
 </head>
 
 <body>
 
-    <h1>SpaceScape</h1>
+<div id="game">
 
-    <p>The adventure begins...</p>
+    <div id="title-screen">
+        <h1>SpaceScape</h1>
+        <p>A sci-fi skill-based RPG</p>
+        <button id="play-button">PLAY</button>
+    </div>
+
+    <div id="game-screen">
+
+        <div id="world">
+            <div id="player"></div>
+
+            <div id="hud">
+                <div>Level: <span id="level">1</span></div>
+                <div>Health: <span id="health">100</span>/100</div>
+                <div>XP: <span id="xp">0</span></div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    const playButton = document.getElementById("play-button");
+    const titleScreen = document.getElementById("title-screen");
+    const gameScreen = document.getElementById("game-screen");
+    const player = document.getElementById("player");
+
+    let playerX = window.innerWidth / 2;
+    let playerY = window.innerHeight / 2;
+
+    const speed = 5;
+
+    playButton.addEventListener("click", () => {
+        titleScreen.style.display = "none";
+        gameScreen.style.display = "block";
+    });
+
+    document.addEventListener("keydown", (event) => {
+
+        if (gameScreen.style.display !== "block") {
+            return;
+        }
+
+        if (event.key === "ArrowUp" || event.key.toLowerCase() === "w") {
+            playerY -= speed;
+        }
+
+        if (event.key === "ArrowDown" || event.key.toLowerCase() === "s") {
+            playerY += speed;
+        }
+
+        if (event.key === "ArrowLeft" || event.key.toLowerCase() === "a") {
+            playerX -= speed;
+        }
+
+        if (event.key === "ArrowRight" || event.key.toLowerCase() === "d") {
+            playerX += speed;
+        }
+
+        player.style.left = playerX + "px";
+        player.style.top = playerY + "px";
+    });
+</script>
 
 </body>
 </html>

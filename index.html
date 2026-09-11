@@ -1,749 +1,1481 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SpaceScape</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpaceScape</title>
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
+<style>
 
-        html,
-        body {
-            margin: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #080b12;
-            color: white;
-            font-family: Arial, sans-serif;
-        }
+* {
+    box-sizing: border-box;
+}
 
-        #game {
-            width: 100vw;
-            height: 100vh;
-        }
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #080b12;
+    color: white;
+    font-family: Arial, sans-serif;
+}
 
-        /* =========================
-           TITLE SCREEN
-        ========================= */
+#game {
+    width: 100vw;
+    height: 100vh;
+}
 
-        #title-screen {
-            width: 100vw;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            background:
-                radial-gradient(circle at center, #17202c 0%, #080b12 65%);
-        }
 
-        #title-screen h1 {
-            font-size: 64px;
-            margin: 0 0 10px 0;
-            letter-spacing: 3px;
-        }
+/* =========================================================
+   TITLE SCREEN
+   ========================================================= */
 
-        #title-screen p {
-            color: #9aa4b2;
-            margin: 0 0 35px 0;
-            font-size: 18px;
-        }
+#title-screen {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 
-        #play-button {
-            padding: 15px 50px;
-            font-size: 20px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            background: #e8e8e8;
-            color: #111;
-        }
+    background:
+        radial-gradient(
+            circle at center,
+            #17202c 0%,
+            #080b12 65%
+        );
+}
 
-        #play-button:hover {
-            background: #ffffff;
-        }
+#title-screen h1 {
+    font-size: 64px;
+    margin: 0 0 10px 0;
+    letter-spacing: 3px;
+}
 
-        /* =========================
-           GAME SCREEN
-        ========================= */
+#title-screen p {
+    color: #9aa4b2;
+    margin: 0 0 35px 0;
+    font-size: 18px;
+}
 
-        #game-screen {
-            display: none;
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            overflow: hidden;
-        }
+#play-button {
+    padding: 15px 50px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+    background: #e8e8e8;
+    color: #111;
+}
 
-        #world-container {
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
-        }
+#play-button:hover {
+    background: #ffffff;
+}
 
-        #world {
-            position: absolute;
-            width: 2400px;
-            height: 1800px;
 
-            background:
-                radial-gradient(
-                    circle at 20% 30%,
-                    #2a3d2c 0%,
-                    transparent 24%
-                ),
-                radial-gradient(
-                    circle at 75% 65%,
-                    #263a2b 0%,
-                    transparent 28%
-                ),
-                #18221b;
-        }
+/* =========================================================
+   GAME SCREEN
+   ========================================================= */
 
-        /* =========================
-           ROADS
-        ========================= */
+#game-screen {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
 
-        .road {
-            position: absolute;
-            background: #30353a;
-        }
+#world-container {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+}
 
-        .road.horizontal {
-            width: 2400px;
-            height: 90px;
-            left: 0;
-        }
+#world {
+    position: absolute;
 
-        .road.vertical {
-            width: 90px;
-            height: 1800px;
-            top: 0;
-        }
+    width: 2400px;
+    height: 1800px;
 
-        .road-line {
-            position: absolute;
-            background: #b4a76c;
-        }
+    background:
+        radial-gradient(
+            circle at 20% 30%,
+            #2a3d2c 0%,
+            transparent 24%
+        ),
+        radial-gradient(
+            circle at 75% 65%,
+            #263a2b 0%,
+            transparent 28%
+        ),
+        #18221b;
+}
 
-        .road-line.horizontal {
-            width: 2400px;
-            height: 4px;
-            left: 0;
-        }
 
-        .road-line.vertical {
-            width: 4px;
-            height: 1800px;
-            top: 0;
-        }
+/* =========================================================
+   ROADS
+   ========================================================= */
 
-        /* =========================
-           COLONY WALL
-        ========================= */
+.road {
+    position: absolute;
+    background: #30353a;
+}
 
-        #colony-wall {
-            position: absolute;
-            left: 250px;
-            top: 180px;
-            width: 1700px;
-            height: 1200px;
-            border: 12px solid #68737c;
-        }
+.road.horizontal {
+    width: 2400px;
+    height: 90px;
+    left: 0;
+}
 
-        /* =========================
-           BUILDINGS
-        ========================= */
+.road.vertical {
+    width: 90px;
+    height: 1800px;
+    top: 0;
+}
 
-        .building {
-            position: absolute;
-            background: #505963;
-            border: 4px solid #303740;
-            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.25);
-        }
+.road-line {
+    position: absolute;
+    background: #b4a76c;
+}
 
-        .building::after {
-            content: "";
-            position: absolute;
-            width: 35%;
-            height: 18%;
-            left: 10%;
-            top: 15%;
-            background: #8ba8b8;
-            box-shadow:
-                80px 0 #8ba8b8,
-                160px 0 #8ba8b8;
-        }
+.road-line.horizontal {
+    width: 2400px;
+    height: 4px;
+    left: 0;
+}
 
-        .building-label {
-            position: absolute;
-            top: -30px;
-            left: 0;
-            color: #d8dde3;
-            font-size: 14px;
-            white-space: nowrap;
-        }
+.road-line.vertical {
+    width: 4px;
+    height: 1800px;
+    top: 0;
+}
 
-        /* =========================
-           TREES
-        ========================= */
 
-        .tree {
-            position: absolute;
-            width: 40px;
-            height: 55px;
-        }
+/* =========================================================
+   COLONY WALL
+   ========================================================= */
 
-        .tree::before {
-            content: "";
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #314d35;
-            top: 0;
-        }
+#colony-wall {
+    position: absolute;
 
-        .tree::after {
-            content: "";
-            position: absolute;
-            width: 10px;
-            height: 25px;
-            background: #554333;
-            left: 15px;
-            top: 30px;
-        }
+    left: 250px;
+    top: 180px;
 
-        /* =========================
-           ROCKS
-        ========================= */
+    width: 1700px;
+    height: 1200px;
 
-        .rock {
-            position: absolute;
-            width: 35px;
-            height: 25px;
-            background: #555d60;
-            border-radius: 40%;
-        }
+    border: 12px solid #68737c;
+}
 
-        /* =========================
-           PLAYER
-        ========================= */
 
-        #player {
-            position: absolute;
-            width: 34px;
-            height: 34px;
-            background: #e8e8e8;
-            border: 3px solid #111;
-            border-radius: 5px;
-            transform: translate(-50%, -50%);
-            z-index: 50;
-        }
+/* =========================================================
+   BUILDINGS
+   ========================================================= */
 
-        /* =========================
-           HUD
-        ========================= */
+.building {
+    position: absolute;
 
-        #hud {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            min-width: 190px;
-            padding: 15px 20px;
-            background: rgba(0, 0, 0, 0.82);
-            border-radius: 8px;
-            z-index: 100;
-        }
+    background: #505963;
+    border: 4px solid #303740;
 
-        #hud-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #d8dde3;
-            letter-spacing: 1px;
-        }
+    box-shadow:
+        0 8px 0 rgba(0, 0, 0, 0.25);
+}
 
-        .hud-row {
-            margin: 5px 0;
-        }
+.building::after {
+    content: "";
 
-        /* =========================
-           LOCATION
-        ========================= */
+    position: absolute;
 
-        #location {
-            position: fixed;
-            top: 15px;
-            right: 15px;
-            padding: 12px 18px;
-            background: rgba(0, 0, 0, 0.82);
-            border-radius: 8px;
-            z-index: 100;
-            color: #c8d0d8;
-        }
-    </style>
+    width: 35%;
+    height: 18%;
+
+    left: 10%;
+    top: 15%;
+
+    background: #8ba8b8;
+
+    box-shadow:
+        80px 0 #8ba8b8,
+        160px 0 #8ba8b8;
+}
+
+.building-label {
+    position: absolute;
+
+    top: -30px;
+    left: 0;
+
+    color: #d8dde3;
+
+    font-size: 14px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   TREES
+   ========================================================= */
+
+.tree {
+    position: absolute;
+
+    width: 40px;
+    height: 55px;
+}
+
+.tree::before {
+    content: "";
+
+    position: absolute;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    background: #314d35;
+
+    top: 0;
+}
+
+.tree::after {
+    content: "";
+
+    position: absolute;
+
+    width: 10px;
+    height: 25px;
+
+    background: #554333;
+
+    left: 15px;
+    top: 30px;
+}
+
+
+/* =========================================================
+   ROCKS
+   ========================================================= */
+
+.rock {
+    position: absolute;
+
+    width: 35px;
+    height: 25px;
+
+    background: #555d60;
+
+    border-radius: 40%;
+}
+
+
+/* =========================================================
+   PLAYER
+   ========================================================= */
+
+#player {
+    position: absolute;
+
+    width: 34px;
+    height: 34px;
+
+    background: #e8e8e8;
+
+    border: 3px solid #111;
+
+    border-radius: 5px;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 50;
+}
+
+
+/* =========================================================
+   NPC
+   ========================================================= */
+
+.npc {
+    position: absolute;
+
+    width: 38px;
+    height: 48px;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 45;
+
+    cursor: default;
+}
+
+
+/* NPC BODY */
+
+.npc-body {
+    position: absolute;
+
+    width: 28px;
+    height: 30px;
+
+    left: 5px;
+    top: 17px;
+
+    background: #3d566b;
+
+    border: 3px solid #18222c;
+
+    border-radius: 6px;
+}
+
+
+/* NPC HEAD */
+
+.npc-head {
+    position: absolute;
+
+    width: 22px;
+    height: 22px;
+
+    left: 8px;
+    top: 0;
+
+    background: #c79268;
+
+    border: 3px solid #18222c;
+
+    border-radius: 50%;
+
+    z-index: 2;
+}
+
+
+/* NPC VISOR */
+
+.npc-visor {
+    position: absolute;
+
+    width: 16px;
+    height: 6px;
+
+    left: 11px;
+    top: 8px;
+
+    background: #80b6c8;
+
+    border: 1px solid #243b46;
+
+    border-radius: 3px;
+
+    z-index: 3;
+}
+
+
+/* NPC NAME */
+
+.npc-name {
+    position: absolute;
+
+    left: 50%;
+    transform: translateX(-50%);
+
+    bottom: 55px;
+
+    color: #f0f2f4;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    white-space: nowrap;
+
+    text-shadow:
+        1px 1px 2px #000,
+        -1px -1px 2px #000,
+        1px -1px 2px #000,
+        -1px 1px 2px #000;
+}
+
+
+/* =========================================================
+   INTERACTION PROMPT
+   ========================================================= */
+
+#interaction-prompt {
+    position: fixed;
+
+    display: none;
+
+    left: 50%;
+    bottom: 90px;
+
+    transform: translateX(-50%);
+
+    padding: 12px 20px;
+
+    background: rgba(0, 0, 0, 0.88);
+
+    border: 1px solid #68737c;
+
+    border-radius: 7px;
+
+    color: #ffffff;
+
+    font-size: 15px;
+
+    z-index: 300;
+
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.35);
+}
+
+#interaction-prompt span {
+    color: #e8d27b;
+
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   DIALOGUE WINDOW
+   ========================================================= */
+
+#dialogue {
+    position: fixed;
+
+    display: none;
+
+    left: 50%;
+    bottom: 30px;
+
+    transform: translateX(-50%);
+
+    width: min(760px, calc(100vw - 40px));
+
+    background: rgba(8, 11, 18, 0.96);
+
+    border: 2px solid #68737c;
+
+    border-radius: 10px;
+
+    padding: 20px 24px;
+
+    z-index: 400;
+
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.55);
+}
+
+#dialogue-name {
+    color: #e8d27b;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    margin-bottom: 12px;
+}
+
+#dialogue-text {
+    color: #d8dde3;
+
+    font-size: 17px;
+
+    line-height: 1.5;
+
+    min-height: 55px;
+}
+
+#dialogue-buttons {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 18px;
+}
+
+.dialogue-button {
+    padding: 9px 18px;
+
+    border: none;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+    background: #e8e8e8;
+
+    color: #111;
+}
+
+.dialogue-button:hover {
+    background: #ffffff;
+}
+
+#dialogue-close {
+    background: #39414a;
+    color: #ffffff;
+}
+
+#dialogue-close:hover {
+    background: #4a535d;
+}
+
+
+/* =========================================================
+   HUD
+   ========================================================= */
+
+#hud {
+    position: fixed;
+
+    top: 15px;
+    left: 15px;
+
+    min-width: 190px;
+
+    padding: 15px 20px;
+
+    background: rgba(0, 0, 0, 0.82);
+
+    border-radius: 8px;
+
+    z-index: 100;
+}
+
+#hud-title {
+    font-weight: bold;
+
+    margin-bottom: 10px;
+
+    color: #d8dde3;
+
+    letter-spacing: 1px;
+}
+
+.hud-row {
+    margin: 5px 0;
+}
+
+
+/* =========================================================
+   LOCATION
+   ========================================================= */
+
+#location {
+    position: fixed;
+
+    top: 15px;
+    right: 15px;
+
+    padding: 12px 18px;
+
+    background: rgba(0, 0, 0, 0.82);
+
+    border-radius: 8px;
+
+    z-index: 100;
+
+    color: #c8d0d8;
+}
+
+</style>
 </head>
+
 
 <body>
 
 <div id="game">
 
-    <!-- =========================
-         TITLE SCREEN
-    ========================= -->
 
-    <div id="title-screen">
+<!-- =======================================================
+     TITLE SCREEN
+     ======================================================= -->
 
-        <div>
-            <h1>SpaceScape</h1>
-            <p>A sci-fi skill-based RPG</p>
+<div id="title-screen">
 
-            <button id="play-button">
-                PLAY
-            </button>
-        </div>
+    <div>
 
-    </div>
+        <h1>SpaceScape</h1>
 
+        <p>A sci-fi skill-based RPG</p>
 
-    <!-- =========================
-         GAME SCREEN
-    ========================= -->
-
-    <div id="game-screen">
-
-        <div id="world-container">
-
-            <div id="world">
-
-                <!-- COLONY WALL -->
-
-                <div id="colony-wall"></div>
-
-
-                <!-- ROADS -->
-
-                <div
-                    class="road horizontal"
-                    style="top: 745px;">
-                </div>
-
-                <div
-                    class="road vertical"
-                    style="left: 1155px;">
-                </div>
-
-                <div
-                    class="road-line horizontal"
-                    style="top: 788px;">
-                </div>
-
-                <div
-                    class="road-line vertical"
-                    style="left: 1198px;">
-                </div>
-
-
-                <!-- =========================
-                     BUILDINGS
-                ========================= -->
-
-                <div
-                    class="building"
-                    style="
-                        left: 450px;
-                        top: 350px;
-                        width: 300px;
-                        height: 190px;
-                    ">
-
-                    <div class="building-label">
-                        COLONY COMMAND
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="building"
-                    style="
-                        left: 1350px;
-                        top: 350px;
-                        width: 300px;
-                        height: 190px;
-                    ">
-
-                    <div class="building-label">
-                        MEDICAL CENTER
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="building"
-                    style="
-                        left: 450px;
-                        top: 1000px;
-                        width: 300px;
-                        height: 190px;
-                    ">
-
-                    <div class="building-label">
-                        ENGINEERING BAY
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="building"
-                    style="
-                        left: 1350px;
-                        top: 1000px;
-                        width: 300px;
-                        height: 190px;
-                    ">
-
-                    <div class="building-label">
-                        TRADING POST
-                    </div>
-
-                </div>
-
-
-                <!-- =========================
-                     TREES
-                ========================= -->
-
-                <div
-                    class="tree"
-                    style="left: 330px; top: 350px;">
-                </div>
-
-                <div
-                    class="tree"
-                    style="left: 380px; top: 420px;">
-                </div>
-
-                <div
-                    class="tree"
-                    style="left: 1740px; top: 350px;">
-                </div>
-
-                <div
-                    class="tree"
-                    style="left: 1790px; top: 430px;">
-                </div>
-
-                <div
-                    class="tree"
-                    style="left: 330px; top: 1000px;">
-                </div>
-
-                <div
-                    class="tree"
-                    style="left: 380px; top: 1080px;">
-                </div>
-
-                <div
-                    class="tree"
-                    style="left: 1740px; top: 1000px;">
-                </div>
-
-                <div
-                    class="tree"
-                    style="left: 1790px; top: 1080px;">
-                </div>
-
-
-                <!-- =========================
-                     ROCKS
-                ========================= -->
-
-                <div
-                    class="rock"
-                    style="left: 600px; top: 620px;">
-                </div>
-
-                <div
-                    class="rock"
-                    style="left: 700px; top: 650px;">
-                </div>
-
-                <div
-                    class="rock"
-                    style="left: 1450px; top: 620px;">
-                </div>
-
-                <div
-                    class="rock"
-                    style="left: 1550px; top: 650px;">
-                </div>
-
-
-                <!-- PLAYER -->
-
-                <div id="player"></div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =========================
-             HUD
-        ========================= -->
-
-        <div id="hud">
-
-            <div id="hud-title">
-                SPACESCAPE
-            </div>
-
-            <div class="hud-row">
-                Level:
-                <span id="level">1</span>
-            </div>
-
-            <div class="hud-row">
-                Health:
-                <span id="health">100</span>/100
-            </div>
-
-            <div class="hud-row">
-                XP:
-                <span id="xp">0</span>
-            </div>
-
-        </div>
-
-
-        <!-- LOCATION -->
-
-        <div id="location">
-            Aurelia Colony
-        </div>
+        <button id="play-button">
+            PLAY
+        </button>
 
     </div>
 
 </div>
 
 
+<!-- =======================================================
+     GAME SCREEN
+     ======================================================= -->
+
+<div id="game-screen">
+
+
+<div id="world-container">
+
+
+<div id="world">
+
+
+<!-- =======================================================
+     COLONY WALL
+     ======================================================= -->
+
+<div id="colony-wall"></div>
+
+
+<!-- =======================================================
+     ROADS
+     ======================================================= -->
+
+<div
+    class="road horizontal"
+    style="top: 745px;">
+</div>
+
+<div
+    class="road vertical"
+    style="left: 1155px;">
+</div>
+
+<div
+    class="road-line horizontal"
+    style="top: 788px;">
+</div>
+
+<div
+    class="road-line vertical"
+    style="left: 1198px;">
+</div>
+
+
+<!-- =======================================================
+     BUILDINGS
+     ======================================================= -->
+
+<div
+    class="building"
+    style="
+        left: 450px;
+        top: 350px;
+        width: 300px;
+        height: 190px;
+    "
+>
+
+    <div class="building-label">
+        COLONY COMMAND
+    </div>
+
+</div>
+
+
+<div
+    class="building"
+    style="
+        left: 1350px;
+        top: 350px;
+        width: 300px;
+        height: 190px;
+    "
+>
+
+    <div class="building-label">
+        MEDICAL CENTER
+    </div>
+
+</div>
+
+
+<div
+    class="building"
+    style="
+        left: 450px;
+        top: 1000px;
+        width: 300px;
+        height: 190px;
+    "
+>
+
+    <div class="building-label">
+        ENGINEERING BAY
+    </div>
+
+</div>
+
+
+<div
+    class="building"
+    style="
+        left: 1350px;
+        top: 1000px;
+        width: 300px;
+        height: 190px;
+    "
+>
+
+    <div class="building-label">
+        TRADING POST
+    </div>
+
+</div>
+
+
+<!-- =======================================================
+     TREES
+     ======================================================= -->
+
+<div
+    class="tree"
+    style="
+        left: 330px;
+        top: 350px;
+    "
+></div>
+
+
+<div
+    class="tree"
+    style="
+        left: 380px;
+        top: 420px;
+    "
+></div>
+
+
+<div
+    class="tree"
+    style="
+        left: 1740px;
+        top: 350px;
+    "
+></div>
+
+
+<div
+    class="tree"
+    style="
+        left: 1790px;
+        top: 430px;
+    "
+></div>
+
+
+<div
+    class="tree"
+    style="
+        left: 330px;
+        top: 1000px;
+    "
+></div>
+
+
+<div
+    class="tree"
+    style="
+        left: 380px;
+        top: 1080px;
+    "
+></div>
+
+
+<div
+    class="tree"
+    style="
+        left: 1740px;
+        top: 1000px;
+    "
+></div>
+
+
+<div
+    class="tree"
+    style="
+        left: 1790px;
+        top: 1080px;
+    "
+></div>
+
+
+<!-- =======================================================
+     ROCKS
+     ======================================================= -->
+
+<div
+    class="rock"
+    style="
+        left: 600px;
+        top: 620px;
+    "
+></div>
+
+
+<div
+    class="rock"
+    style="
+        left: 700px;
+        top: 650px;
+    "
+></div>
+
+
+<div
+    class="rock"
+    style="
+        left: 1450px;
+        top: 620px;
+    "
+></div>
+
+
+<div
+    class="rock"
+    style="
+        left: 1550px;
+        top: 650px;
+    "
+></div>
+
+
+<!-- =======================================================
+     COMMANDER KAEL NPC
+     ======================================================= -->
+
+<div
+    id="commander-kael"
+    class="npc"
+    style="
+        left: 1050px;
+        top: 650px;
+    "
+>
+
+    <div class="npc-name">
+        Commander Kael
+    </div>
+
+    <div class="npc-head"></div>
+
+    <div class="npc-visor"></div>
+
+    <div class="npc-body"></div>
+
+</div>
+
+
+<!-- =======================================================
+     PLAYER
+     ======================================================= -->
+
+<div id="player"></div>
+
+
+</div>
+</div>
+
+
+<!-- =======================================================
+     HUD
+     ======================================================= -->
+
+<div id="hud">
+
+    <div id="hud-title">
+        SPACESCAPE
+    </div>
+
+    <div class="hud-row">
+        Level:
+        <span id="level">1</span>
+    </div>
+
+    <div class="hud-row">
+        Health:
+        <span id="health">100</span>/100
+    </div>
+
+    <div class="hud-row">
+        XP:
+        <span id="xp">0</span>
+    </div>
+
+</div>
+
+
+<!-- =======================================================
+     LOCATION
+     ======================================================= -->
+
+<div id="location">
+    Aurelia Colony
+</div>
+
+
+<!-- =======================================================
+     INTERACTION PROMPT
+     ======================================================= -->
+
+<div id="interaction-prompt">
+    Press <span>E</span> to talk to Commander Kael
+</div>
+
+
+<!-- =======================================================
+     DIALOGUE
+     ======================================================= -->
+
+<div id="dialogue">
+
+    <div id="dialogue-name">
+        Commander Kael
+    </div>
+
+    <div id="dialogue-text"></div>
+
+    <div id="dialogue-buttons">
+
+        <button
+            id="dialogue-close"
+            class="dialogue-button"
+        >
+            Close
+        </button>
+
+        <button
+            id="dialogue-next"
+            class="dialogue-button"
+        >
+            Continue
+        </button>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
 <script>
 
-    /* =========================
-       BASIC GAME VARIABLES
-    ========================= */
+/* =========================================================
+   BASIC GAME VARIABLES
+   ========================================================= */
 
-    const playButton =
-        document.getElementById("play-button");
+const playButton =
+    document.getElementById("play-button");
 
-    const titleScreen =
-        document.getElementById("title-screen");
+const titleScreen =
+    document.getElementById("title-screen");
 
-    const gameScreen =
-        document.getElementById("game-screen");
+const gameScreen =
+    document.getElementById("game-screen");
 
-    const world =
-        document.getElementById("world");
+const world =
+    document.getElementById("world");
 
-    const player =
-        document.getElementById("player");
-
-
-    /* =========================
-       PLAYER
-    ========================= */
-
-    let playerX = 1200;
-    let playerY = 900;
-
-    const playerSize = 34;
-    const speed = 5;
-
-    const keys = {};
+const player =
+    document.getElementById("player");
 
 
-    /* =========================
-       COLLISION OBJECTS
-    ========================= */
+/* =========================================================
+   NPC ELEMENTS
+   ========================================================= */
 
-    const obstacles = [
+const commanderKael =
+    document.getElementById("commander-kael");
 
-        /* Colony Command */
-        {
-            x: 450,
-            y: 350,
-            width: 300,
-            height: 190
-        },
+const interactionPrompt =
+    document.getElementById("interaction-prompt");
 
-        /* Medical Center */
-        {
-            x: 1350,
-            y: 350,
-            width: 300,
-            height: 190
-        },
+const dialogue =
+    document.getElementById("dialogue");
 
-        /* Engineering Bay */
-        {
-            x: 450,
-            y: 1000,
-            width: 300,
-            height: 190
-        },
+const dialogueName =
+    document.getElementById("dialogue-name");
 
-        /* Trading Post */
-        {
-            x: 1350,
-            y: 1000,
-            width: 300,
-            height: 190
-        },
+const dialogueText =
+    document.getElementById("dialogue-text");
 
-        /* Rocks */
-        {
-            x: 600,
-            y: 620,
-            width: 35,
-            height: 25
-        },
+const dialogueNext =
+    document.getElementById("dialogue-next");
 
-        {
-            x: 700,
-            y: 650,
-            width: 35,
-            height: 25
-        },
+const dialogueClose =
+    document.getElementById("dialogue-close");
 
-        {
-            x: 1450,
-            y: 620,
-            width: 35,
-            height: 25
-        },
 
-        {
-            x: 1550,
-            y: 650,
-            width: 35,
-            height: 25
+/* =========================================================
+   PLAYER
+   ========================================================= */
+
+let playerX = 1200;
+let playerY = 900;
+
+const playerSize = 34;
+
+const speed = 5;
+
+const keys = {};
+
+
+/* =========================================================
+   COMMANDER KAEL
+   ========================================================= */
+
+const kaelX = 1050;
+const kaelY = 650;
+
+const npcInteractionDistance = 85;
+
+let dialogueOpen = false;
+
+let dialogueIndex = 0;
+
+
+/* =========================================================
+   COMMANDER KAEL DIALOGUE
+   ========================================================= */
+
+const kaelDialogue = [
+
+    "Commander Kael: You're finally here. We've been waiting for someone capable enough to investigate what happened outside the colony.",
+
+    "Commander Kael: Three miners disappeared near the Xenium fields yesterday. Their transport came back empty.",
+
+    "Commander Kael: I need someone to find out what happened. Be careful. Whatever took them may still be out there.",
+
+    "Commander Kael: Talk to me again when you're ready. This could be your first real assignment."
+];
+
+
+/* =========================================================
+   COLLISION OBJECTS
+   ========================================================= */
+
+const obstacles = [
+
+    /* Colony Command */
+
+    {
+        x: 450,
+        y: 350,
+        width: 300,
+        height: 190
+    },
+
+
+    /* Medical Center */
+
+    {
+        x: 1350,
+        y: 350,
+        width: 300,
+        height: 190
+    },
+
+
+    /* Engineering Bay */
+
+    {
+        x: 450,
+        y: 1000,
+        width: 300,
+        height: 190
+    },
+
+
+    /* Trading Post */
+
+    {
+        x: 1350,
+        y: 1000,
+        width: 300,
+        height: 190
+    },
+
+
+    /* Rocks */
+
+    {
+        x: 600,
+        y: 620,
+        width: 35,
+        height: 25
+    },
+
+    {
+        x: 700,
+        y: 650,
+        width: 35,
+        height: 25
+    },
+
+    {
+        x: 1450,
+        y: 620,
+        width: 35,
+        height: 25
+    },
+
+    {
+        x: 1550,
+        y: 650,
+        width: 35,
+        height: 25
+    }
+
+];
+
+
+/* =========================================================
+   COLLISION DETECTION
+   ========================================================= */
+
+function isColliding(x, y) {
+
+    const half =
+        playerSize / 2;
+
+    const playerLeft =
+        x - half;
+
+    const playerRight =
+        x + half;
+
+    const playerTop =
+        y - half;
+
+    const playerBottom =
+        y + half;
+
+
+    for (const obstacle of obstacles) {
+
+        const obstacleLeft =
+            obstacle.x;
+
+        const obstacleRight =
+            obstacle.x +
+            obstacle.width;
+
+        const obstacleTop =
+            obstacle.y;
+
+        const obstacleBottom =
+            obstacle.y +
+            obstacle.height;
+
+
+        if (
+
+            playerRight > obstacleLeft &&
+
+            playerLeft < obstacleRight &&
+
+            playerBottom > obstacleTop &&
+
+            playerTop < obstacleBottom
+
+        ) {
+
+            return true;
+
         }
-    ];
 
-
-    /* =========================
-       COLLISION DETECTION
-    ========================= */
-
-    function isColliding(x, y) {
-
-        const half =
-            playerSize / 2;
-
-        const playerLeft =
-            x - half;
-
-        const playerRight =
-            x + half;
-
-        const playerTop =
-            y - half;
-
-        const playerBottom =
-            y + half;
-
-
-        for (const obstacle of obstacles) {
-
-            const obstacleLeft =
-                obstacle.x;
-
-            const obstacleRight =
-                obstacle.x +
-                obstacle.width;
-
-            const obstacleTop =
-                obstacle.y;
-
-            const obstacleBottom =
-                obstacle.y +
-                obstacle.height;
-
-
-            if (
-                playerRight > obstacleLeft &&
-                playerLeft < obstacleRight &&
-                playerBottom > obstacleTop &&
-                playerTop < obstacleBottom
-            ) {
-                return true;
-            }
-        }
-
-
-        return false;
     }
 
 
-    /* =========================
-       PLAY BUTTON
-    ========================= */
+    return false;
 
-    playButton.addEventListener(
-        "click",
-        function () {
+}
 
-            titleScreen.style.display =
-                "none";
 
-            gameScreen.style.display =
-                "block";
+/* =========================================================
+   DISTANCE BETWEEN PLAYER AND NPC
+   ========================================================= */
 
-            updateCamera();
-        }
+function getDistanceToKael() {
+
+    const dx =
+        playerX - kaelX;
+
+    const dy =
+        playerY - kaelY;
+
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
     );
 
+}
 
-    /* =========================
-       KEYBOARD
-    ========================= */
 
-    document.addEventListener(
-        "keydown",
-        function (event) {
+/* =========================================================
+   CHECK NPC INTERACTION
+   ========================================================= */
 
-            keys[event.key.toLowerCase()] =
-                true;
+function updateInteraction() {
+
+    if (dialogueOpen) {
+
+        interactionPrompt.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    const distance =
+        getDistanceToKael();
+
+
+    if (
+        distance <=
+        npcInteractionDistance
+    ) {
+
+        interactionPrompt.style.display =
+            "block";
+
+    } else {
+
+        interactionPrompt.style.display =
+            "none";
+
+    }
+
+}
+
+
+/* =========================================================
+   OPEN DIALOGUE
+   ========================================================= */
+
+function openDialogue() {
+
+    const distance =
+        getDistanceToKael();
+
+
+    if (
+        distance >
+        npcInteractionDistance
+    ) {
+
+        return;
+
+    }
+
+
+    dialogueOpen = true;
+
+    dialogueIndex = 0;
+
+
+    dialogue.style.display =
+        "block";
+
+
+    interactionPrompt.style.display =
+        "none";
+
+
+    updateDialogue();
+
+}
+
+
+/* =========================================================
+   UPDATE DIALOGUE
+   ========================================================= */
+
+function updateDialogue() {
+
+    dialogueName.textContent =
+        "Commander Kael";
+
+
+    dialogueText.textContent =
+        kaelDialogue[dialogueIndex];
+
+
+    if (
+        dialogueIndex >=
+        kaelDialogue.length - 1
+    ) {
+
+        dialogueNext.textContent =
+            "Finish";
+
+    } else {
+
+        dialogueNext.textContent =
+            "Continue";
+
+    }
+
+}
+
+
+/* =========================================================
+   NEXT DIALOGUE
+   ========================================================= */
+
+function nextDialogue() {
+
+    if (!dialogueOpen) {
+        return;
+    }
+
+
+    if (
+        dialogueIndex <
+        kaelDialogue.length - 1
+    ) {
+
+        dialogueIndex++;
+
+        updateDialogue();
+
+    } else {
+
+        closeDialogue();
+
+    }
+
+}
+
+
+/* =========================================================
+   CLOSE DIALOGUE
+   ========================================================= */
+
+function closeDialogue() {
+
+    dialogueOpen = false;
+
+    dialogue.style.display =
+        "none";
+
+
+    updateInteraction();
+
+}
+
+
+/* =========================================================
+   PLAY BUTTON
+   ========================================================= */
+
+playButton.addEventListener(
+    "click",
+    function () {
+
+        titleScreen.style.display =
+            "none";
+
+        gameScreen.style.display =
+            "block";
+
+        updateCamera();
+
+        updateInteraction();
+
+    }
+);
+
+
+/* =========================================================
+   KEYBOARD
+   ========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function (event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        keys[key] = true;
+
+
+        /* Prevent repeated E presses */
+
+        if (
+            key === "e" &&
+            !event.repeat
+        ) {
+
+            if (dialogueOpen) {
+
+                nextDialogue();
+
+            } else {
+
+                openDialogue();
+
+            }
 
         }
-    );
 
 
-    document.addEventListener(
-        "keyup",
-        function (event) {
+        /* Escape closes dialogue */
 
-            keys[event.key.toLowerCase()] =
-                false;
+        if (
+            key === "escape"
+        ) {
+
+            if (dialogueOpen) {
+
+                closeDialogue();
+
+            }
 
         }
-    );
+
+    }
+);
 
 
-    /* =========================
-       PLAYER MOVEMENT
-    ========================= */
+document.addEventListener(
+    "keyup",
+    function (event) {
 
-    function updatePlayer() {
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+
+    }
+);
+
+
+/* =========================================================
+   PLAYER MOVEMENT
+   ========================================================= */
+
+function updatePlayer() {
+
+
+    /*
+       Player cannot move while dialogue
+       is open.
+    */
+
+    if (!dialogueOpen) {
 
         let newX =
             playerX;
@@ -758,7 +1490,9 @@
             keys["w"] ||
             keys["arrowup"]
         ) {
+
             newY -= speed;
+
         }
 
 
@@ -768,7 +1502,9 @@
             keys["s"] ||
             keys["arrowdown"]
         ) {
+
             newY += speed;
+
         }
 
 
@@ -778,7 +1514,9 @@
             keys["a"] ||
             keys["arrowleft"]
         ) {
+
             newX -= speed;
+
         }
 
 
@@ -788,13 +1526,15 @@
             keys["d"] ||
             keys["arrowright"]
         ) {
+
             newX += speed;
+
         }
 
 
-        /* =========================
+        /* =================================================
            COLLISION
-        ========================= */
+           ================================================= */
 
         if (
             !isColliding(
@@ -802,8 +1542,10 @@
                 playerY
             )
         ) {
+
             playerX =
                 newX;
+
         }
 
 
@@ -813,14 +1555,16 @@
                 newY
             )
         ) {
+
             playerY =
                 newY;
+
         }
 
 
-        /* =========================
+        /* =================================================
            WORLD BOUNDARIES
-        ========================= */
+           ================================================= */
 
         playerX =
             Math.max(
@@ -831,6 +1575,7 @@
                 )
             );
 
+
         playerY =
             Math.max(
                 20,
@@ -840,89 +1585,139 @@
                 )
             );
 
-
-        /* =========================
-           DRAW PLAYER
-        ========================= */
-
-        player.style.left =
-            playerX + "px";
-
-        player.style.top =
-            playerY + "px";
+    }
 
 
-        /* CAMERA */
+    /* =====================================================
+       DRAW PLAYER
+       ===================================================== */
+
+    player.style.left =
+        playerX + "px";
+
+    player.style.top =
+        playerY + "px";
+
+
+    /* =====================================================
+       CAMERA
+       ===================================================== */
+
+    updateCamera();
+
+
+    /* =====================================================
+       NPC INTERACTION
+       ===================================================== */
+
+    updateInteraction();
+
+
+    requestAnimationFrame(
+        updatePlayer
+    );
+
+}
+
+
+/* =========================================================
+   CAMERA
+   ========================================================= */
+
+function updateCamera() {
+
+    const screenWidth =
+        window.innerWidth;
+
+    const screenHeight =
+        window.innerHeight;
+
+
+    let cameraX =
+        playerX -
+        screenWidth / 2;
+
+
+    let cameraY =
+        playerY -
+        screenHeight / 2;
+
+
+    cameraX =
+        Math.max(
+            0,
+            Math.min(
+                2400 - screenWidth,
+                cameraX
+            )
+        );
+
+
+    cameraY =
+        Math.max(
+            0,
+            Math.min(
+                1800 - screenHeight,
+                cameraY
+            )
+        );
+
+
+    world.style.left =
+        -cameraX + "px";
+
+
+    world.style.top =
+        -cameraY + "px";
+
+}
+
+
+/* =========================================================
+   DIALOGUE BUTTONS
+   ========================================================= */
+
+dialogueNext.addEventListener(
+    "click",
+    function () {
+
+        nextDialogue();
+
+    }
+);
+
+
+dialogueClose.addEventListener(
+    "click",
+    function () {
+
+        closeDialogue();
+
+    }
+);
+
+
+/* =========================================================
+   WINDOW RESIZE
+   ========================================================= */
+
+window.addEventListener(
+    "resize",
+    function () {
 
         updateCamera();
 
-
-        requestAnimationFrame(
-            updatePlayer
-        );
     }
+);
 
 
-    /* =========================
-       CAMERA
-    ========================= */
+/* =========================================================
+   START GAME LOOP
+   ========================================================= */
 
-    function updateCamera() {
-
-        const screenWidth =
-            window.innerWidth;
-
-        const screenHeight =
-            window.innerHeight;
-
-
-        let cameraX =
-            playerX -
-            screenWidth / 2;
-
-        let cameraY =
-            playerY -
-            screenHeight / 2;
-
-
-        cameraX =
-            Math.max(
-                0,
-                Math.min(
-                    2400 -
-                    screenWidth,
-                    cameraX
-                )
-            );
-
-
-        cameraY =
-            Math.max(
-                0,
-                Math.min(
-                    1800 -
-                    screenHeight,
-                    cameraY
-                )
-            );
-
-
-        world.style.left =
-            -cameraX + "px";
-
-        world.style.top =
-            -cameraY + "px";
-    }
-
-
-    /* =========================
-       START GAME LOOP
-    ========================= */
-
-    updatePlayer();
+updatePlayer();
 
 </script>
 
 </body>
 </html>
-```

@@ -505,7 +505,9 @@ function createDamageNumber(
         "spacescape-damage-number";
 
     element.textContent =
-        event.damage;
+        event.isMiss
+            ? "0"
+            : event.damage;
 
     element.style.position =
         "absolute";
@@ -514,19 +516,43 @@ function createDamageNumber(
         `${event.x}px`;
 
     element.style.top =
-        `${event.y - 35}px`;
+        `${event.y - 42}px`;
 
-    element.style.transform =
-        "translateX(-50%)";
+    element.style.width =
+        "32px";
+
+    element.style.height =
+        "32px";
+
+    element.style.display =
+        "flex";
+
+    element.style.alignItems =
+        "center";
+
+    element.style.justifyContent =
+        "center";
+
+    element.style.boxSizing =
+        "border-box";
+
+    element.style.fontFamily =
+        "Arial, sans-serif";
+
+    element.style.fontSize =
+        "17px";
+
+    element.style.fontWeight =
+        "900";
+
+    element.style.lineHeight =
+        "1";
 
     element.style.color =
         "#ffffff";
 
-    element.style.fontSize =
-        "20px";
-
-    element.style.fontWeight =
-        "bold";
+    element.style.textAlign =
+        "center";
 
     element.style.pointerEvents =
         "none";
@@ -535,7 +561,43 @@ function createDamageNumber(
         "100";
 
     element.style.textShadow =
-        "0 2px 4px #000000";
+        "0 2px 2px #000000";
+
+    element.style.background =
+        event.isMiss
+            ? "#2f69c9"
+            : "#c83232";
+
+    element.style.border =
+        "2px solid #111111";
+
+    element.style.clipPath =
+        "polygon(" +
+        "50% 0%, " +
+        "61% 10%, " +
+        "76% 5%, " +
+        "79% 20%, " +
+        "95% 24%, " +
+        "88% 38%, " +
+        "100% 50%, " +
+        "88% 62%, " +
+        "95% 76%, " +
+        "79% 80%, " +
+        "76% 95%, " +
+        "61% 90%, " +
+        "50% 100%, " +
+        "39% 90%, " +
+        "24% 95%, " +
+        "21% 80%, " +
+        "5% 76%, " +
+        "12% 62%, " +
+        "0% 50%, " +
+        "12% 38%, " +
+        "5% 24%, " +
+        "21% 20%, " +
+        "24% 5%, " +
+        "39% 10%" +
+        ")";
 
     element.style.animation =
         "spacescapeDamageFloat 950ms ease-out forwards";
@@ -613,12 +675,23 @@ function ensureDamageAnimation() {
         @keyframes spacescapeDamageFloat {
             0% {
                 opacity: 1;
-                transform: translate(-50%, 0);
+                transform:
+                    translate(-50%, 0)
+                    scale(1);
+            }
+
+            20% {
+                opacity: 1;
+                transform:
+                    translate(-50%, -5px)
+                    scale(1.08);
             }
 
             100% {
                 opacity: 0;
-                transform: translate(-50%, -45px);
+                transform:
+                    translate(-50%, -50px)
+                    scale(0.9);
             }
         }
     `;

@@ -53,7 +53,8 @@ function addCombatFeedback(
     targetId,
     damage,
     x,
-    y
+    y,
+    isMiss = false
 ) {
     if (
         !targetType ||
@@ -71,7 +72,8 @@ function addCombatFeedback(
         targetId,
         damage,
         x,
-        y
+        y,
+        isMiss
     });
 }
 
@@ -288,7 +290,8 @@ function processPlayerAttack(
             enemy.id,
             result.damage,
             enemy.position.x,
-            enemy.position.y
+            enemy.position.y,
+            false
         );
 
         console.log(
@@ -296,6 +299,15 @@ function processPlayerAttack(
             `${enemy.health.current}/${enemy.health.maximum} HP remaining.`
         );
     } else {
+        addCombatFeedback(
+            "enemy",
+            enemy.id,
+            0,
+            enemy.position.x,
+            enemy.position.y,
+            true
+        );
+
         console.log(
             `Player misses ${enemy.name}.`
         );
@@ -335,7 +347,8 @@ function processEnemyAttack(
             "player",
             result.damage,
             player.position.x,
-            player.position.y
+            player.position.y,
+            false
         );
 
         console.log(
@@ -343,6 +356,15 @@ function processEnemyAttack(
             `${player.health.current}/${player.health.maximum} HP remaining.`
         );
     } else {
+        addCombatFeedback(
+            "player",
+            "player",
+            0,
+            player.position.x,
+            player.position.y,
+            true
+        );
+
         console.log(
             `${enemy.name} misses player.`
         );

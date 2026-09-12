@@ -44,10 +44,173 @@ function createEnemyElement(enemy) {
     element.dataset.enemyId =
         enemy.id;
 
-    element.textContent =
-        enemy.name;
+    element.style.flexDirection =
+        "column";
 
-    world.appendChild(element);
+    element.style.lineHeight =
+        "1";
+
+    element.style.overflow =
+        "visible";
+
+    /* ---------------------------------------------------
+       ENEMY NAME
+       --------------------------------------------------- */
+
+    const nameElement =
+        document.createElement("div");
+
+    nameElement.className =
+        "enemy-name";
+
+    nameElement.style.position =
+        "absolute";
+
+    nameElement.style.bottom =
+        "48px";
+
+    nameElement.style.left =
+        "50%";
+
+    nameElement.style.transform =
+        "translateX(-50%)";
+
+    nameElement.style.color =
+        "#ffffff";
+
+    nameElement.style.fontSize =
+        "11px";
+
+    nameElement.style.fontWeight =
+        "bold";
+
+    nameElement.style.whiteSpace =
+        "nowrap";
+
+    nameElement.style.textShadow =
+        "0 1px 3px #000000";
+
+    element.appendChild(
+        nameElement
+    );
+
+
+    /* ---------------------------------------------------
+       ENEMY LEVEL
+       --------------------------------------------------- */
+
+    const levelElement =
+        document.createElement("div");
+
+    levelElement.className =
+        "enemy-level";
+
+    levelElement.style.position =
+        "absolute";
+
+    levelElement.style.top =
+        "-18px";
+
+    levelElement.style.left =
+        "50%";
+
+    levelElement.style.transform =
+        "translateX(-50%)";
+
+    levelElement.style.color =
+        "#ffffff";
+
+    levelElement.style.fontSize =
+        "10px";
+
+    levelElement.style.fontWeight =
+        "bold";
+
+    levelElement.style.whiteSpace =
+        "nowrap";
+
+    levelElement.style.textShadow =
+        "0 1px 3px #000000";
+
+    element.appendChild(
+        levelElement
+    );
+
+
+    /* ---------------------------------------------------
+       HEALTH BAR CONTAINER
+       --------------------------------------------------- */
+
+    const healthContainer =
+        document.createElement("div");
+
+    healthContainer.className =
+        "enemy-health-container";
+
+    healthContainer.style.position =
+        "absolute";
+
+    healthContainer.style.top =
+        "48px";
+
+    healthContainer.style.left =
+        "50%";
+
+    healthContainer.style.transform =
+        "translateX(-50%)";
+
+    healthContainer.style.width =
+        "60px";
+
+    healthContainer.style.height =
+        "7px";
+
+    healthContainer.style.background =
+        "#220000";
+
+    healthContainer.style.border =
+        "1px solid #000000";
+
+    healthContainer.style.borderRadius =
+        "3px";
+
+    healthContainer.style.overflow =
+        "hidden";
+
+    const healthFill =
+        document.createElement("div");
+
+    healthFill.className =
+        "enemy-health-fill";
+
+    healthFill.style.width =
+        "100%";
+
+    healthFill.style.height =
+        "100%";
+
+    healthFill.style.background =
+        "#38c95b";
+
+    healthFill.style.transition =
+        "width 0.1s linear";
+
+    healthContainer.appendChild(
+        healthFill
+    );
+
+    element.appendChild(
+        healthContainer
+    );
+
+
+    /* ---------------------------------------------------
+       ADD TO WORLD
+       --------------------------------------------------- */
+
+    world.appendChild(
+        element
+    );
 
     enemyElements.set(
         enemy.id,
@@ -79,6 +242,73 @@ function updateEnemyElement(
 
     element.style.top =
         `${enemy.position.y}px`;
+
+
+    /* ---------------------------------------------------
+       NAME
+       --------------------------------------------------- */
+
+    const nameElement =
+        element.querySelector(
+            ".enemy-name"
+        );
+
+    if (nameElement) {
+        nameElement.textContent =
+            enemy.name || "Enemy";
+    }
+
+
+    /* ---------------------------------------------------
+       LEVEL
+       --------------------------------------------------- */
+
+    const levelElement =
+        element.querySelector(
+            ".enemy-level"
+        );
+
+    if (levelElement) {
+        levelElement.textContent =
+            `Lv. ${enemy.level}`;
+    }
+
+
+    /* ---------------------------------------------------
+       HEALTH BAR
+       --------------------------------------------------- */
+
+    const healthFill =
+        element.querySelector(
+            ".enemy-health-fill"
+        );
+
+    if (
+        healthFill &&
+        enemy.health &&
+        Number.isFinite(
+            enemy.health.current
+        ) &&
+        Number.isFinite(
+            enemy.health.maximum
+        ) &&
+        enemy.health.maximum > 0
+    ) {
+        const healthPercent =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    (
+                        enemy.health.current /
+                        enemy.health.maximum
+                    ) * 100
+                )
+            );
+
+        healthFill.style.width =
+            `${healthPercent}%`;
+    }
 }
 
 
@@ -90,7 +320,9 @@ function removeEnemyElement(
     enemyId
 ) {
     const element =
-        enemyElements.get(enemyId);
+        enemyElements.get(
+            enemyId
+        );
 
     if (!element) {
         return;
@@ -116,7 +348,10 @@ export function renderEnemies() {
     const activeIds =
         new Set();
 
-    for (const enemy of activeEnemies) {
+    for (
+        const enemy
+        of activeEnemies
+    ) {
 
         if (
             !enemy ||
@@ -147,6 +382,11 @@ export function renderEnemies() {
             element
         );
     }
+
+
+    /* ---------------------------------------------------
+       REMOVE NO-LONGER-ACTIVE ENEMIES
+       --------------------------------------------------- */
 
     for (
         const enemyId

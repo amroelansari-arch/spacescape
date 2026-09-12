@@ -46,3 +46,73 @@ export function itemExists(itemId) {
 export function getAllItems() {
     return Object.values(ITEM_DEFINITIONS);
 }
+
+
+/* =======================================================
+   USE ITEM
+   ======================================================= */
+
+export function useItem(
+    player,
+    inventory,
+    itemId
+) {
+    if (
+        !player ||
+        !inventory ||
+        !itemId
+    ) {
+        return false;
+    }
+
+    const item = getItem(itemId);
+
+    if (!item) {
+        return false;
+    }
+
+    if (item.type !== "consumable") {
+        return false;
+    }
+
+    if (!Array.isArray(inventory.items)) {
+        return false;
+    }
+
+    const inventoryItem =
+        inventory.items.find(
+            currentItem =>
+                currentItem.id === itemId
+        );
+
+    if (!inventoryItem) {
+        return false;
+    }
+
+    if (inventoryItem.quantity <= 0) {
+        return false;
+    }
+
+    if (
+        item.effect &&
+        item.effect.type === "heal"
+    ) {
+        player.health.current = Math.min(
+            player.health.maximum,
+            player.health.current +
+            item.effect.amount
+        );
+    }
+
+    inventoryItem.quantity--;
+
+    if (inventoryItem.quantity === 0) {
+        inventory.items =
+            inventory.items.filter(
+                currentItem =>
+                    currentItem.id !== itemId
+            );
+    }
+
+    return true;
+}

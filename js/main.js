@@ -15,6 +15,14 @@ import {
     createDialogueController
 } from "./npc.js";
 
+import {
+    spawnWorldEnemy
+} from "./enemyWorld.js";
+
+import {
+    renderEnemies
+} from "./enemyRenderer.js";
+
 
 /* =======================================================
    DOM ELEMENTS
@@ -102,6 +110,44 @@ const dialogueController =
 
 
 /* =======================================================
+   ENEMY WORLD INITIALIZATION
+   ======================================================= */
+
+function initializeEnemies() {
+
+    spawnWorldEnemy(
+        "Test Enemy",
+        1,
+        50,
+        5,
+        2,
+        1500,
+        900
+    );
+
+    spawnWorldEnemy(
+        "Test Enemy",
+        1,
+        50,
+        5,
+        2,
+        1800,
+        1100
+    );
+
+    spawnWorldEnemy(
+        "Test Enemy",
+        2,
+        75,
+        8,
+        3,
+        2200,
+        1400
+    );
+}
+
+
+/* =======================================================
    INTERACTION
    ======================================================= */
 
@@ -147,6 +193,8 @@ function updateGame() {
     drawPlayer(
         playerElement
     );
+
+    renderEnemies();
 
     updatePlayerHUD({
         levelElement,
@@ -292,6 +340,13 @@ dialogueWindow.style.display =
 
 gameScreen.style.display =
     "none";
+
+
+/* =======================================================
+   INITIALIZE ENEMIES
+   ======================================================= */
+
+initializeEnemies();
 
 
 /* =======================================================

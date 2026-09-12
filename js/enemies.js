@@ -29,6 +29,31 @@ export function addEnemy(
 
 
 /* =======================================================
+   FIND ENEMY BY ID
+   ======================================================= */
+
+export function findEnemyById(
+    enemies,
+    enemyId
+) {
+    if (
+        !Array.isArray(enemies) ||
+        !enemyId
+    ) {
+        return null;
+    }
+
+    return (
+        enemies.find(
+            enemy =>
+                enemy &&
+                enemy.id === enemyId
+        ) || null
+    );
+}
+
+
+/* =======================================================
    REMOVE ENEMY
    ======================================================= */
 

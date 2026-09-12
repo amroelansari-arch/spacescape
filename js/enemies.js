@@ -8,6 +8,63 @@ export function createEnemyCollection() {
 
 
 /* =======================================================
+   ENEMY VALIDATION
+   ======================================================= */
+
+export function isValidEnemy(enemy) {
+    return (
+        !!enemy &&
+        typeof enemy === "object" &&
+        !!enemy.id &&
+        !!enemy.health &&
+        Number.isFinite(enemy.health.current) &&
+        Number.isFinite(enemy.health.maximum)
+    );
+}
+
+
+/* =======================================================
+   ENEMY ACTIVE CHECK
+   ======================================================= */
+
+export function isEnemyActive(enemy) {
+    return (
+        isValidEnemy(enemy) &&
+        enemy.health.current > 0
+    );
+}
+
+
+/* =======================================================
+   DISTANCE CALCULATION
+   ======================================================= */
+
+export function getDistance(
+    x1,
+    y1,
+    x2,
+    y2
+) {
+    if (
+        !Number.isFinite(x1) ||
+        !Number.isFinite(y1) ||
+        !Number.isFinite(x2) ||
+        !Number.isFinite(y2)
+    ) {
+        return Infinity;
+    }
+
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+
+    return Math.sqrt(
+        dx * dx +
+        dy * dy
+    );
+}
+
+
+/* =======================================================
    ADD ENEMY
    ======================================================= */
 
@@ -17,7 +74,7 @@ export function addEnemy(
 ) {
     if (
         !Array.isArray(enemies) ||
-        !enemy
+        !isValidEnemy(enemy)
     ) {
         return false;
     }
@@ -46,7 +103,7 @@ export function findEnemyById(
     return (
         enemies.find(
             enemy =>
-                enemy &&
+                isValidEnemy(enemy) &&
                 enemy.id === enemyId
         ) || null
     );
@@ -76,31 +133,20 @@ export function findNearestEnemy(
     for (const enemy of enemies) {
 
         if (
-            !enemy ||
+            !isEnemyActive(enemy) ||
             !enemy.position ||
-            !enemy.health ||
-            enemy.health.current <= 0
-        ) {
-            continue;
-        }
-
-        if (
             !Number.isFinite(enemy.position.x) ||
             !Number.isFinite(enemy.position.y)
         ) {
             continue;
         }
 
-        const dx =
-            enemy.position.x - x;
-
-        const dy =
-            enemy.position.y - y;
-
         const distance =
-            Math.sqrt(
-                dx * dx +
-                dy * dy
+            getDistance(
+                x,
+                y,
+                enemy.position.x,
+                enemy.position.y
             );
 
         if (distance < nearestDistance) {
@@ -138,31 +184,20 @@ export function findEnemiesWithinRange(
     for (const enemy of enemies) {
 
         if (
-            !enemy ||
+            !isEnemyActive(enemy) ||
             !enemy.position ||
-            !enemy.health ||
-            enemy.health.current <= 0
-        ) {
-            continue;
-        }
-
-        if (
             !Number.isFinite(enemy.position.x) ||
             !Number.isFinite(enemy.position.y)
         ) {
             continue;
         }
 
-        const dx =
-            enemy.position.x - x;
-
-        const dy =
-            enemy.position.y - y;
-
         const distance =
-            Math.sqrt(
-                dx * dx +
-                dy * dy
+            getDistance(
+                x,
+                y,
+                enemy.position.x,
+                enemy.position.y
             );
 
         if (distance <= range) {
@@ -215,9 +250,35 @@ export function getActiveEnemies(
 
     return enemies.filter(
         enemy =>
-            enemy &&
-            enemy.health &&
-            enemy.health.current > 0
+            isEnemyActive(enemy)
+    );
+}
+
+
+/* =======================================================
+   REMOVE DEAD ENEMIES
+   ======================================================= */
+
+export function removeDeadEnemies(
+    enemies
+) {
+    if (!Array.isArray(enemies)) {
+        return 0;
+    }
+
+    const originalCount =
+        enemies.length;
+
+    for (let i = enemies.length - 1; i >= 0; i--) {
+
+        if (!isEnemyActive(enemies[i])) {
+            enemies.splice(i, 1);
+        }
+    }
+
+    return (
+        originalCount -
+        enemies.length
     );
 }
 

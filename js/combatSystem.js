@@ -210,17 +210,26 @@ function movePlayerTowardTarget(player, enemy) {
             ? player.movement.speed
             : 5;
 
-    const moveDistance =
-        Math.min(
-            speed,
-            distance - COMBAT_RANGE
-        );
+    /*
+     * Move directly toward the enemy using
+     * the normalized direction vector.
+     *
+     * This is important for diagonal approaches.
+     * The player should close the actual distance
+     * to the enemy rather than favoring one axis.
+     */
 
     const normalizedX =
         dx / distance;
 
     const normalizedY =
         dy / distance;
+
+    const moveDistance =
+        Math.min(
+            speed,
+            distance - COMBAT_RANGE
+        );
 
     const newX =
         player.position.x +
@@ -232,29 +241,66 @@ function movePlayerTowardTarget(player, enemy) {
         normalizedY *
         moveDistance;
 
-    player.movement.moving = true;
+    let moved = false;
+
+    /*
+     * First try the complete diagonal movement.
+     */
 
     if (
         newX >= 0 &&
         newX <= WORLD_WIDTH &&
-        !isColliding(
-            newX,
-            player.position.y
-        )
-    ) {
-        player.position.x = newX;
-    }
-
-    if (
         newY >= 0 &&
         newY <= WORLD_HEIGHT &&
         !isColliding(
-            player.position.x,
+            newX,
             newY
         )
     ) {
+        player.position.x = newX;
         player.position.y = newY;
+
+        moved = true;
     }
+
+    /*
+     * If the diagonal position is blocked by
+     * world collision, allow the player to
+     * continue along whichever individual axis
+     * remains available.
+     *
+     * This preserves normal collision behavior
+     * without breaking diagonal combat approach.
+     */
+
+    if (!moved) {
+        if (
+            newX >= 0 &&
+            newX <= WORLD_WIDTH &&
+            !isColliding(
+                newX,
+                player.position.y
+            )
+        ) {
+            player.position.x = newX;
+            moved = true;
+        }
+
+        if (
+            newY >= 0 &&
+            newY <= WORLD_HEIGHT &&
+            !isColliding(
+                player.position.x,
+                newY
+            )
+        ) {
+            player.position.y = newY;
+            moved = true;
+        }
+    }
+
+    player.movement.moving =
+        moved;
 }
 
 function processPlayerAttack(

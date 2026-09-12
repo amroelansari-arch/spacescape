@@ -2,7 +2,11 @@ const ITEM_DEFINITIONS = {
     medkit: {
         id: "medkit",
         name: "Medkit",
-        type: "consumable"
+        type: "consumable",
+        effect: {
+            type: "heal",
+            amount: 25
+        }
     },
 
     laser_rifle: {

@@ -17,37 +17,26 @@ import {
     isColliding
 } from "./world.js";
 
-
-/* =======================================================
-   COMBAT SETTINGS
-   ======================================================= */
-
 const PLAYER_ATTACK_SPEED = 2000;
-
 const ENEMY_ATTACK_SPEED = 2500;
-
 const COMBAT_RANGE = 100;
+
+const combatState = {
+    targetEnemyId: null,
+    playerNextAttackTime: 0,
+    enemyNextAttackTime: 0,
+    active: false,
+    engaged: false,
+    combatEndTime: 0
+};
+
+const combatFeedback = [];
+
+let feedbackId = 0;
 
 
 /* =======================================================
    COMBAT STATE
-   ======================================================= */
-
-const combatState = {
-    targetEnemyId: null,
-
-    playerNextAttackTime: 0,
-
-    enemyNextAttackTime: 0,
-
-    active: false,
-
-    engaged: false
-};
-
-
-/* =======================================================
-   GET COMBAT STATE
    ======================================================= */
 
 export function getCombatState() {
@@ -56,14 +45,50 @@ export function getCombatState() {
 
 
 /* =======================================================
-   GET CURRENT TARGET
+   COMBAT FEEDBACK
+   ======================================================= */
+
+function addCombatFeedback(
+    targetType,
+    targetId,
+    damage,
+    x,
+    y
+) {
+    if (
+        !targetType ||
+        !Number.isFinite(damage) ||
+        damage <= 0 ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
+    ) {
+        return;
+    }
+
+    feedbackId++;
+
+    combatFeedback.push({
+        id: feedbackId,
+        targetType,
+        targetId,
+        damage,
+        x,
+        y,
+        createdAt: performance.now()
+    });
+}
+
+export function getCombatFeedback() {
+    return combatFeedback;
+}
+
+
+/* =======================================================
+   CURRENT TARGET
    ======================================================= */
 
 export function getCurrentCombatTarget() {
-
-    if (
-        !combatState.targetEnemyId
-    ) {
+    if (!combatState.targetEnemyId) {
         return null;
     }
 
@@ -74,7 +99,7 @@ export function getCurrentCombatTarget() {
 
 
 /* =======================================================
-   START COMBAT / SELECT TARGET
+   START COMBAT
    ======================================================= */
 
 export function startCombat(
@@ -105,6 +130,9 @@ export function startCombat(
     combatState.engaged =
         false;
 
+    combatState.combatEndTime =
+        0;
+
     const now =
         performance.now();
 
@@ -127,13 +155,13 @@ export function startCombat(
    ======================================================= */
 
 export function stopCombat() {
-
-    if (
-        combatState.active
-    ) {
+    if (combatState.active) {
         console.log(
             "Combat ended."
         );
+
+        combatState.combatEndTime =
+            performance.now();
     }
 
     combatState.targetEnemyId =
@@ -154,7 +182,7 @@ export function stopCombat() {
 
 
 /* =======================================================
-   CHECK COMBAT RANGE
+   COMBAT RANGE
    ======================================================= */
 
 function isWithinCombatRange(
@@ -178,15 +206,12 @@ function isWithinCombatRange(
             enemy.position.y
         );
 
-    return (
-        distance <=
-        COMBAT_RANGE
-    );
+    return distance <= COMBAT_RANGE;
 }
 
 
 /* =======================================================
-   APPROACH TARGET
+   MOVE PLAYER TOWARD TARGET
    ======================================================= */
 
 function movePlayerTowardTarget(
@@ -217,7 +242,8 @@ function movePlayerTowardTarget(
         );
 
     if (
-        distance <= COMBAT_RANGE
+        distance <=
+        COMBAT_RANGE
     ) {
         player.movement.moving =
             false;
@@ -225,9 +251,7 @@ function movePlayerTowardTarget(
         return;
     }
 
-    if (
-        distance === 0
-    ) {
+    if (distance === 0) {
         player.movement.moving =
             false;
 
@@ -244,14 +268,17 @@ function movePlayerTowardTarget(
     const moveDistance =
         Math.min(
             speed,
-            distance - COMBAT_RANGE
+            distance -
+            COMBAT_RANGE
         );
 
     const normalizedX =
-        dx / distance;
+        dx /
+        distance;
 
     const normalizedY =
-        dy / distance;
+        dy /
+        distance;
 
     const newX =
         player.position.x +
@@ -325,6 +352,14 @@ function processPlayerAttack(
 
     if (result.hit) {
 
+        addCombatFeedback(
+            "enemy",
+            enemy.id,
+            result.damage,
+            enemy.position.x,
+            enemy.position.y
+        );
+
         console.log(
             `Player hits ${enemy.name} for ${result.damage}. ` +
             `${enemy.health.current}/${enemy.health.maximum} HP remaining.`
@@ -372,6 +407,14 @@ function processEnemyAttack(
 
     if (result.hit) {
 
+        addCombatFeedback(
+            "player",
+            "player",
+            result.damage,
+            player.position.x,
+            player.position.y
+        );
+
         console.log(
             `${enemy.name} hits player for ${result.damage}. ` +
             `${player.health.current}/${player.health.maximum} HP remaining.`
@@ -393,9 +436,7 @@ function processEnemyAttack(
 export function updateCombat(
     player
 ) {
-    if (
-        !combatState.active
-    ) {
+    if (!combatState.active) {
         return;
     }
 
@@ -415,11 +456,6 @@ export function updateCombat(
         return;
     }
 
-
-    /* ---------------------------------------------------
-       APPROACH TARGET
-       --------------------------------------------------- */
-
     if (
         !isWithinCombatRange(
             player,
@@ -434,11 +470,6 @@ export function updateCombat(
 
         return;
     }
-
-
-    /* ---------------------------------------------------
-       ENTER COMBAT RANGE
-       --------------------------------------------------- */
 
     player.movement.moving =
         false;
@@ -463,11 +494,6 @@ export function updateCombat(
             `Combat started: ${enemy.name}`
         );
     }
-
-
-    /* ---------------------------------------------------
-       PROCESS ATTACKS
-       --------------------------------------------------- */
 
     const now =
         performance.now();

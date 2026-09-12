@@ -3,8 +3,13 @@ import {
 } from "./enemyWorld.js";
 
 import {
-    getCombatState
+    getCombatState,
+    getCombatFeedback
 } from "./combatSystem.js";
+
+import {
+    player
+} from "./player.js";
 
 
 /* =======================================================
@@ -14,15 +19,106 @@ import {
 const enemyElements =
     new Map();
 
+const feedbackElements =
+    new Map();
+
+let playerHealthBar =
+    null;
+
 
 /* =======================================================
-   GET WORLD ELEMENT
+   WORLD ELEMENT
    ======================================================= */
 
 function getWorldElement() {
 
     return document.getElementById(
         "world"
+    );
+}
+
+
+/* =======================================================
+   DAMAGE ANIMATION STYLE
+   ======================================================= */
+
+function ensureDamageAnimationStyle() {
+
+    if (
+        document.getElementById(
+            "spacescape-damage-style"
+        )
+    ) {
+        return;
+    }
+
+    const style =
+        document.createElement(
+            "style"
+        );
+
+    style.id =
+        "spacescape-damage-style";
+
+    style.textContent = `
+        @keyframes spacescapeDamageFloat {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, 0) scale(1);
+            }
+
+            20% {
+                opacity: 1;
+                transform: translate(-50%, -8px) scale(1.15);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -42px) scale(1);
+            }
+        }
+
+        .spacescape-damage-number {
+            position: absolute;
+            pointer-events: none;
+            z-index: 200;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow:
+                0 1px 3px #000000,
+                1px 0 2px #000000,
+                -1px 0 2px #000000;
+            white-space: nowrap;
+            animation:
+                spacescapeDamageFloat
+                900ms
+                ease-out
+                forwards;
+        }
+
+        .spacescape-player-health-container {
+            position: absolute;
+            width: 60px;
+            height: 7px;
+            transform: translateX(-50%);
+            background: #220000;
+            border: 1px solid #000000;
+            border-radius: 3px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .spacescape-player-health-fill {
+            width: 100%;
+            height: 100%;
+            background: #38c95b;
+        }
+    `;
+
+    document.head.appendChild(
+        style
     );
 }
 
@@ -278,6 +374,7 @@ function updateEnemyElement(
         );
 
     if (nameElement) {
+
         nameElement.textContent =
             enemy.name ||
             "Enemy";
@@ -294,6 +391,7 @@ function updateEnemyElement(
         );
 
     if (levelElement) {
+
         levelElement.textContent =
             `Lv. ${enemy.level}`;
     }
@@ -391,6 +489,225 @@ function removeEnemyElement(
 
 
 /* =======================================================
+   PLAYER HEALTH BAR
+   ======================================================= */
+
+function createPlayerHealthBar() {
+
+    const world =
+        getWorldElement();
+
+    if (!world) {
+        return null;
+    }
+
+    const container =
+        document.createElement(
+            "div"
+        );
+
+    container.className =
+        "spacescape-player-health-container";
+
+    const fill =
+        document.createElement(
+            "div"
+        );
+
+    fill.className =
+        "spacescape-player-health-fill";
+
+    container.appendChild(
+        fill
+    );
+
+    world.appendChild(
+        container
+    );
+
+    return container;
+}
+
+
+function updatePlayerHealthBar() {
+
+    ensureDamageAnimationStyle();
+
+    const combatState =
+        getCombatState();
+
+    const now =
+        performance.now();
+
+    const visible =
+        combatState.active ||
+        (
+            combatState.combatEndTime > 0 &&
+            now -
+            combatState.combatEndTime <
+            3000
+        );
+
+    if (!visible) {
+
+        if (playerHealthBar) {
+
+            playerHealthBar.style.display =
+                "none";
+        }
+
+        return;
+    }
+
+    if (!playerHealthBar) {
+
+        playerHealthBar =
+            createPlayerHealthBar();
+    }
+
+    if (!playerHealthBar) {
+        return;
+    }
+
+    playerHealthBar.style.display =
+        "block";
+
+    playerHealthBar.style.left =
+        `${player.position.x}px`;
+
+    playerHealthBar.style.top =
+        `${player.position.y - 34}px`;
+
+    const fill =
+        playerHealthBar.querySelector(
+            ".spacescape-player-health-fill"
+        );
+
+    if (
+        fill &&
+        player.health &&
+        Number.isFinite(
+            player.health.current
+        ) &&
+        Number.isFinite(
+            player.health.maximum
+        ) &&
+        player.health.maximum > 0
+    ) {
+
+        const healthPercent =
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    (
+                        player.health.current /
+                        player.health.maximum
+                    ) *
+                    100
+                )
+            );
+
+        fill.style.width =
+            `${healthPercent}%`;
+    }
+}
+
+
+/* =======================================================
+   FLOATING DAMAGE NUMBERS
+   ======================================================= */
+
+function createDamageNumber(
+    feedback
+) {
+
+    const world =
+        getWorldElement();
+
+    if (
+        !world ||
+        !feedback
+    ) {
+        return;
+    }
+
+    const element =
+        document.createElement(
+            "div"
+        );
+
+    element.className =
+        "spacescape-damage-number";
+
+    element.textContent =
+        `${feedback.damage}`;
+
+    element.style.left =
+        `${feedback.x}px`;
+
+    element.style.top =
+        `${feedback.y - 24}px`;
+
+    world.appendChild(
+        element
+    );
+
+    feedbackElements.set(
+        feedback.id,
+        element
+    );
+
+    window.setTimeout(
+        () => {
+
+            if (
+                feedbackElements.get(
+                    feedback.id
+                ) === element
+            ) {
+
+                element.remove();
+
+                feedbackElements.delete(
+                    feedback.id
+                );
+            }
+
+        },
+        950
+    );
+}
+
+
+function renderCombatFeedback() {
+
+    ensureDamageAnimationStyle();
+
+    const feedback =
+        getCombatFeedback();
+
+    for (
+        const event
+        of feedback
+    ) {
+
+        if (
+            feedbackElements.has(
+                event.id
+            )
+        ) {
+            continue;
+        }
+
+        createDamageNumber(
+            event
+        );
+    }
+}
+
+
+/* =======================================================
    RENDER ENEMIES
    ======================================================= */
 
@@ -459,6 +776,15 @@ export function renderEnemies() {
             );
         }
     }
+
+
+    /* ---------------------------------------------------
+       PLAYER COMBAT UI
+       --------------------------------------------------- */
+
+    updatePlayerHealthBar();
+
+    renderCombatFeedback();
 }
 
 
@@ -477,4 +803,22 @@ export function clearEnemyRendering() {
             enemyId
         );
     }
+
+    if (playerHealthBar) {
+
+        playerHealthBar.remove();
+
+        playerHealthBar =
+            null;
+    }
+
+    for (
+        const element
+        of feedbackElements.values()
+    ) {
+
+        element.remove();
+    }
+
+    feedbackElements.clear();
 }

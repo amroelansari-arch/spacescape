@@ -9,7 +9,6 @@ import {
 } from "./world.js";
 
 import {
-    getXPRequiredForLevel,
     getXPToNextLevel
 } from "./xp.js";
 
@@ -19,7 +18,13 @@ import {
    ======================================================= */
 
 export const player = {
+
     position: {
+        x: 1200,
+        y: 900
+    },
+
+    respawnPosition: {
         x: 1200,
         y: 900
     },
@@ -42,6 +47,8 @@ export const player = {
 
     defense: 5,
 
+    isDead: false,
+
     skills: createSkills(),
 
     inventory: createInventory(),
@@ -52,6 +59,7 @@ export const player = {
         speed: 5,
         moving: false
     }
+
 };
 
 
@@ -86,6 +94,62 @@ export function applyLevelUp() {
         `Attack ${player.attack}, ` +
         `Defense ${player.defense}.`
     );
+
+}
+
+
+/* =======================================================
+   PLAYER DEATH
+   ======================================================= */
+
+export function handlePlayerDeath() {
+
+    if (player.isDead) {
+        return false;
+    }
+
+    player.health.current = 0;
+
+    player.isDead = true;
+
+    player.movement.moving = false;
+
+    console.log(
+        "Player died."
+    );
+
+    return true;
+
+}
+
+
+/* =======================================================
+   PLAYER RESPAWN
+   ======================================================= */
+
+export function respawnPlayer() {
+
+    player.position.x =
+        player.respawnPosition.x;
+
+    player.position.y =
+        player.respawnPosition.y;
+
+    player.health.current =
+        player.health.maximum;
+
+    player.energy.current =
+        player.energy.maximum;
+
+    player.isDead = false;
+
+    player.movement.moving = false;
+
+    console.log(
+        `Player respawned at ` +
+        `${player.position.x}, ${player.position.y}.`
+    );
+
 }
 
 
@@ -95,14 +159,27 @@ export function applyLevelUp() {
 
 export function updatePlayerMovement() {
 
+    if (player.isDead) {
+
+        player.movement.moving =
+            false;
+
+        return;
+
+    }
+
     if (
         document
             .getElementById("dialogue")
             ?.classList
             .contains("active")
     ) {
-        player.movement.moving = false;
+
+        player.movement.moving =
+            false;
+
         return;
+
     }
 
     let dx = 0;
@@ -112,39 +189,52 @@ export function updatePlayerMovement() {
         keys["w"] ||
         keys["ArrowUp"]
     ) {
+
         dy -= 1;
+
     }
 
     if (
         keys["s"] ||
         keys["ArrowDown"]
     ) {
+
         dy += 1;
+
     }
 
     if (
         keys["a"] ||
         keys["ArrowLeft"]
     ) {
+
         dx -= 1;
+
     }
 
     if (
         keys["d"] ||
         keys["ArrowRight"]
     ) {
+
         dx += 1;
+
     }
 
     if (
         dx === 0 &&
         dy === 0
     ) {
-        player.movement.moving = false;
+
+        player.movement.moving =
+            false;
+
         return;
+
     }
 
-    player.movement.moving = true;
+    player.movement.moving =
+        true;
 
     const magnitude =
         Math.sqrt(
@@ -163,10 +253,12 @@ export function updatePlayerMovement() {
         player.movement.speed;
 
     const newX =
-        player.position.x + dx;
+        player.position.x +
+        dx;
 
     const newY =
-        player.position.y + dy;
+        player.position.y +
+        dy;
 
     if (
         newX >= 0 &&
@@ -176,7 +268,10 @@ export function updatePlayerMovement() {
             player.position.y
         )
     ) {
-        player.position.x = newX;
+
+        player.position.x =
+            newX;
+
     }
 
     if (
@@ -187,8 +282,12 @@ export function updatePlayerMovement() {
             newY
         )
     ) {
-        player.position.y = newY;
+
+        player.position.y =
+            newY;
+
     }
+
 }
 
 
@@ -210,6 +309,12 @@ export function drawPlayer() {
 
     playerElement.style.top =
         `${player.position.y}px`;
+
+    playerElement.style.opacity =
+        player.isDead
+            ? "0.45"
+            : "1";
+
 }
 
 
@@ -239,43 +344,61 @@ export function updatePlayerHUD() {
 
 
     if (levelElement) {
+
         levelElement.textContent =
             player.level;
+
     }
 
+
     if (xpElement) {
+
         xpElement.textContent =
             player.xp;
 
         xpElement.title =
             `${getXPToNextLevel(player)} XP to next level`;
+
     }
+
 
     if (healthElement) {
+
         healthElement.textContent =
             `${player.health.current}/${player.health.maximum}`;
+
     }
 
+
     if (healthBar) {
+
         healthBar.style.width =
             `${(
                 player.health.current /
                 player.health.maximum
             ) * 100}%`;
+
     }
+
 
     if (energyElement) {
+
         energyElement.textContent =
             `${player.energy.current}/${player.energy.maximum}`;
+
     }
 
+
     if (energyBar) {
+
         energyBar.style.width =
             `${(
                 player.energy.current /
                 player.energy.maximum
             ) * 100}%`;
+
     }
+
 }
 
 
@@ -288,13 +411,17 @@ const keys = {};
 window.addEventListener(
     "keydown",
     event => {
+
         keys[event.key] = true;
+
     }
 );
 
 window.addEventListener(
     "keyup",
     event => {
+
         keys[event.key] = false;
+
     }
 );

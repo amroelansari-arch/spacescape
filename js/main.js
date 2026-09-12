@@ -2,7 +2,8 @@ import {
     player,
     updatePlayerMovement,
     drawPlayer,
-    updatePlayerHUD
+    updatePlayerHUD,
+    respawnPlayer
 } from "./player.js";
 
 import {
@@ -138,14 +139,168 @@ const keys = {};
 
 const dialogueController =
     createDialogueController({
-
         dialogueWindow,
-
         dialogueText,
-
         continueButton
-
     });
+
+
+/* =======================================================
+   DEATH UI
+   ======================================================= */
+
+let deathOverlay = null;
+
+let respawnButton = null;
+
+
+function createDeathOverlay() {
+
+    if (deathOverlay) {
+        return;
+    }
+
+    deathOverlay =
+        document.createElement("div");
+
+    deathOverlay.id =
+        "spacescape-death-overlay";
+
+    deathOverlay.style.position =
+        "fixed";
+
+    deathOverlay.style.inset =
+        "0";
+
+    deathOverlay.style.display =
+        "none";
+
+    deathOverlay.style.alignItems =
+        "center";
+
+    deathOverlay.style.justifyContent =
+        "center";
+
+    deathOverlay.style.flexDirection =
+        "column";
+
+    deathOverlay.style.background =
+        "rgba(0, 0, 0, 0.78)";
+
+    deathOverlay.style.zIndex =
+        "10000";
+
+    deathOverlay.style.fontFamily =
+        "Arial, sans-serif";
+
+
+    const title =
+        document.createElement("div");
+
+    title.textContent =
+        "YOU DIED";
+
+    title.style.color =
+        "#ffffff";
+
+    title.style.fontSize =
+        "48px";
+
+    title.style.fontWeight =
+        "900";
+
+    title.style.marginBottom =
+        "20px";
+
+    title.style.textShadow =
+        "0 3px 8px #000000";
+
+
+    respawnButton =
+        document.createElement("button");
+
+    respawnButton.textContent =
+        "RESPAWN";
+
+    respawnButton.style.padding =
+        "12px 28px";
+
+    respawnButton.style.fontSize =
+        "16px";
+
+    respawnButton.style.fontWeight =
+        "bold";
+
+    respawnButton.style.cursor =
+        "pointer";
+
+
+    respawnButton.addEventListener(
+        "click",
+        handleRespawn
+    );
+
+
+    deathOverlay.appendChild(
+        title
+    );
+
+    deathOverlay.appendChild(
+        respawnButton
+    );
+
+    document.body.appendChild(
+        deathOverlay
+    );
+
+}
+
+
+function showDeathScreen() {
+
+    createDeathOverlay();
+
+    deathOverlay.style.display =
+        "flex";
+
+}
+
+
+function hideDeathScreen() {
+
+    if (!deathOverlay) {
+        return;
+    }
+
+    deathOverlay.style.display =
+        "none";
+
+}
+
+
+/* =======================================================
+   RESPawn
+   ======================================================= */
+
+function handleRespawn() {
+
+    if (!player.isDead) {
+        return;
+    }
+
+    respawnPlayer();
+
+    hideDeathScreen();
+
+    drawPlayer(
+        playerElement
+    );
+
+    updatePlayerHUD();
+
+    updateGame();
+
+}
 
 
 /* =======================================================
@@ -164,7 +319,6 @@ function initializeEnemies() {
         900
     );
 
-
     spawnWorldEnemy(
         "Test Enemy",
         1,
@@ -174,7 +328,6 @@ function initializeEnemies() {
         1800,
         1100
     );
-
 
     spawnWorldEnemy(
         "Test Enemy",
@@ -197,6 +350,10 @@ function handleEnemyClick(
     event
 ) {
 
+    if (player.isDead) {
+        return;
+    }
+
     const enemyElement =
         event.target.closest(
             ".enemy"
@@ -206,19 +363,15 @@ function handleEnemyClick(
         return;
     }
 
-
     const enemyId =
         enemyElement.dataset.enemyId;
-
 
     if (!enemyId) {
         return;
     }
 
-
     const enemies =
         getEnemyCollection();
-
 
     const enemy =
         enemies.find(
@@ -227,18 +380,15 @@ function handleEnemyClick(
                 enemyId
         );
 
-
     if (!enemy) {
         return;
     }
-
 
     if (
         dialogueController.isOpen()
     ) {
         return;
     }
-
 
     startCombat(
         player,
@@ -254,6 +404,17 @@ function handleEnemyClick(
 
 function updateInteraction() {
 
+    if (player.isDead) {
+
+        if (interactionPrompt) {
+            interactionPrompt.style.display =
+                "none";
+        }
+
+        return;
+
+    }
+
     return updateInteractionPrompt(
         player,
         dialogueController.isOpen(),
@@ -265,23 +426,24 @@ function updateInteraction() {
 
 function handleInteraction() {
 
+    if (player.isDead) {
+        return;
+    }
+
     if (
         dialogueController.isOpen()
     ) {
         return;
     }
 
-
     const interactable =
         getNearbyInteractable(
             player
         );
 
-
     if (!interactable) {
         return;
     }
-
 
     dialogueController.openDialogue(
         interactable
@@ -300,13 +462,17 @@ function updateCombatSystem() {
         player
     );
 
-
     const combatState =
         getCombatState();
 
-
     if (!combatState.active) {
+
+        if (player.isDead) {
+            showDeathScreen();
+        }
+
         return;
+
     }
 
 }
@@ -318,10 +484,19 @@ function updateCombatSystem() {
 
 function updateGame() {
 
-    updatePlayerMovement(
-        keys,
-        dialogueController.isOpen()
-    );
+    if (!player.isDead) {
+
+        updatePlayerMovement(
+            keys,
+            dialogueController.isOpen()
+        );
+
+    } else {
+
+        player.movement.moving =
+            false;
+
+    }
 
 
     updateCombatSystem();
@@ -338,45 +513,37 @@ function updateGame() {
         playerElement
     );
 
-
     renderEnemies();
 
-
     updatePlayerHUD({
-
         levelElement,
-
         xpElement,
-
         healthCurrentElement,
-
         healthMaximumElement,
-
         healthFillElement,
-
         energyCurrentElement,
-
         energyMaximumElement,
-
         energyFillElement
-
     });
 
-
     updateInteraction();
-
 
     updateCamera(
         player,
         world
     );
 
+
+    if (
+        player.isDead
+    ) {
+
+        showDeathScreen();
+
+    }
+
 }
 
-
-/* =======================================================
-   GAME LOOP
-   ======================================================= */
 
 function gameLoop() {
 
@@ -401,11 +568,9 @@ function startGame() {
     gameScreen.style.display =
         "block";
 
-
     drawPlayer(
         playerElement
     );
-
 
     updateGame();
 
@@ -413,7 +578,7 @@ function startGame() {
 
 
 /* =======================================================
-   PLAY BUTTON
+   EVENT LISTENERS
    ======================================================= */
 
 playButton.addEventListener(
@@ -422,26 +587,17 @@ playButton.addEventListener(
 );
 
 
-/* =======================================================
-   ENEMY CLICK
-   ======================================================= */
-
 world.addEventListener(
     "click",
     handleEnemyClick
 );
 
 
-/* =======================================================
-   KEYBOARD DOWN
-   ======================================================= */
-
 window.addEventListener(
     "keydown",
     event => {
 
         keys[event.key] = true;
-
 
         if (
             event.key === "e" ||
@@ -458,10 +614,6 @@ window.addEventListener(
 );
 
 
-/* =======================================================
-   KEYBOARD UP
-   ======================================================= */
-
 window.addEventListener(
     "keyup",
     event => {
@@ -471,10 +623,6 @@ window.addEventListener(
     }
 );
 
-
-/* =======================================================
-   DIALOGUE CONTROLS
-   ======================================================= */
 
 continueButton.addEventListener(
     "click",
@@ -496,10 +644,6 @@ closeButton.addEventListener(
 );
 
 
-/* =======================================================
-   WINDOW RESIZE
-   ======================================================= */
-
 window.addEventListener(
     "resize",
     () => {
@@ -520,10 +664,7 @@ dialogueWindow.style.display =
 gameScreen.style.display =
     "none";
 
-
-/* =======================================================
-   INITIALIZE WORLD
-   ======================================================= */
+createDeathOverlay();
 
 initializeEnemies();
 

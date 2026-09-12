@@ -31,8 +31,11 @@ import {
 } from "./enemies.js";
 
 import {
-    performAttack
-} from "./combat.js";
+    startCombat,
+    stopCombat,
+    updateCombat,
+    getCombatState
+} from "./combatSystem.js";
 
 
 /* =======================================================
@@ -40,34 +43,54 @@ import {
    ======================================================= */
 
 const titleScreen =
-    document.getElementById("title-screen");
+    document.getElementById(
+        "title-screen"
+    );
 
 const gameScreen =
-    document.getElementById("game-screen");
+    document.getElementById(
+        "game-screen"
+    );
 
 const playButton =
-    document.getElementById("play-button");
+    document.getElementById(
+        "play-button"
+    );
 
 const world =
-    document.getElementById("world");
+    document.getElementById(
+        "world"
+    );
 
 const playerElement =
-    document.getElementById("player");
+    document.getElementById(
+        "player"
+    );
 
 const interactionPrompt =
-    document.getElementById("interaction-prompt");
+    document.getElementById(
+        "interaction-prompt"
+    );
 
 const dialogueWindow =
-    document.getElementById("dialogue");
+    document.getElementById(
+        "dialogue"
+    );
 
 const dialogueText =
-    document.getElementById("dialogue-text");
+    document.getElementById(
+        "dialogue-text"
+    );
 
 const continueButton =
-    document.getElementById("dialogue-next");
+    document.getElementById(
+        "dialogue-next"
+    );
 
 const closeButton =
-    document.getElementById("dialogue-close");
+    document.getElementById(
+        "dialogue-close"
+    );
 
 
 /* =======================================================
@@ -75,30 +98,42 @@ const closeButton =
    ======================================================= */
 
 const levelElement =
-    document.getElementById("level");
+    document.getElementById(
+        "level"
+    );
 
 const xpElement =
-    document.getElementById("xp");
+    document.getElementById(
+        "xp"
+    );
 
 const healthCurrentElement =
-    document.getElementById("health");
+    document.getElementById(
+        "health"
+    );
 
 const healthMaximumElement = {
     textContent: "100"
 };
 
 const healthFillElement =
-    document.getElementById("health-bar");
+    document.getElementById(
+        "health-bar"
+    );
 
 const energyCurrentElement =
-    document.getElementById("energy");
+    document.getElementById(
+        "energy"
+    );
 
 const energyMaximumElement = {
     textContent: "100"
 };
 
 const energyFillElement =
-    document.getElementById("energy-bar");
+    document.getElementById(
+        "energy-bar"
+    );
 
 
 /* =======================================================
@@ -106,17 +141,6 @@ const energyFillElement =
    ======================================================= */
 
 const keys = {};
-
-
-/* =======================================================
-   COMBAT SETTINGS
-   ======================================================= */
-
-const PLAYER_ATTACK_RANGE = 100;
-
-const PLAYER_ATTACK_COOLDOWN = 500;
-
-let lastPlayerAttackTime = 0;
 
 
 /* =======================================================
@@ -170,27 +194,42 @@ function initializeEnemies() {
 
 
 /* =======================================================
-   FIND ATTACK TARGET
+   ENEMY CLICK HANDLING
    ======================================================= */
 
-function getAttackTarget() {
+function handleEnemyClick(
+    event
+) {
+
+    const enemyElement =
+        event.target.closest(
+            ".enemy"
+        );
+
+    if (!enemyElement) {
+        return;
+    }
+
+    const enemyId =
+        enemyElement.dataset.enemyId;
+
+    if (!enemyId) {
+        return;
+    }
 
     const enemies =
         getEnemyCollection();
 
-    return findNearestEnemy(
-        enemies,
-        player.position.x,
-        player.position.y
-    );
-}
+    const enemy =
+        enemies.find(
+            currentEnemy =>
+                currentEnemy.id ===
+                enemyId
+        );
 
-
-/* =======================================================
-   PLAYER ATTACK
-   ======================================================= */
-
-function playerAttack() {
+    if (!enemy) {
+        return;
+    }
 
     if (
         dialogueController.isOpen()
@@ -198,58 +237,27 @@ function playerAttack() {
         return;
     }
 
-    const now =
-        performance.now();
-
-    if (
-        now -
-        lastPlayerAttackTime <
-        PLAYER_ATTACK_COOLDOWN
-    ) {
-        return;
-    }
-
-    const target =
-        getAttackTarget();
-
-    if (!target) {
-        return;
-    }
-
     const distance =
         getDistance(
             player.position.x,
             player.position.y,
-            target.position.x,
-            target.position.y
+            enemy.position.x,
+            enemy.position.y
         );
 
-    if (
-        distance >
-        PLAYER_ATTACK_RANGE
-    ) {
+    if (distance > 100) {
+
+        console.log(
+            "Enemy is too far away to attack."
+        );
+
         return;
     }
 
-    const attackSucceeded =
-        performAttack(
-            player,
-            target,
-            player.attack
-        );
-
-    if (!attackSucceeded) {
-        return;
-    }
-
-    lastPlayerAttackTime =
-        now;
-
-    if (
-        target.health.current <= 0
-    ) {
-        cleanupDeadWorldEnemies();
-    }
+    startCombat(
+        player,
+        enemy
+    );
 }
 
 
@@ -291,6 +299,29 @@ function handleInteraction() {
 
 
 /* =======================================================
+   COMBAT UPDATE
+   ======================================================= */
+
+function updateCombatSystem() {
+
+    updateCombat(
+        player
+    );
+
+    cleanupDeadWorldEnemies();
+
+    const combatState =
+        getCombatState();
+
+    if (
+        !combatState.active
+    ) {
+        return;
+    }
+}
+
+
+/* =======================================================
    GAME UPDATE
    ======================================================= */
 
@@ -304,6 +335,8 @@ function updateGame() {
     drawPlayer(
         playerElement
     );
+
+    updateCombatSystem();
 
     renderEnemies();
 
@@ -372,6 +405,16 @@ playButton.addEventListener(
 
 
 /* =======================================================
+   WORLD CLICK
+   ======================================================= */
+
+world.addEventListener(
+    "click",
+    handleEnemyClick
+);
+
+
+/* =======================================================
    KEYBOARD DOWN
    ======================================================= */
 
@@ -381,11 +424,6 @@ window.addEventListener(
 
         keys[event.key] = true;
 
-
-        /* -----------------------------------------------
-           INTERACTION
-           ----------------------------------------------- */
-
         if (
             event.key === "e" ||
             event.key === "E"
@@ -394,20 +432,6 @@ window.addEventListener(
             event.preventDefault();
 
             handleInteraction();
-        }
-
-
-        /* -----------------------------------------------
-           ATTACK
-           ----------------------------------------------- */
-
-        if (
-            event.code === "Space"
-        ) {
-
-            event.preventDefault();
-
-            playerAttack();
         }
     }
 );

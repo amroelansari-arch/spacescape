@@ -13,6 +13,7 @@ export function createEnemy(
         id: crypto.randomUUID(),
 
         name,
+
         level,
 
         health: {
@@ -21,6 +22,9 @@ export function createEnemy(
         },
 
         attack,
-        defense
+
+        defense,
+
+        attackSpeed: 2500
     };
 }

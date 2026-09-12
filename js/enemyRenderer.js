@@ -2,12 +2,17 @@ import {
     getWorldActiveEnemies
 } from "./enemyWorld.js";
 
+import {
+    getCombatState
+} from "./combatSystem.js";
+
 
 /* =======================================================
    ENEMY RENDERER
    ======================================================= */
 
-const enemyElements = new Map();
+const enemyElements =
+    new Map();
 
 
 /* =======================================================
@@ -15,7 +20,10 @@ const enemyElements = new Map();
    ======================================================= */
 
 function getWorldElement() {
-    return document.getElementById("world");
+
+    return document.getElementById(
+        "world"
+    );
 }
 
 
@@ -23,7 +31,9 @@ function getWorldElement() {
    CREATE ENEMY ELEMENT
    ======================================================= */
 
-function createEnemyElement(enemy) {
+function createEnemyElement(
+    enemy
+) {
 
     const world =
         getWorldElement();
@@ -37,12 +47,18 @@ function createEnemyElement(enemy) {
     }
 
     const element =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
-    element.className = "enemy";
+    element.className =
+        "enemy";
 
     element.dataset.enemyId =
         enemy.id;
+
+    element.style.cursor =
+        "pointer";
 
     element.style.flexDirection =
         "column";
@@ -53,12 +69,15 @@ function createEnemyElement(enemy) {
     element.style.overflow =
         "visible";
 
+
     /* ---------------------------------------------------
        ENEMY NAME
        --------------------------------------------------- */
 
     const nameElement =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     nameElement.className =
         "enemy-name";
@@ -100,7 +119,9 @@ function createEnemyElement(enemy) {
        --------------------------------------------------- */
 
     const levelElement =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     levelElement.className =
         "enemy-level";
@@ -138,11 +159,13 @@ function createEnemyElement(enemy) {
 
 
     /* ---------------------------------------------------
-       HEALTH BAR CONTAINER
+       HEALTH BAR
        --------------------------------------------------- */
 
     const healthContainer =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     healthContainer.className =
         "enemy-health-container";
@@ -177,8 +200,11 @@ function createEnemyElement(enemy) {
     healthContainer.style.overflow =
         "hidden";
 
+
     const healthFill =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     healthFill.className =
         "enemy-health-fill";
@@ -191,9 +217,6 @@ function createEnemyElement(enemy) {
 
     healthFill.style.background =
         "#38c95b";
-
-    healthFill.style.transition =
-        "width 0.1s linear";
 
     healthContainer.appendChild(
         healthFill
@@ -229,6 +252,7 @@ function updateEnemyElement(
     enemy,
     element
 ) {
+
     if (
         !enemy ||
         !element ||
@@ -255,7 +279,8 @@ function updateEnemyElement(
 
     if (nameElement) {
         nameElement.textContent =
-            enemy.name || "Enemy";
+            enemy.name ||
+            "Enemy";
     }
 
 
@@ -275,7 +300,7 @@ function updateEnemyElement(
 
 
     /* ---------------------------------------------------
-       HEALTH BAR
+       HEALTH
        --------------------------------------------------- */
 
     const healthFill =
@@ -294,6 +319,7 @@ function updateEnemyElement(
         ) &&
         enemy.health.maximum > 0
     ) {
+
         const healthPercent =
             Math.max(
                 0,
@@ -302,12 +328,39 @@ function updateEnemyElement(
                     (
                         enemy.health.current /
                         enemy.health.maximum
-                    ) * 100
+                    ) *
+                    100
                 )
             );
 
         healthFill.style.width =
             `${healthPercent}%`;
+    }
+
+
+    /* ---------------------------------------------------
+       SELECTED TARGET
+       --------------------------------------------------- */
+
+    const combatState =
+        getCombatState();
+
+    const selected =
+        combatState.targetEnemyId ===
+        enemy.id;
+
+    if (selected) {
+
+        element.style.outline =
+            "3px solid #ffff00";
+
+        element.style.outlineOffset =
+            "4px";
+
+    } else {
+
+        element.style.outline =
+            "none";
     }
 }
 
@@ -319,6 +372,7 @@ function updateEnemyElement(
 function removeEnemyElement(
     enemyId
 ) {
+
     const element =
         enemyElements.get(
             enemyId
@@ -371,6 +425,7 @@ export function renderEnemies() {
             );
 
         if (!element) {
+
             element =
                 createEnemyElement(
                     enemy
@@ -385,7 +440,7 @@ export function renderEnemies() {
 
 
     /* ---------------------------------------------------
-       REMOVE NO-LONGER-ACTIVE ENEMIES
+       REMOVE DEAD / MISSING ELEMENTS
        --------------------------------------------------- */
 
     for (
@@ -398,6 +453,7 @@ export function renderEnemies() {
                 enemyId
             )
         ) {
+
             removeEnemyElement(
                 enemyId
             );
@@ -416,6 +472,7 @@ export function clearEnemyRendering() {
         const enemyId
         of enemyElements.keys()
     ) {
+
         removeEnemyElement(
             enemyId
         );

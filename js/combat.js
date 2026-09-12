@@ -1,6 +1,6 @@
- /* =======================================================
-    DAMAGE
-    ======================================================= */
+/* =======================================================
+   APPLY DAMAGE
+   ======================================================= */
 
 export function applyDamage(
     target,
@@ -25,7 +25,7 @@ export function applyDamage(
 
 
 /* =======================================================
-   HEAL
+   HEAL TARGET
    ======================================================= */
 
 export function healTarget(
@@ -51,10 +51,12 @@ export function healTarget(
 
 
 /* =======================================================
-   HEALTH CHECKS
+   TARGET ALIVE
    ======================================================= */
 
-export function isTargetAlive(target) {
+export function isTargetAlive(
+    target
+) {
     if (
         !target ||
         !target.health
@@ -66,7 +68,13 @@ export function isTargetAlive(target) {
 }
 
 
-export function isTargetDead(target) {
+/* =======================================================
+   TARGET DEAD
+   ======================================================= */
+
+export function isTargetDead(
+    target
+) {
     return !isTargetAlive(target);
 }
 
@@ -101,7 +109,106 @@ export function calculateDamage(
 
 
 /* =======================================================
-   ATTACK
+   HIT CHANCE
+   ======================================================= */
+
+export function calculateHitChance(
+    attackPower,
+    defense
+) {
+    if (
+        !Number.isFinite(attackPower) ||
+        attackPower <= 0
+    ) {
+        return 0;
+    }
+
+    if (
+        !Number.isFinite(defense) ||
+        defense < 0
+    ) {
+        defense = 0;
+    }
+
+    const chance =
+        attackPower /
+        (
+            attackPower +
+            defense
+        );
+
+    return Math.max(
+        0.20,
+        Math.min(
+            0.90,
+            chance
+        )
+    );
+}
+
+
+/* =======================================================
+   HIT ROLL
+   ======================================================= */
+
+export function rollAttackHit(
+    attackPower,
+    defense
+) {
+    const hitChance =
+        calculateHitChance(
+            attackPower,
+            defense
+        );
+
+    return Math.random() < hitChance;
+}
+
+
+/* =======================================================
+   DAMAGE ROLL
+   ======================================================= */
+
+export function rollDamage(
+    attackPower,
+    defense
+) {
+    const maximumDamage =
+        calculateDamage(
+            attackPower,
+            defense
+        );
+
+    const minimumDamage =
+        Math.max(
+            1,
+            Math.floor(
+                maximumDamage * 0.50
+            )
+        );
+
+    if (
+        maximumDamage <= minimumDamage
+    ) {
+        return maximumDamage;
+    }
+
+    return (
+        Math.floor(
+            Math.random() *
+            (
+                maximumDamage -
+                minimumDamage +
+                1
+            )
+        ) +
+        minimumDamage
+    );
+}
+
+
+/* =======================================================
+   PERFORM ATTACK
    ======================================================= */
 
 export function performAttack(
@@ -115,15 +222,27 @@ export function performAttack(
         !Number.isFinite(attackPower) ||
         attackPower <= 0
     ) {
-        return false;
+        return {
+            success: false,
+            hit: false,
+            damage: 0
+        };
     }
 
     if (!isTargetAlive(attacker)) {
-        return false;
+        return {
+            success: false,
+            hit: false,
+            damage: 0
+        };
     }
 
     if (!isTargetAlive(target)) {
-        return false;
+        return {
+            success: false,
+            hit: false,
+            damage: 0
+        };
     }
 
     const defense =
@@ -131,14 +250,34 @@ export function performAttack(
             ? target.defense
             : 0;
 
-    const damage =
-        calculateDamage(
+    const hit =
+        rollAttackHit(
             attackPower,
             defense
         );
 
-    return applyDamage(
+    if (!hit) {
+        return {
+            success: true,
+            hit: false,
+            damage: 0
+        };
+    }
+
+    const damage =
+        rollDamage(
+            attackPower,
+            defense
+        );
+
+    applyDamage(
         target,
         damage
     );
+
+    return {
+        success: true,
+        hit: true,
+        damage
+    };
 }

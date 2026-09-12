@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -6,8 +7,9 @@
 <meta charset="UTF-8">
 
 <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+
 >
 
 <title>SpaceScape</title>
@@ -19,11 +21,9 @@
 
 </head>
 
-
 <body>
 
 <div id="game">
-
 
 <!-- =======================================================
      TITLE SCREEN
@@ -31,20 +31,21 @@
 
 <div id="title-screen">
 
-    <div>
+```
+<div>
 
-        <h1>SpaceScape</h1>
+    <h1>SpaceScape</h1>
 
-        <p>A sci-fi skill-based RPG</p>
+    <p>A sci-fi skill-based RPG</p>
 
-        <button id="play-button">
-            PLAY
-        </button>
-
-    </div>
+    <button id="play-button">
+        PLAY
+    </button>
 
 </div>
+```
 
+</div>
 
 <!-- =======================================================
      GAME SCREEN
@@ -56,13 +57,11 @@
 
 <div id="world">
 
-
 <!-- =======================================================
      COLONY WALL
      ======================================================= -->
 
 <div id="colony-wall"></div>
-
 
 <!-- =======================================================
      ROADS
@@ -88,7 +87,6 @@
     style="left: 1198px;"
 ></div>
 
-
 <!-- =======================================================
      BUILDINGS
      ======================================================= -->
@@ -103,12 +101,13 @@
     "
 >
 
-    <div class="building-label">
-        COLONY COMMAND
-    </div>
+```
+<div class="building-label">
+    COLONY COMMAND
+</div>
+```
 
 </div>
-
 
 <div
     class="building"
@@ -120,12 +119,13 @@
     "
 >
 
-    <div class="building-label">
-        MEDICAL CENTER
-    </div>
+```
+<div class="building-label">
+    MEDICAL CENTER
+</div>
+```
 
 </div>
-
 
 <div
     class="building"
@@ -137,12 +137,13 @@
     "
 >
 
-    <div class="building-label">
-        ENGINEERING BAY
-    </div>
+```
+<div class="building-label">
+    ENGINEERING BAY
+</div>
+```
 
 </div>
-
 
 <div
     class="building"
@@ -154,12 +155,13 @@
     "
 >
 
-    <div class="building-label">
-        TRADING POST
-    </div>
+```
+<div class="building-label">
+    TRADING POST
+</div>
+```
 
 </div>
-
 
 <!-- =======================================================
      TREES
@@ -229,7 +231,6 @@
     "
 ></div>
 
-
 <!-- =======================================================
      ROCKS
      ======================================================= -->
@@ -266,7 +267,6 @@
     "
 ></div>
 
-
 <!-- =======================================================
      COMMANDER KAEL
      ======================================================= -->
@@ -280,18 +280,19 @@
     "
 >
 
-    <div class="npc-name">
-        Commander Kael
-    </div>
-
-    <div class="npc-head"></div>
-
-    <div class="npc-visor"></div>
-
-    <div class="npc-body"></div>
-
+```
+<div class="npc-name">
+    Commander Kael
 </div>
 
+<div class="npc-head"></div>
+
+<div class="npc-visor"></div>
+
+<div class="npc-body"></div>
+```
+
+</div>
 
 <!-- =======================================================
      PLAYER
@@ -299,10 +300,8 @@
 
 <div id="player"></div>
 
-
 </div>
 </div>
-
 
 <!-- =======================================================
      HUD
@@ -310,50 +309,51 @@
 
 <div id="hud">
 
-    <div id="hud-title">
-        SPACESCAPE
-    </div>
+```
+<div id="hud-title">
+    SPACESCAPE
+</div>
 
-    <div class="hud-row">
-        Level:
-        <span id="level">1</span>
-    </div>
+<div class="hud-row">
+    Level:
+    <span id="level">1</span>
+</div>
 
-    <div class="hud-row">
+<div class="hud-row">
 
-        Health:
-        <span id="health">100</span>/100
+    Health:
+    <span id="health">100/100</span>
 
-        <div id="health-bar-container">
+    <div id="health-bar-container">
 
-            <div id="health-bar"></div>
-
-        </div>
-
-    </div>
-
-    <div class="hud-row">
-
-        Energy:
-        <span id="energy">100</span>/100
-
-        <div id="energy-bar-container">
-
-            <div id="energy-bar"></div>
-
-        </div>
-
-    </div>
-
-    <div class="hud-row">
-
-        XP:
-        <span id="xp">0</span>
+        <div id="health-bar"></div>
 
     </div>
 
 </div>
 
+<div class="hud-row">
+
+    Energy:
+    <span id="energy">100/100</span>
+
+    <div id="energy-bar-container">
+
+        <div id="energy-bar"></div>
+
+    </div>
+
+</div>
+
+<div class="hud-row">
+
+    XP:
+    <span id="xp">0</span>
+
+</div>
+```
+
+</div>
 
 <!-- =======================================================
      LOCATION
@@ -363,17 +363,17 @@
     Aurelia Colony
 </div>
 
-
 <!-- =======================================================
      INTERACTION PROMPT
      ======================================================= -->
 
 <div id="interaction-prompt">
 
-    Press <span>E</span> to talk to Commander Kael
+```
+Press <span>E</span> to talk to Commander Kael
+```
 
 </div>
-
 
 <!-- =======================================================
      DIALOGUE
@@ -381,35 +381,35 @@
 
 <div id="dialogue">
 
-    <div id="dialogue-name">
-        Commander Kael
-    </div>
+```
+<div id="dialogue-name">
+    Commander Kael
+</div>
 
-    <div id="dialogue-text"></div>
+<div id="dialogue-text"></div>
 
-    <div id="dialogue-buttons">
+<div id="dialogue-buttons">
 
-        <button
-            id="dialogue-close"
-            class="dialogue-button"
-        >
-            Close
-        </button>
+    <button
+        id="dialogue-close"
+        class="dialogue-button"
+    >
+        Close
+    </button>
 
-        <button
-            id="dialogue-next"
-            class="dialogue-button"
-        >
-            Continue
-        </button>
+    <button
+        id="dialogue-next"
+        class="dialogue-button"
+    >
+        Continue
+    </button>
 
-    </div>
+</div>
+```
 
 </div>
 
-
 </div>
-
 
 <script
     type="module"

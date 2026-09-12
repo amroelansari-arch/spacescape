@@ -4,13 +4,8 @@ import {
 
 import {
     getCombatState,
-    getCombatFeedback
+    consumeCombatFeedback
 } from "./combatSystem.js";
-
-import {
-    player
-} from "./player.js";
-
 
 /* =======================================================
    ENEMY RENDERER
@@ -22,134 +17,21 @@ const enemyElements =
 const feedbackElements =
     new Map();
 
-let playerHealthBar =
-    null;
-
-
-/* =======================================================
-   WORLD ELEMENT
-   ======================================================= */
-
 function getWorldElement() {
-
-    return document.getElementById(
-        "world"
-    );
+    return document.getElementById("world");
 }
 
+function createEnemyElement(enemy) {
+    const world = getWorldElement();
 
-/* =======================================================
-   DAMAGE ANIMATION STYLE
-   ======================================================= */
-
-function ensureDamageAnimationStyle() {
-
-    if (
-        document.getElementById(
-            "spacescape-damage-style"
-        )
-    ) {
-        return;
-    }
-
-    const style =
-        document.createElement(
-            "style"
-        );
-
-    style.id =
-        "spacescape-damage-style";
-
-    style.textContent = `
-        @keyframes spacescapeDamageFloat {
-            0% {
-                opacity: 1;
-                transform: translate(-50%, 0) scale(1);
-            }
-
-            20% {
-                opacity: 1;
-                transform: translate(-50%, -8px) scale(1.15);
-            }
-
-            100% {
-                opacity: 0;
-                transform: translate(-50%, -42px) scale(1);
-            }
-        }
-
-        .spacescape-damage-number {
-            position: absolute;
-            pointer-events: none;
-            z-index: 200;
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: bold;
-            text-shadow:
-                0 1px 3px #000000,
-                1px 0 2px #000000,
-                -1px 0 2px #000000;
-            white-space: nowrap;
-            animation:
-                spacescapeDamageFloat
-                900ms
-                ease-out
-                forwards;
-        }
-
-        .spacescape-player-health-container {
-            position: absolute;
-            width: 60px;
-            height: 7px;
-            transform: translateX(-50%);
-            background: #220000;
-            border: 1px solid #000000;
-            border-radius: 3px;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        .spacescape-player-health-fill {
-            width: 100%;
-            height: 100%;
-            background: #38c95b;
-        }
-    `;
-
-    document.head.appendChild(
-        style
-    );
-}
-
-
-/* =======================================================
-   CREATE ENEMY ELEMENT
-   ======================================================= */
-
-function createEnemyElement(
-    enemy
-) {
-
-    const world =
-        getWorldElement();
-
-    if (
-        !world ||
-        !enemy ||
-        !enemy.id
-    ) {
+    if (!world || !enemy || !enemy.id) {
         return null;
     }
 
     const element =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
-    element.className =
-        "enemy";
-
+    element.className = "enemy";
     element.dataset.enemyId =
         enemy.id;
 
@@ -165,15 +47,8 @@ function createEnemyElement(
     element.style.overflow =
         "visible";
 
-
-    /* ---------------------------------------------------
-       ENEMY NAME
-       --------------------------------------------------- */
-
     const nameElement =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     nameElement.className =
         "enemy-name";
@@ -209,15 +84,8 @@ function createEnemyElement(
         nameElement
     );
 
-
-    /* ---------------------------------------------------
-       ENEMY LEVEL
-       --------------------------------------------------- */
-
     const levelElement =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     levelElement.className =
         "enemy-level";
@@ -253,15 +121,8 @@ function createEnemyElement(
         levelElement
     );
 
-
-    /* ---------------------------------------------------
-       HEALTH BAR
-       --------------------------------------------------- */
-
     const healthContainer =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     healthContainer.className =
         "enemy-health-container";
@@ -296,11 +157,8 @@ function createEnemyElement(
     healthContainer.style.overflow =
         "hidden";
 
-
     const healthFill =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     healthFill.className =
         "enemy-health-fill";
@@ -322,11 +180,6 @@ function createEnemyElement(
         healthContainer
     );
 
-
-    /* ---------------------------------------------------
-       ADD TO WORLD
-       --------------------------------------------------- */
-
     world.appendChild(
         element
     );
@@ -339,16 +192,10 @@ function createEnemyElement(
     return element;
 }
 
-
-/* =======================================================
-   UPDATE ENEMY ELEMENT
-   ======================================================= */
-
 function updateEnemyElement(
     enemy,
     element
 ) {
-
     if (
         !enemy ||
         !element ||
@@ -363,27 +210,15 @@ function updateEnemyElement(
     element.style.top =
         `${enemy.position.y}px`;
 
-
-    /* ---------------------------------------------------
-       NAME
-       --------------------------------------------------- */
-
     const nameElement =
         element.querySelector(
             ".enemy-name"
         );
 
     if (nameElement) {
-
         nameElement.textContent =
-            enemy.name ||
-            "Enemy";
+            enemy.name || "Enemy";
     }
-
-
-    /* ---------------------------------------------------
-       LEVEL
-       --------------------------------------------------- */
 
     const levelElement =
         element.querySelector(
@@ -391,15 +226,9 @@ function updateEnemyElement(
         );
 
     if (levelElement) {
-
         levelElement.textContent =
             `Lv. ${enemy.level}`;
     }
-
-
-    /* ---------------------------------------------------
-       HEALTH
-       --------------------------------------------------- */
 
     const healthFill =
         element.querySelector(
@@ -417,7 +246,6 @@ function updateEnemyElement(
         ) &&
         enemy.health.maximum > 0
     ) {
-
         const healthPercent =
             Math.max(
                 0,
@@ -435,11 +263,6 @@ function updateEnemyElement(
             `${healthPercent}%`;
     }
 
-
-    /* ---------------------------------------------------
-       SELECTED TARGET
-       --------------------------------------------------- */
-
     const combatState =
         getCombatState();
 
@@ -448,29 +271,20 @@ function updateEnemyElement(
         enemy.id;
 
     if (selected) {
-
         element.style.outline =
             "3px solid #ffff00";
 
         element.style.outlineOffset =
             "4px";
-
     } else {
-
         element.style.outline =
             "none";
     }
 }
 
-
-/* =======================================================
-   REMOVE ENEMY ELEMENT
-   ======================================================= */
-
 function removeEnemyElement(
     enemyId
 ) {
-
     const element =
         enemyElements.get(
             enemyId
@@ -487,35 +301,78 @@ function removeEnemyElement(
     );
 }
 
-
-/* =======================================================
-   PLAYER HEALTH BAR
-   ======================================================= */
-
 function createPlayerHealthBar() {
-
     const world =
         getWorldElement();
 
-    if (!world) {
+    const player =
+        document.getElementById(
+            "player"
+        );
+
+    if (
+        !world ||
+        !player
+    ) {
         return null;
     }
 
-    const container =
-        document.createElement(
-            "div"
+    let container =
+        document.querySelector(
+            ".spacescape-player-health-container"
         );
+
+    if (container) {
+        return container;
+    }
+
+    container =
+        document.createElement("div");
 
     container.className =
         "spacescape-player-health-container";
 
+    container.style.position =
+        "absolute";
+
+    container.style.width =
+        "60px";
+
+    container.style.height =
+        "7px";
+
+    container.style.background =
+        "#220000";
+
+    container.style.border =
+        "1px solid #000000";
+
+    container.style.borderRadius =
+        "3px";
+
+    container.style.overflow =
+        "hidden";
+
+    container.style.transform =
+        "translateX(-50%)";
+
+    container.style.zIndex =
+        "50";
+
     const fill =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     fill.className =
         "spacescape-player-health-fill";
+
+    fill.style.width =
+        "100%";
+
+    fill.style.height =
+        "100%";
+
+    fill.style.background =
+        "#38c95b";
 
     container.appendChild(
         fill
@@ -528,10 +385,15 @@ function createPlayerHealthBar() {
     return container;
 }
 
-
 function updatePlayerHealthBar() {
+    const player =
+        document.getElementById(
+            "player"
+        );
 
-    ensureDamageAnimationStyle();
+    if (!player) {
+        return;
+    }
 
     const combatState =
         getCombatState();
@@ -539,7 +401,7 @@ function updatePlayerHealthBar() {
     const now =
         performance.now();
 
-    const visible =
+    const showBar =
         combatState.active ||
         (
             combatState.combatEndTime > 0 &&
@@ -548,170 +410,226 @@ function updatePlayerHealthBar() {
             3000
         );
 
-    if (!visible) {
+    let container =
+        document.querySelector(
+            ".spacescape-player-health-container"
+        );
 
-        if (playerHealthBar) {
-
-            playerHealthBar.style.display =
-                "none";
+    if (!showBar) {
+        if (container) {
+            container.remove();
         }
 
         return;
     }
 
-    if (!playerHealthBar) {
-
-        playerHealthBar =
+    if (!container) {
+        container =
             createPlayerHealthBar();
     }
 
-    if (!playerHealthBar) {
+    if (!container) {
         return;
     }
 
-    playerHealthBar.style.display =
-        "block";
+    container.style.left =
+        `${player.offsetLeft}px`;
 
-    playerHealthBar.style.left =
-        `${player.position.x}px`;
-
-    playerHealthBar.style.top =
-        `${player.position.y - 34}px`;
+    container.style.top =
+        `${player.offsetTop - 32}px`;
 
     const fill =
-        playerHealthBar.querySelector(
+        container.querySelector(
             ".spacescape-player-health-fill"
+        );
+
+    const healthElement =
+        document.getElementById(
+            "health"
         );
 
     if (
         fill &&
-        player.health &&
-        Number.isFinite(
-            player.health.current
-        ) &&
-        Number.isFinite(
-            player.health.maximum
-        ) &&
-        player.health.maximum > 0
+        healthElement
     ) {
+        const healthText =
+            healthElement.textContent;
 
-        const healthPercent =
-            Math.max(
-                0,
-                Math.min(
-                    100,
-                    (
-                        player.health.current /
-                        player.health.maximum
-                    ) *
-                    100
-                )
-            );
+        const parts =
+            healthText.split("/");
 
-        fill.style.width =
-            `${healthPercent}%`;
+        const current =
+            Number(parts[0]);
+
+        const maximum =
+            Number(parts[1]);
+
+        if (
+            Number.isFinite(current) &&
+            Number.isFinite(maximum) &&
+            maximum > 0
+        ) {
+            const percent =
+                Math.max(
+                    0,
+                    Math.min(
+                        100,
+                        (current / maximum) *
+                        100
+                    )
+                );
+
+            fill.style.width =
+                `${percent}%`;
+        }
     }
 }
 
-
-/* =======================================================
-   FLOATING DAMAGE NUMBERS
-   ======================================================= */
-
 function createDamageNumber(
-    feedback
+    event
 ) {
-
     const world =
         getWorldElement();
 
     if (
         !world ||
-        !feedback
+        !event
     ) {
         return;
     }
 
     const element =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
     element.className =
         "spacescape-damage-number";
 
     element.textContent =
-        `${feedback.damage}`;
+        event.damage;
+
+    element.style.position =
+        "absolute";
 
     element.style.left =
-        `${feedback.x}px`;
+        `${event.x}px`;
 
     element.style.top =
-        `${feedback.y - 24}px`;
+        `${event.y - 35}px`;
+
+    element.style.transform =
+        "translateX(-50%)";
+
+    element.style.color =
+        "#ffffff";
+
+    element.style.fontSize =
+        "20px";
+
+    element.style.fontWeight =
+        "bold";
+
+    element.style.pointerEvents =
+        "none";
+
+    element.style.zIndex =
+        "100";
+
+    element.style.textShadow =
+        "0 2px 4px #000000";
+
+    element.style.animation =
+        "spacescapeDamageFloat 950ms ease-out forwards";
 
     world.appendChild(
         element
     );
 
     feedbackElements.set(
-        feedback.id,
+        event.id,
         element
     );
 
-    window.setTimeout(
+    setTimeout(
         () => {
+            const currentElement =
+                feedbackElements.get(
+                    event.id
+                );
 
             if (
-                feedbackElements.get(
-                    feedback.id
-                ) === element
+                currentElement ===
+                element
             ) {
-
                 element.remove();
 
                 feedbackElements.delete(
-                    feedback.id
+                    event.id
                 );
             }
-
         },
         950
     );
 }
 
-
 function renderCombatFeedback() {
+    const pendingFeedback =
+        consumeCombatFeedback();
 
-    ensureDamageAnimationStyle();
-
-    const feedback =
-        getCombatFeedback();
+    if (
+        !pendingFeedback ||
+        pendingFeedback.length === 0
+    ) {
+        return;
+    }
 
     for (
         const event
-        of feedback
+        of pendingFeedback
     ) {
-
-        if (
-            feedbackElements.has(
-                event.id
-            )
-        ) {
-            continue;
-        }
-
         createDamageNumber(
             event
         );
     }
 }
 
+function ensureDamageAnimation() {
+    if (
+        document.getElementById(
+            "spacescape-damage-animation"
+        )
+    ) {
+        return;
+    }
 
-/* =======================================================
-   RENDER ENEMIES
-   ======================================================= */
+    const style =
+        document.createElement(
+            "style"
+        );
+
+    style.id =
+        "spacescape-damage-animation";
+
+    style.textContent = `
+        @keyframes spacescapeDamageFloat {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, 0);
+            }
+
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -45px);
+            }
+        }
+    `;
+
+    document.head.appendChild(
+        style
+    );
+}
 
 export function renderEnemies() {
+    ensureDamageAnimation();
 
     const activeEnemies =
         getWorldActiveEnemies();
@@ -723,7 +641,6 @@ export function renderEnemies() {
         const enemy
         of activeEnemies
     ) {
-
         if (
             !enemy ||
             !enemy.id ||
@@ -742,7 +659,6 @@ export function renderEnemies() {
             );
 
         if (!element) {
-
             element =
                 createEnemyElement(
                     enemy
@@ -755,70 +671,51 @@ export function renderEnemies() {
         );
     }
 
-
-    /* ---------------------------------------------------
-       REMOVE DEAD / MISSING ELEMENTS
-       --------------------------------------------------- */
-
     for (
         const enemyId
         of enemyElements.keys()
     ) {
-
         if (
             !activeIds.has(
                 enemyId
             )
         ) {
-
             removeEnemyElement(
                 enemyId
             );
         }
     }
 
-
-    /* ---------------------------------------------------
-       PLAYER COMBAT UI
-       --------------------------------------------------- */
-
     updatePlayerHealthBar();
 
     renderCombatFeedback();
 }
 
-
-/* =======================================================
-   CLEAR ENEMY RENDERING
-   ======================================================= */
-
 export function clearEnemyRendering() {
-
     for (
         const enemyId
         of enemyElements.keys()
     ) {
-
         removeEnemyElement(
             enemyId
         );
-    }
-
-    if (playerHealthBar) {
-
-        playerHealthBar.remove();
-
-        playerHealthBar =
-            null;
     }
 
     for (
         const element
         of feedbackElements.values()
     ) {
-
         element.remove();
     }
 
     feedbackElements.clear();
+
+    const playerHealthBar =
+        document.querySelector(
+            ".spacescape-player-health-container"
+        );
+
+    if (playerHealthBar) {
+        playerHealthBar.remove();
+    }
 }

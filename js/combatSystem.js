@@ -34,58 +34,9 @@ const combatFeedback = [];
 
 let feedbackId = 0;
 
-
-/* =======================================================
-   COMBAT STATE
-   ======================================================= */
-
 export function getCombatState() {
     return combatState;
 }
-
-
-/* =======================================================
-   COMBAT FEEDBACK
-   ======================================================= */
-
-function addCombatFeedback(
-    targetType,
-    targetId,
-    damage,
-    x,
-    y
-) {
-    if (
-        !targetType ||
-        !Number.isFinite(damage) ||
-        damage <= 0 ||
-        !Number.isFinite(x) ||
-        !Number.isFinite(y)
-    ) {
-        return;
-    }
-
-    feedbackId++;
-
-    combatFeedback.push({
-        id: feedbackId,
-        targetType,
-        targetId,
-        damage,
-        x,
-        y,
-        createdAt: performance.now()
-    });
-}
-
-export function getCombatFeedback() {
-    return combatFeedback;
-}
-
-
-/* =======================================================
-   CURRENT TARGET
-   ======================================================= */
 
 export function getCurrentCombatTarget() {
     if (!combatState.targetEnemyId) {
@@ -97,20 +48,49 @@ export function getCurrentCombatTarget() {
     );
 }
 
-
-/* =======================================================
-   START COMBAT
-   ======================================================= */
-
-export function startCombat(
-    player,
-    enemy
+function addCombatFeedback(
+    targetType,
+    targetId,
+    damage,
+    x,
+    y
 ) {
     if (
-        !player ||
-        !enemy ||
-        !enemy.id
+        !targetType ||
+        !targetId ||
+        !Number.isFinite(damage) ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
     ) {
+        return;
+    }
+
+    combatFeedback.push({
+        id: ++feedbackId,
+        targetType,
+        targetId,
+        damage,
+        x,
+        y
+    });
+}
+
+export function consumeCombatFeedback() {
+    if (combatFeedback.length === 0) {
+        return [];
+    }
+
+    const pendingFeedback =
+        combatFeedback.splice(
+            0,
+            combatFeedback.length
+        );
+
+    return pendingFeedback;
+}
+
+export function startCombat(player, enemy) {
+    if (!player || !enemy || !enemy.id) {
         return false;
     }
 
@@ -149,11 +129,6 @@ export function startCombat(
     return true;
 }
 
-
-/* =======================================================
-   STOP COMBAT
-   ======================================================= */
-
 export function stopCombat() {
     if (combatState.active) {
         console.log(
@@ -164,31 +139,14 @@ export function stopCombat() {
             performance.now();
     }
 
-    combatState.targetEnemyId =
-        null;
-
-    combatState.active =
-        false;
-
-    combatState.engaged =
-        false;
-
-    combatState.playerNextAttackTime =
-        0;
-
-    combatState.enemyNextAttackTime =
-        0;
+    combatState.targetEnemyId = null;
+    combatState.active = false;
+    combatState.engaged = false;
+    combatState.playerNextAttackTime = 0;
+    combatState.enemyNextAttackTime = 0;
 }
 
-
-/* =======================================================
-   COMBAT RANGE
-   ======================================================= */
-
-function isWithinCombatRange(
-    player,
-    enemy
-) {
+function isWithinCombatRange(player, enemy) {
     if (
         !player ||
         !enemy ||
@@ -209,15 +167,7 @@ function isWithinCombatRange(
     return distance <= COMBAT_RANGE;
 }
 
-
-/* =======================================================
-   MOVE PLAYER TOWARD TARGET
-   ======================================================= */
-
-function movePlayerTowardTarget(
-    player,
-    enemy
-) {
+function movePlayerTowardTarget(player, enemy) {
     if (
         !player ||
         !enemy ||
@@ -241,20 +191,13 @@ function movePlayerTowardTarget(
             dy * dy
         );
 
-    if (
-        distance <=
-        COMBAT_RANGE
-    ) {
-        player.movement.moving =
-            false;
-
+    if (distance <= COMBAT_RANGE) {
+        player.movement.moving = false;
         return;
     }
 
     if (distance === 0) {
-        player.movement.moving =
-            false;
-
+        player.movement.moving = false;
         return;
     }
 
@@ -268,17 +211,14 @@ function movePlayerTowardTarget(
     const moveDistance =
         Math.min(
             speed,
-            distance -
-            COMBAT_RANGE
+            distance - COMBAT_RANGE
         );
 
     const normalizedX =
-        dx /
-        distance;
+        dx / distance;
 
     const normalizedY =
-        dy /
-        distance;
+        dy / distance;
 
     const newX =
         player.position.x +
@@ -290,8 +230,7 @@ function movePlayerTowardTarget(
         normalizedY *
         moveDistance;
 
-    player.movement.moving =
-        true;
+    player.movement.moving = true;
 
     if (
         newX >= 0 &&
@@ -301,8 +240,7 @@ function movePlayerTowardTarget(
             player.position.y
         )
     ) {
-        player.position.x =
-            newX;
+        player.position.x = newX;
     }
 
     if (
@@ -313,15 +251,9 @@ function movePlayerTowardTarget(
             newY
         )
     ) {
-        player.position.y =
-            newY;
+        player.position.y = newY;
     }
 }
-
-
-/* =======================================================
-   PLAYER ATTACK
-   ======================================================= */
 
 function processPlayerAttack(
     player,
@@ -351,7 +283,6 @@ function processPlayerAttack(
     }
 
     if (result.hit) {
-
         addCombatFeedback(
             "enemy",
             enemy.id,
@@ -364,19 +295,12 @@ function processPlayerAttack(
             `Player hits ${enemy.name} for ${result.damage}. ` +
             `${enemy.health.current}/${enemy.health.maximum} HP remaining.`
         );
-
     } else {
-
         console.log(
             `Player misses ${enemy.name}.`
         );
     }
 }
-
-
-/* =======================================================
-   ENEMY ATTACK
-   ======================================================= */
 
 function processEnemyAttack(
     player,
@@ -406,7 +330,6 @@ function processEnemyAttack(
     }
 
     if (result.hit) {
-
         addCombatFeedback(
             "player",
             "player",
@@ -419,23 +342,14 @@ function processEnemyAttack(
             `${enemy.name} hits player for ${result.damage}. ` +
             `${player.health.current}/${player.health.maximum} HP remaining.`
         );
-
     } else {
-
         console.log(
             `${enemy.name} misses player.`
         );
     }
 }
 
-
-/* =======================================================
-   UPDATE COMBAT
-   ======================================================= */
-
-export function updateCombat(
-    player
-) {
+export function updateCombat(player) {
     if (!combatState.active) {
         return;
     }
@@ -462,7 +376,6 @@ export function updateCombat(
             enemy
         )
     ) {
-
         movePlayerTowardTarget(
             player,
             enemy
@@ -474,12 +387,8 @@ export function updateCombat(
     player.movement.moving =
         false;
 
-    if (
-        !combatState.engaged
-    ) {
-
-        combatState.engaged =
-            true;
+    if (!combatState.engaged) {
+        combatState.engaged = true;
 
         const now =
             performance.now();
@@ -489,10 +398,6 @@ export function updateCombat(
 
         combatState.enemyNextAttackTime =
             now;
-
-        console.log(
-            `Combat started: ${enemy.name}`
-        );
     }
 
     const now =
@@ -504,10 +409,7 @@ export function updateCombat(
         now
     );
 
-    if (
-        !isTargetAlive(enemy)
-    ) {
-
+    if (!isTargetAlive(enemy)) {
         console.log(
             `${enemy.name} defeated.`
         );
@@ -523,10 +425,7 @@ export function updateCombat(
         now
     );
 
-    if (
-        !isTargetAlive(player)
-    ) {
-
+    if (!isTargetAlive(player)) {
         console.log(
             "Player defeated."
         );

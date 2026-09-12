@@ -11,6 +11,11 @@ import {
     getXPToNextLevel
 } from "./xp.js";
 
+
+/* =======================================================
+   PLAYER
+   ======================================================= */
+
 export const player = {
     position: {
         x: 1200,
@@ -31,6 +36,10 @@ export const player = {
 
     xp: 0,
 
+    attack: 10,
+
+    defense: 5,
+
     skills: createSkills(),
 
     inventory: createInventory(),
@@ -43,8 +52,19 @@ export const player = {
     }
 };
 
-export function updatePlayerMovement(keys, dialogueOpen) {
-    if (dialogueOpen) {
+
+/* =======================================================
+   MOVEMENT
+   ======================================================= */
+
+export function updatePlayerMovement() {
+
+    if (
+        document
+            .getElementById("dialogue")
+            ?.classList
+            .contains("active")
+    ) {
         player.movement.moving = false;
         return;
     }
@@ -52,122 +72,193 @@ export function updatePlayerMovement(keys, dialogueOpen) {
     let dx = 0;
     let dy = 0;
 
-    if (keys.w || keys.ArrowUp) {
+    if (
+        keys["w"] ||
+        keys["ArrowUp"]
+    ) {
         dy -= 1;
     }
 
-    if (keys.s || keys.ArrowDown) {
+    if (
+        keys["s"] ||
+        keys["ArrowDown"]
+    ) {
         dy += 1;
     }
 
-    if (keys.a || keys.ArrowLeft) {
+    if (
+        keys["a"] ||
+        keys["ArrowLeft"]
+    ) {
         dx -= 1;
     }
 
-    if (keys.d || keys.ArrowRight) {
+    if (
+        keys["d"] ||
+        keys["ArrowRight"]
+    ) {
         dx += 1;
     }
 
-    if (dx === 0 && dy === 0) {
+    if (
+        dx === 0 &&
+        dy === 0
+    ) {
         player.movement.moving = false;
         return;
     }
 
     player.movement.moving = true;
 
-    if (dx !== 0 && dy !== 0) {
-        const diagonalSpeed =
-            player.movement.speed / Math.sqrt(2);
+    const magnitude =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
 
-        dx *= diagonalSpeed;
-        dy *= diagonalSpeed;
-    } else {
-        dx *= player.movement.speed;
-        dy *= player.movement.speed;
+    dx =
+        dx /
+        magnitude *
+        player.movement.speed;
+
+    dy =
+        dy /
+        magnitude *
+        player.movement.speed;
+
+    const newX =
+        player.position.x + dx;
+
+    const newY =
+        player.position.y + dy;
+
+    if (
+        newX >= 0 &&
+        newX <= WORLD_WIDTH &&
+        !isColliding(
+            newX,
+            player.position.y
+        )
+    ) {
+        player.position.x = newX;
     }
 
-    const newX = player.position.x + dx;
-    const newY = player.position.y + dy;
-
-    const minX = 20;
-    const maxX = WORLD_WIDTH - 20;
-    const minY = 20;
-    const maxY = WORLD_HEIGHT - 20;
-
-    const boundedX = Math.max(
-        minX,
-        Math.min(maxX, newX)
-    );
-
-    const boundedY = Math.max(
-        minY,
-        Math.min(maxY, newY)
-    );
-
-    if (!isColliding(boundedX, player.position.y)) {
-        player.position.x = boundedX;
-    }
-
-    if (!isColliding(player.position.x, boundedY)) {
-        player.position.y = boundedY;
+    if (
+        newY >= 0 &&
+        newY <= WORLD_HEIGHT &&
+        !isColliding(
+            player.position.x,
+            newY
+        )
+    ) {
+        player.position.y = newY;
     }
 }
 
-export function drawPlayer(playerElement) {
+
+/* =======================================================
+   DRAW PLAYER
+   ======================================================= */
+
+export function drawPlayer() {
+
+    const playerElement =
+        document.getElementById("player");
+
+    if (!playerElement) {
+        return;
+    }
+
     playerElement.style.left =
-        `${player.position.x - 17}px`;
+        `${player.position.x}px`;
 
     playerElement.style.top =
-        `${player.position.y - 17}px`;
+        `${player.position.y}px`;
 }
 
-export function updatePlayerHUD(elements) {
-    const {
-        levelElement,
-        xpElement,
-        healthCurrentElement,
-        healthMaximumElement,
-        healthFillElement,
-        energyCurrentElement,
-        energyMaximumElement,
-        energyFillElement
-    } = elements;
 
-    levelElement.textContent =
-        player.level;
+/* =======================================================
+   PLAYER HUD
+   ======================================================= */
 
-    xpElement.textContent =
-        player.xp;
+export function updatePlayerHUD() {
 
-    healthCurrentElement.textContent =
-        Math.floor(player.health.current);
+    const levelElement =
+        document.getElementById("level");
 
-    healthMaximumElement.textContent =
-        Math.floor(player.health.maximum);
+    const xpElement =
+        document.getElementById("xp");
 
-    energyCurrentElement.textContent =
-        Math.floor(player.energy.current);
+    const healthElement =
+        document.getElementById("health");
 
-    energyMaximumElement.textContent =
-        Math.floor(player.energy.maximum);
+    const healthBar =
+        document.getElementById("health-bar");
 
-    const healthPercent =
-        (player.health.current /
-            player.health.maximum) * 100;
+    const energyElement =
+        document.getElementById("energy");
 
-    const energyPercent =
-        (player.energy.current /
-            player.energy.maximum) * 100;
+    const energyBar =
+        document.getElementById("energy-bar");
 
-    healthFillElement.style.width =
-        `${Math.max(0, Math.min(100, healthPercent))}%`;
 
-    energyFillElement.style.width =
-        `${Math.max(0, Math.min(100, energyPercent))}%`;
+    if (levelElement) {
+        levelElement.textContent =
+            player.level;
+    }
 
-    levelElement.title =
-        `Level ${player.level}`;
+    if (xpElement) {
+        xpElement.textContent =
+            player.xp;
 
-    xpElement.title =
-        `${getXPToNextLevel(player)} XP needed for Level ${player.level + 1}`;
+        xpElement.title =
+            `${getXPToNextLevel(player)} XP to next level`;
+    }
+
+    if (healthElement) {
+        healthElement.textContent =
+            `${player.health.current}/${player.health.maximum}`;
+    }
+
+    if (healthBar) {
+        healthBar.style.width =
+            `${(
+                player.health.current /
+                player.health.maximum
+            ) * 100}%`;
+    }
+
+    if (energyElement) {
+        energyElement.textContent =
+            `${player.energy.current}/${player.energy.maximum}`;
+    }
+
+    if (energyBar) {
+        energyBar.style.width =
+            `${(
+                player.energy.current /
+                player.energy.maximum
+            ) * 100}%`;
+    }
 }
+
+
+/* =======================================================
+   KEYBOARD INPUT
+   ======================================================= */
+
+const keys = {};
+
+window.addEventListener(
+    "keydown",
+    event => {
+        keys[event.key] = true;
+    }
+);
+
+window.addEventListener(
+    "keyup",
+    event => {
+        keys[event.key] = false;
+    }
+);

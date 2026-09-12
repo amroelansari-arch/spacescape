@@ -17,9 +17,20 @@ import {
     isColliding
 } from "./world.js";
 
+import {
+    awardXP
+} from "./xp.js";
+
+import {
+    player as gamePlayer,
+    applyLevelUp
+} from "./player.js";
+
+
 const PLAYER_ATTACK_SPEED = 2000;
 const ENEMY_ATTACK_SPEED = 2500;
 const COMBAT_RANGE = 100;
+
 
 const combatState = {
     targetEnemyId: null,
@@ -30,15 +41,19 @@ const combatState = {
     combatEndTime: 0
 };
 
+
 const combatFeedback = [];
 
 let feedbackId = 0;
+
 
 export function getCombatState() {
     return combatState;
 }
 
+
 export function getCurrentCombatTarget() {
+
     if (!combatState.targetEnemyId) {
         return null;
     }
@@ -48,6 +63,7 @@ export function getCurrentCombatTarget() {
     );
 }
 
+
 function addCombatFeedback(
     targetType,
     targetId,
@@ -56,6 +72,7 @@ function addCombatFeedback(
     y,
     isMiss = false
 ) {
+
     if (
         !targetType ||
         !targetId ||
@@ -77,7 +94,9 @@ function addCombatFeedback(
     });
 }
 
+
 export function consumeCombatFeedback() {
+
     if (combatFeedback.length === 0) {
         return [];
     }
@@ -91,8 +110,21 @@ export function consumeCombatFeedback() {
     return pendingFeedback;
 }
 
-export function startCombat(player, enemy) {
-    if (!player || !enemy || !enemy.id) {
+
+/* =======================================================
+   START COMBAT
+   ======================================================= */
+
+export function startCombat(
+    player,
+    enemy
+) {
+
+    if (
+        !player ||
+        !enemy ||
+        !enemy.id
+    ) {
         return false;
     }
 
@@ -131,8 +163,15 @@ export function startCombat(player, enemy) {
     return true;
 }
 
+
+/* =======================================================
+   STOP COMBAT
+   ======================================================= */
+
 export function stopCombat() {
+
     if (combatState.active) {
+
         console.log(
             "Combat ended."
         );
@@ -148,7 +187,16 @@ export function stopCombat() {
     combatState.enemyNextAttackTime = 0;
 }
 
-function isWithinCombatRange(player, enemy) {
+
+/* =======================================================
+   COMBAT RANGE
+   ======================================================= */
+
+function isWithinCombatRange(
+    player,
+    enemy
+) {
+
     if (
         !player ||
         !enemy ||
@@ -169,14 +217,16 @@ function isWithinCombatRange(player, enemy) {
     return distance <= COMBAT_RANGE;
 }
 
+
 /* =======================================================
-   COMBAT APPROACH MOVEMENT
+   MOVEMENT VALIDATION
    ======================================================= */
 
 function isValidMovementPosition(
     x,
     y
 ) {
+
     if (
         !Number.isFinite(x) ||
         !Number.isFinite(y)
@@ -199,11 +249,17 @@ function isValidMovementPosition(
     );
 }
 
+
+/* =======================================================
+   MOVEMENT CANDIDATES
+   ======================================================= */
+
 function getMovementCandidates(
     dx,
     dy,
     speed
 ) {
+
     const distance =
         Math.sqrt(
             dx * dx +
@@ -220,14 +276,6 @@ function getMovementCandidates(
             dx
         );
 
-    /*
-     * Try the direct route first.
-     *
-     * If that route is blocked by a building,
-     * the remaining directions allow the player
-     * to naturally steer around the obstacle.
-     */
-
     const angleOffsets = [
         0,
         Math.PI / 6,
@@ -243,10 +291,12 @@ function getMovementCandidates(
 
     return angleOffsets.map(
         offset => {
+
             const candidateAngle =
                 angle + offset;
 
             return {
+
                 x:
                     Math.cos(
                         candidateAngle
@@ -264,10 +314,16 @@ function getMovementCandidates(
     );
 }
 
+
+/* =======================================================
+   MOVE TOWARD TARGET
+   ======================================================= */
+
 function movePlayerTowardTarget(
     player,
     enemy
 ) {
+
     if (
         !player ||
         !enemy ||
@@ -294,6 +350,7 @@ function movePlayerTowardTarget(
     if (
         distance <= COMBAT_RANGE
     ) {
+
         player.movement.moving =
             false;
 
@@ -301,6 +358,7 @@ function movePlayerTowardTarget(
     }
 
     if (distance === 0) {
+
         player.movement.moving =
             false;
 
@@ -313,10 +371,6 @@ function movePlayerTowardTarget(
         )
             ? player.movement.speed
             : 5;
-
-    /*
-     * Never move closer than the combat range.
-     */
 
     const moveDistance =
         Math.min(
@@ -338,6 +392,7 @@ function movePlayerTowardTarget(
         const candidate
         of candidates
     ) {
+
         const newX =
             player.position.x +
             candidate.x;
@@ -363,15 +418,6 @@ function movePlayerTowardTarget(
                 enemy.position.y
             );
 
-        /*
-         * Lower score is better.
-         *
-         * Distance is the primary factor.
-         * The small angle penalty makes the player
-         * prefer continuing toward the enemy when
-         * several routes are available.
-         */
-
         const score =
             newDistance +
             candidate.angleDifference *
@@ -381,12 +427,14 @@ function movePlayerTowardTarget(
             newDistance <=
             COMBAT_RANGE
         ) {
+
             bestCandidate = {
                 x: newX,
                 y: newY
             };
 
-            bestScore = score;
+            bestScore =
+                score;
 
             break;
         }
@@ -394,7 +442,9 @@ function movePlayerTowardTarget(
         if (
             score < bestScore
         ) {
-            bestScore = score;
+
+            bestScore =
+                score;
 
             bestCandidate = {
                 x: newX,
@@ -403,11 +453,8 @@ function movePlayerTowardTarget(
         }
     }
 
-    /*
-     * If a valid movement was found, use it.
-     */
-
     if (bestCandidate) {
+
         player.position.x =
             bestCandidate.x;
 
@@ -419,15 +466,6 @@ function movePlayerTowardTarget(
 
         return;
     }
-
-    /*
-     * Emergency fallback:
-     *
-     * If every candidate is blocked, try each
-     * axis independently. This prevents the
-     * player from becoming permanently stuck
-     * against an obstacle corner.
-     */
 
     const normalizedX =
         dx / distance;
@@ -455,6 +493,7 @@ function movePlayerTowardTarget(
             player.position.y
         )
     ) {
+
         player.position.x =
             xOnlyX;
 
@@ -471,6 +510,7 @@ function movePlayerTowardTarget(
             yOnlyY
         )
     ) {
+
         player.position.y =
             yOnlyY;
 
@@ -481,6 +521,7 @@ function movePlayerTowardTarget(
         moved;
 }
 
+
 /* =======================================================
    PLAYER ATTACK
    ======================================================= */
@@ -490,6 +531,7 @@ function processPlayerAttack(
     enemy,
     now
 ) {
+
     if (
         now <
         combatState.playerNextAttackTime
@@ -513,6 +555,7 @@ function processPlayerAttack(
     }
 
     if (result.hit) {
+
         addCombatFeedback(
             "enemy",
             enemy.id,
@@ -526,7 +569,9 @@ function processPlayerAttack(
             `Player hits ${enemy.name} for ${result.damage}. ` +
             `${enemy.health.current}/${enemy.health.maximum} HP remaining.`
         );
+
     } else {
+
         addCombatFeedback(
             "enemy",
             enemy.id,
@@ -542,6 +587,7 @@ function processPlayerAttack(
     }
 }
 
+
 /* =======================================================
    ENEMY ATTACK
    ======================================================= */
@@ -551,6 +597,7 @@ function processEnemyAttack(
     enemy,
     now
 ) {
+
     if (
         now <
         combatState.enemyNextAttackTime
@@ -574,6 +621,7 @@ function processEnemyAttack(
     }
 
     if (result.hit) {
+
         addCombatFeedback(
             "player",
             "player",
@@ -587,7 +635,9 @@ function processEnemyAttack(
             `${enemy.name} hits player for ${result.damage}. ` +
             `${player.health.current}/${player.health.maximum} HP remaining.`
         );
+
     } else {
+
         addCombatFeedback(
             "player",
             "player",
@@ -603,11 +653,13 @@ function processEnemyAttack(
     }
 }
 
+
 /* =======================================================
    COMBAT UPDATE
    ======================================================= */
 
 export function updateCombat(player) {
+
     if (!combatState.active) {
         return;
     }
@@ -628,18 +680,13 @@ export function updateCombat(player) {
         return;
     }
 
-    /*
-     * Keep approaching until the actual distance
-     * between the player and enemy is within the
-     * combat range.
-     */
-
     if (
         !isWithinCombatRange(
             player,
             enemy
         )
     ) {
+
         movePlayerTowardTarget(
             player,
             enemy
@@ -652,7 +699,9 @@ export function updateCombat(player) {
         false;
 
     if (!combatState.engaged) {
-        combatState.engaged = true;
+
+        combatState.engaged =
+            true;
 
         const now =
             performance.now();
@@ -673,10 +722,66 @@ export function updateCombat(player) {
         now
     );
 
+    /*
+     * Enemy has died.
+     *
+     * Award XP exactly once before
+     * combat is stopped.
+     */
+
     if (!isTargetAlive(enemy)) {
-        console.log(
-            `${enemy.name} defeated.`
-        );
+
+        const xpReward =
+            Number.isFinite(
+                enemy.xpReward
+            )
+                ? enemy.xpReward
+                : 0;
+
+        if (xpReward > 0) {
+
+            const previousLevel =
+                player.level;
+
+            const xpResult =
+                awardXP(
+                    player,
+                    xpReward
+                );
+
+            console.log(
+                `${enemy.name} defeated. ` +
+                `+${xpResult.awarded} XP.`
+            );
+
+            if (
+                xpResult.levelsGained > 0
+            ) {
+
+                for (
+                    let i = 0;
+                    i <
+                    xpResult.levelsGained;
+                    i++
+                ) {
+
+                    applyLevelUp();
+                }
+
+                console.log(
+                    `Player reached level ${player.level}.`
+                );
+
+                console.log(
+                    `Previous level: ${previousLevel}`
+                );
+            }
+        } else {
+
+            console.log(
+                `${enemy.name} defeated.`
+            );
+        }
 
         stopCombat();
 
@@ -690,6 +795,7 @@ export function updateCombat(player) {
     );
 
     if (!isTargetAlive(player)) {
+
         console.log(
             "Player defeated."
         );

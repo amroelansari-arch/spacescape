@@ -1,11 +1,13 @@
 import { createSkills } from "./skills.js";
 import { createInventory } from "./inventory.js";
 import { createEquipment } from "./equipment.js";
+
 import {
     WORLD_WIDTH,
     WORLD_HEIGHT,
     isColliding
 } from "./world.js";
+
 import {
     getXPRequiredForLevel,
     getXPToNextLevel
@@ -51,6 +53,40 @@ export const player = {
         moving: false
     }
 };
+
+
+/* =======================================================
+   LEVEL UP
+   ======================================================= */
+
+export function applyLevelUp() {
+
+    player.health.maximum += 10;
+
+    player.energy.maximum += 10;
+
+    player.attack += 2;
+
+    player.defense += 1;
+
+    player.health.current =
+        player.health.maximum;
+
+    player.energy.current =
+        player.energy.maximum;
+
+    console.log(
+        `Level up! Player is now level ${player.level}.`
+    );
+
+    console.log(
+        `Stats increased: ` +
+        `Health ${player.health.maximum}, ` +
+        `Energy ${player.energy.maximum}, ` +
+        `Attack ${player.attack}, ` +
+        `Defense ${player.defense}.`
+    );
+}
 
 
 /* =======================================================

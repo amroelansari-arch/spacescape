@@ -10,6 +10,8 @@ export function createEnemy(
     defense = 2
 ) {
     return {
+        id: crypto.randomUUID(),
+
         name,
         level,
 

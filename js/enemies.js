@@ -54,6 +54,66 @@ export function findEnemyById(
 
 
 /* =======================================================
+   FIND NEAREST ENEMY
+   ======================================================= */
+
+export function findNearestEnemy(
+    enemies,
+    x,
+    y
+) {
+    if (
+        !Array.isArray(enemies) ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
+    ) {
+        return null;
+    }
+
+    let nearestEnemy = null;
+    let nearestDistance = Infinity;
+
+    for (const enemy of enemies) {
+
+        if (
+            !enemy ||
+            !enemy.position ||
+            !enemy.health ||
+            enemy.health.current <= 0
+        ) {
+            continue;
+        }
+
+        if (
+            !Number.isFinite(enemy.position.x) ||
+            !Number.isFinite(enemy.position.y)
+        ) {
+            continue;
+        }
+
+        const dx =
+            enemy.position.x - x;
+
+        const dy =
+            enemy.position.y - y;
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+        if (distance < nearestDistance) {
+            nearestDistance = distance;
+            nearestEnemy = enemy;
+        }
+    }
+
+    return nearestEnemy;
+}
+
+
+/* =======================================================
    REMOVE ENEMY
    ======================================================= */
 

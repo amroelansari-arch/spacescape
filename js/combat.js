@@ -69,3 +69,76 @@ export function isTargetAlive(target) {
 export function isTargetDead(target) {
     return !isTargetAlive(target);
 }
+
+
+/* =======================================================
+   DAMAGE CALCULATION
+   ======================================================= */
+
+export function calculateDamage(
+    attackPower,
+    defense
+) {
+    if (
+        !Number.isFinite(attackPower) ||
+        attackPower <= 0
+    ) {
+        return 0;
+    }
+
+    if (
+        !Number.isFinite(defense) ||
+        defense < 0
+    ) {
+        defense = 0;
+    }
+
+    return Math.max(
+        1,
+        attackPower - defense
+    );
+}
+
+
+/* =======================================================
+   ATTACK
+   ======================================================= */
+
+export function performAttack(
+    attacker,
+    target,
+    attackPower
+) {
+    if (
+        !attacker ||
+        !target ||
+        !Number.isFinite(attackPower) ||
+        attackPower <= 0
+    ) {
+        return false;
+    }
+
+    if (!isTargetAlive(attacker)) {
+        return false;
+    }
+
+    if (!isTargetAlive(target)) {
+        return false;
+    }
+
+    const defense =
+        Number.isFinite(target.defense)
+            ? target.defense
+            : 0;
+
+    const damage =
+        calculateDamage(
+            attackPower,
+            defense
+        );
+
+    return applyDamage(
+        target,
+        damage
+    );
+}

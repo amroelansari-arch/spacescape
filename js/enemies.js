@@ -114,6 +114,67 @@ export function findNearestEnemy(
 
 
 /* =======================================================
+   FIND ENEMIES WITHIN RANGE
+   ======================================================= */
+
+export function findEnemiesWithinRange(
+    enemies,
+    x,
+    y,
+    range
+) {
+    if (
+        !Array.isArray(enemies) ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(y) ||
+        !Number.isFinite(range) ||
+        range < 0
+    ) {
+        return [];
+    }
+
+    const enemiesInRange = [];
+
+    for (const enemy of enemies) {
+
+        if (
+            !enemy ||
+            !enemy.position ||
+            !enemy.health ||
+            enemy.health.current <= 0
+        ) {
+            continue;
+        }
+
+        if (
+            !Number.isFinite(enemy.position.x) ||
+            !Number.isFinite(enemy.position.y)
+        ) {
+            continue;
+        }
+
+        const dx =
+            enemy.position.x - x;
+
+        const dy =
+            enemy.position.y - y;
+
+        const distance =
+            Math.sqrt(
+                dx * dx +
+                dy * dy
+            );
+
+        if (distance <= range) {
+            enemiesInRange.push(enemy);
+        }
+    }
+
+    return enemiesInRange;
+}
+
+
+/* =======================================================
    REMOVE ENEMY
    ======================================================= */
 

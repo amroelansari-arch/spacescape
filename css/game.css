@@ -1,0 +1,609 @@
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #080b12;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+#game {
+    width: 100vw;
+    height: 100vh;
+}
+
+
+/* =========================================================
+   TITLE SCREEN
+   ========================================================= */
+
+#title-screen {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #17202c 0%,
+            #080b12 65%
+        );
+}
+
+#title-screen h1 {
+    font-size: 64px;
+    margin: 0 0 10px 0;
+    letter-spacing: 3px;
+}
+
+#title-screen p {
+    color: #9aa4b2;
+    margin: 0 0 35px 0;
+    font-size: 18px;
+}
+
+#play-button {
+    padding: 15px 50px;
+
+    font-size: 20px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    border: none;
+    border-radius: 6px;
+
+    background: #e8e8e8;
+    color: #111;
+}
+
+#play-button:hover {
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   GAME SCREEN
+   ========================================================= */
+
+#game-screen {
+    display: none;
+
+    width: 100vw;
+    height: 100vh;
+
+    position: relative;
+
+    overflow: hidden;
+}
+
+#world-container {
+    position: absolute;
+
+    inset: 0;
+
+    overflow: hidden;
+}
+
+#world {
+    position: absolute;
+
+    width: 2400px;
+    height: 1800px;
+
+    background:
+        radial-gradient(
+            circle at 20% 30%,
+            #2a3d2c 0%,
+            transparent 24%
+        ),
+        radial-gradient(
+            circle at 75% 65%,
+            #263a2b 0%,
+            transparent 28%
+        ),
+        #18221b;
+}
+
+
+/* =========================================================
+   ROADS
+   ========================================================= */
+
+.road {
+    position: absolute;
+    background: #30353a;
+}
+
+.road.horizontal {
+    width: 2400px;
+    height: 90px;
+    left: 0;
+}
+
+.road.vertical {
+    width: 90px;
+    height: 1800px;
+    top: 0;
+}
+
+.road-line {
+    position: absolute;
+    background: #b4a76c;
+}
+
+.road-line.horizontal {
+    width: 2400px;
+    height: 4px;
+    left: 0;
+}
+
+.road-line.vertical {
+    width: 4px;
+    height: 1800px;
+    top: 0;
+}
+
+
+/* =========================================================
+   COLONY WALL
+   ========================================================= */
+
+#colony-wall {
+    position: absolute;
+
+    left: 250px;
+    top: 180px;
+
+    width: 1700px;
+    height: 1200px;
+
+    border: 12px solid #68737c;
+}
+
+
+/* =========================================================
+   BUILDINGS
+   ========================================================= */
+
+.building {
+    position: absolute;
+
+    background: #505963;
+
+    border: 4px solid #303740;
+
+    box-shadow:
+        0 8px 0 rgba(0, 0, 0, 0.25);
+}
+
+.building::after {
+    content: "";
+
+    position: absolute;
+
+    width: 35%;
+    height: 18%;
+
+    left: 10%;
+    top: 15%;
+
+    background: #8ba8b8;
+
+    box-shadow:
+        80px 0 #8ba8b8,
+        160px 0 #8ba8b8;
+}
+
+.building-label {
+    position: absolute;
+
+    top: -30px;
+    left: 0;
+
+    color: #d8dde3;
+
+    font-size: 14px;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   TREES
+   ========================================================= */
+
+.tree {
+    position: absolute;
+
+    width: 40px;
+    height: 55px;
+}
+
+.tree::before {
+    content: "";
+
+    position: absolute;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    background: #314d35;
+
+    top: 0;
+}
+
+.tree::after {
+    content: "";
+
+    position: absolute;
+
+    width: 10px;
+    height: 25px;
+
+    background: #554333;
+
+    left: 15px;
+    top: 30px;
+}
+
+
+/* =========================================================
+   ROCKS
+   ========================================================= */
+
+.rock {
+    position: absolute;
+
+    width: 35px;
+    height: 25px;
+
+    background: #555d60;
+
+    border-radius: 40%;
+}
+
+
+/* =========================================================
+   PLAYER
+   ========================================================= */
+
+#player {
+    position: absolute;
+
+    width: 34px;
+    height: 34px;
+
+    background: #e8e8e8;
+
+    border: 3px solid #111;
+
+    border-radius: 5px;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 50;
+}
+
+
+/* =========================================================
+   NPC
+   ========================================================= */
+
+.npc {
+    position: absolute;
+
+    width: 38px;
+    height: 48px;
+
+    transform: translate(-50%, -50%);
+
+    z-index: 45;
+}
+
+.npc-body {
+    position: absolute;
+
+    width: 28px;
+    height: 30px;
+
+    left: 5px;
+    top: 17px;
+
+    background: #3d566b;
+
+    border: 3px solid #18222c;
+
+    border-radius: 6px;
+}
+
+.npc-head {
+    position: absolute;
+
+    width: 22px;
+    height: 22px;
+
+    left: 8px;
+    top: 0;
+
+    background: #c79268;
+
+    border: 3px solid #18222c;
+
+    border-radius: 50%;
+
+    z-index: 2;
+}
+
+.npc-visor {
+    position: absolute;
+
+    width: 16px;
+    height: 6px;
+
+    left: 11px;
+    top: 8px;
+
+    background: #80b6c8;
+
+    border: 1px solid #243b46;
+
+    border-radius: 3px;
+
+    z-index: 3;
+}
+
+.npc-name {
+    position: absolute;
+
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    bottom: 55px;
+
+    color: #f0f2f4;
+
+    font-size: 14px;
+    font-weight: bold;
+
+    white-space: nowrap;
+
+    text-shadow:
+        1px 1px 2px #000,
+        -1px -1px 2px #000,
+        1px -1px 2px #000,
+        -1px 1px 2px #000;
+}
+
+
+/* =========================================================
+   INTERACTION PROMPT
+   ========================================================= */
+
+#interaction-prompt {
+    position: fixed;
+
+    display: none;
+
+    left: 50%;
+    bottom: 90px;
+
+    transform: translateX(-50%);
+
+    padding: 12px 20px;
+
+    background: rgba(0, 0, 0, 0.88);
+
+    border: 1px solid #68737c;
+
+    border-radius: 7px;
+
+    color: #ffffff;
+
+    font-size: 15px;
+
+    z-index: 300;
+
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.35);
+}
+
+#interaction-prompt span {
+    color: #e8d27b;
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   DIALOGUE
+   ========================================================= */
+
+#dialogue {
+    position: fixed;
+
+    display: none;
+
+    left: 50%;
+    bottom: 30px;
+
+    transform: translateX(-50%);
+
+    width: min(760px, calc(100vw - 40px));
+
+    background: rgba(8, 11, 18, 0.96);
+
+    border: 2px solid #68737c;
+
+    border-radius: 10px;
+
+    padding: 20px 24px;
+
+    z-index: 400;
+
+    box-shadow:
+        0 10px 40px rgba(0, 0, 0, 0.55);
+}
+
+#dialogue-name {
+    color: #e8d27b;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    margin-bottom: 12px;
+}
+
+#dialogue-text {
+    color: #d8dde3;
+
+    font-size: 17px;
+
+    line-height: 1.5;
+
+    min-height: 55px;
+}
+
+#dialogue-buttons {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    margin-top: 18px;
+}
+
+.dialogue-button {
+    padding: 9px 18px;
+
+    border: none;
+
+    border-radius: 5px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+    background: #e8e8e8;
+
+    color: #111;
+}
+
+.dialogue-button:hover {
+    background: #ffffff;
+}
+
+#dialogue-close {
+    background: #39414a;
+    color: #ffffff;
+}
+
+#dialogue-close:hover {
+    background: #4a535d;
+}
+
+
+/* =========================================================
+   HUD
+   ========================================================= */
+
+#hud {
+    position: fixed;
+
+    top: 15px;
+    left: 15px;
+
+    min-width: 210px;
+
+    padding: 15px 20px;
+
+    background: rgba(0, 0, 0, 0.82);
+
+    border-radius: 8px;
+
+    z-index: 100;
+}
+
+#hud-title {
+    font-weight: bold;
+
+    margin-bottom: 10px;
+
+    color: #d8dde3;
+
+    letter-spacing: 1px;
+}
+
+.hud-row {
+    margin: 5px 0;
+}
+
+
+/* =========================================================
+   HEALTH / ENERGY BARS
+   ========================================================= */
+
+#health-bar-container,
+#energy-bar-container {
+    width: 170px;
+
+    height: 8px;
+
+    margin-top: 5px;
+
+    background: #252b31;
+
+    border-radius: 5px;
+
+    overflow: hidden;
+}
+
+#health-bar {
+    width: 100%;
+    height: 100%;
+
+    background: #9d4545;
+}
+
+#energy-bar {
+    width: 100%;
+    height: 100%;
+
+    background: #477ca8;
+}
+
+
+/* =========================================================
+   LOCATION
+   ========================================================= */
+
+#location {
+    position: fixed;
+
+    top: 15px;
+    right: 15px;
+
+    padding: 12px 18px;
+
+    background: rgba(0, 0, 0, 0.82);
+
+    border-radius: 8px;
+
+    z-index: 100;
+
+    color: #c8d0d8;
+}

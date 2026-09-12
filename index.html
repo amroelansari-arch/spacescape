@@ -35,9 +35,11 @@ body {
 #title-screen {
     width: 100vw;
     height: 100vh;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     text-align: center;
 
     background:
@@ -62,11 +64,15 @@ body {
 
 #play-button {
     padding: 15px 50px;
+
     font-size: 20px;
     font-weight: bold;
+
     cursor: pointer;
+
     border: none;
     border-radius: 6px;
+
     background: #e8e8e8;
     color: #111;
 }
@@ -82,15 +88,20 @@ body {
 
 #game-screen {
     display: none;
+
     width: 100vw;
     height: 100vh;
+
     position: relative;
+
     overflow: hidden;
 }
 
 #world-container {
     position: absolute;
+
     inset: 0;
+
     overflow: hidden;
 }
 
@@ -179,6 +190,7 @@ body {
     position: absolute;
 
     background: #505963;
+
     border: 4px solid #303740;
 
     box-shadow:
@@ -309,12 +321,7 @@ body {
     transform: translate(-50%, -50%);
 
     z-index: 45;
-
-    cursor: default;
 }
-
-
-/* NPC BODY */
 
 .npc-body {
     position: absolute;
@@ -331,9 +338,6 @@ body {
 
     border-radius: 6px;
 }
-
-
-/* NPC HEAD */
 
 .npc-head {
     position: absolute;
@@ -353,9 +357,6 @@ body {
     z-index: 2;
 }
 
-
-/* NPC VISOR */
-
 .npc-visor {
     position: absolute;
 
@@ -374,13 +375,11 @@ body {
     z-index: 3;
 }
 
-
-/* NPC NAME */
-
 .npc-name {
     position: absolute;
 
     left: 50%;
+
     transform: translateX(-50%);
 
     bottom: 55px;
@@ -434,13 +433,12 @@ body {
 
 #interaction-prompt span {
     color: #e8d27b;
-
     font-weight: bold;
 }
 
 
 /* =========================================================
-   DIALOGUE WINDOW
+   DIALOGUE
    ========================================================= */
 
 #dialogue {
@@ -473,7 +471,6 @@ body {
     color: #e8d27b;
 
     font-size: 18px;
-
     font-weight: bold;
 
     margin-bottom: 12px;
@@ -539,7 +536,7 @@ body {
     top: 15px;
     left: 15px;
 
-    min-width: 190px;
+    min-width: 210px;
 
     padding: 15px 20px;
 
@@ -562,6 +559,40 @@ body {
 
 .hud-row {
     margin: 5px 0;
+}
+
+
+/* =========================================================
+   HEALTH BAR
+   ========================================================= */
+
+#health-bar-container,
+#energy-bar-container {
+    width: 170px;
+
+    height: 8px;
+
+    margin-top: 5px;
+
+    background: #252b31;
+
+    border-radius: 5px;
+
+    overflow: hidden;
+}
+
+#health-bar {
+    width: 100%;
+    height: 100%;
+
+    background: #9d4545;
+}
+
+#energy-bar {
+    width: 100%;
+    height: 100%;
+
+    background: #477ca8;
 }
 
 
@@ -745,7 +776,6 @@ body {
     "
 ></div>
 
-
 <div
     class="tree"
     style="
@@ -753,7 +783,6 @@ body {
         top: 420px;
     "
 ></div>
-
 
 <div
     class="tree"
@@ -763,7 +792,6 @@ body {
     "
 ></div>
 
-
 <div
     class="tree"
     style="
@@ -771,7 +799,6 @@ body {
         top: 430px;
     "
 ></div>
-
 
 <div
     class="tree"
@@ -781,7 +808,6 @@ body {
     "
 ></div>
 
-
 <div
     class="tree"
     style="
@@ -790,7 +816,6 @@ body {
     "
 ></div>
 
-
 <div
     class="tree"
     style="
@@ -798,7 +823,6 @@ body {
         top: 1000px;
     "
 ></div>
-
 
 <div
     class="tree"
@@ -821,7 +845,6 @@ body {
     "
 ></div>
 
-
 <div
     class="rock"
     style="
@@ -830,7 +853,6 @@ body {
     "
 ></div>
 
-
 <div
     class="rock"
     style="
@@ -838,7 +860,6 @@ body {
         top: 620px;
     "
 ></div>
-
 
 <div
     class="rock"
@@ -850,7 +871,7 @@ body {
 
 
 <!-- =======================================================
-     COMMANDER KAEL NPC
+     COMMANDER KAEL
      ======================================================= -->
 
 <div
@@ -904,6 +925,19 @@ body {
     <div class="hud-row">
         Health:
         <span id="health">100</span>/100
+
+        <div id="health-bar-container">
+            <div id="health-bar"></div>
+        </div>
+    </div>
+
+    <div class="hud-row">
+        Energy:
+        <span id="energy">100</span>/100
+
+        <div id="energy-bar-container">
+            <div id="energy-bar"></div>
+        </div>
     </div>
 
     <div class="hud-row">
@@ -971,7 +1005,7 @@ body {
 <script>
 
 /* =========================================================
-   BASIC GAME VARIABLES
+   DOM ELEMENTS
    ========================================================= */
 
 const playButton =
@@ -986,13 +1020,8 @@ const gameScreen =
 const world =
     document.getElementById("world");
 
-const player =
+const playerElement =
     document.getElementById("player");
-
-
-/* =========================================================
-   NPC ELEMENTS
-   ========================================================= */
 
 const commanderKael =
     document.getElementById("commander-kael");
@@ -1015,29 +1044,206 @@ const dialogueNext =
 const dialogueClose =
     document.getElementById("dialogue-close");
 
+const levelElement =
+    document.getElementById("level");
+
+const healthElement =
+    document.getElementById("health");
+
+const energyElement =
+    document.getElementById("energy");
+
+const xpElement =
+    document.getElementById("xp");
+
+const healthBar =
+    document.getElementById("health-bar");
+
+const energyBar =
+    document.getElementById("energy-bar");
+
 
 /* =========================================================
-   PLAYER
+   PLAYER ENTITY
+   =========================================================
+
+   This is the beginning of the actual SpaceScape
+   player system.
+
+   Future systems will use this object instead of
+   scattering player information throughout the code.
    ========================================================= */
 
-let playerX = 1200;
-let playerY = 900;
+const player = {
 
-const playerSize = 34;
+    /* =====================================================
+       POSITION
+       ===================================================== */
 
-const speed = 5;
+    position: {
+
+        x: 1200,
+
+        y: 900
+
+    },
+
+
+    /* =====================================================
+       HEALTH
+       ===================================================== */
+
+    health: {
+
+        current: 100,
+
+        maximum: 100
+
+    },
+
+
+    /* =====================================================
+       ENERGY
+       ===================================================== */
+
+    energy: {
+
+        current: 100,
+
+        maximum: 100
+
+    },
+
+
+    /* =====================================================
+       PROGRESSION
+       ===================================================== */
+
+    level: 1,
+
+    xp: 0,
+
+
+    /* =====================================================
+       SKILLS
+       =====================================================
+
+       These are intentionally initialized now.
+
+       Actual skill systems will be built later.
+       ===================================================== */
+
+    skills: {
+
+        ballistics: 1,
+
+        energyWeapons: 1,
+
+        defense: 1,
+
+        mining: 1,
+
+        salvaging: 1,
+
+        xenobiology: 1,
+
+        engineering: 1,
+
+        crafting: 1,
+
+        hacking: 1,
+
+        navigation: 1
+
+    },
+
+
+    /* =====================================================
+       INVENTORY
+       =====================================================
+
+       Empty for now.
+
+       The inventory system comes later.
+       ===================================================== */
+
+    inventory: [],
+
+
+    /* =====================================================
+       EQUIPMENT
+       =====================================================
+
+       Empty equipment slots for future systems.
+       ===================================================== */
+
+    equipment: {
+
+        head: null,
+
+        body: null,
+
+        weapon: null,
+
+        offhand: null,
+
+        legs: null,
+
+        feet: null,
+
+        accessory: null
+
+    },
+
+
+    /* =====================================================
+       MOVEMENT
+       ===================================================== */
+
+    movement: {
+
+        speed: 5,
+
+        moving: false
+
+    }
+
+};
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
 
 const keys = {};
 
 
 /* =========================================================
-   COMMANDER KAEL
+   NPC DATA
    ========================================================= */
 
-const kaelX = 1050;
-const kaelY = 650;
+const commanderKaelData = {
 
-const npcInteractionDistance = 85;
+    id: "commander_kael",
+
+    name: "Commander Kael",
+
+    position: {
+
+        x: 1050,
+
+        y: 650
+
+    },
+
+    interactionDistance: 85
+
+};
+
+
+/* =========================================================
+   DIALOGUE STATE
+   ========================================================= */
 
 let dialogueOpen = false;
 
@@ -1057,6 +1263,7 @@ const kaelDialogue = [
     "Commander Kael: I need someone to find out what happened. Be careful. Whatever took them may still be out there.",
 
     "Commander Kael: Talk to me again when you're ready. This could be your first real assignment."
+
 ];
 
 
@@ -1146,7 +1353,8 @@ const obstacles = [
 function isColliding(x, y) {
 
     const half =
-        playerSize / 2;
+        34 / 2;
+
 
     const playerLeft =
         x - half;
@@ -1161,7 +1369,9 @@ function isColliding(x, y) {
         y + half;
 
 
-    for (const obstacle of obstacles) {
+    for (
+        const obstacle of obstacles
+    ) {
 
         const obstacleLeft =
             obstacle.x;
@@ -1203,16 +1413,19 @@ function isColliding(x, y) {
 
 
 /* =========================================================
-   DISTANCE BETWEEN PLAYER AND NPC
+   PLAYER DISTANCE TO NPC
    ========================================================= */
 
 function getDistanceToKael() {
 
     const dx =
-        playerX - kaelX;
+        player.position.x -
+        commanderKaelData.position.x;
 
     const dy =
-        playerY - kaelY;
+        player.position.y -
+        commanderKaelData.position.y;
+
 
     return Math.sqrt(
         dx * dx +
@@ -1223,7 +1436,7 @@ function getDistanceToKael() {
 
 
 /* =========================================================
-   CHECK NPC INTERACTION
+   INTERACTION CHECK
    ========================================================= */
 
 function updateInteraction() {
@@ -1244,7 +1457,7 @@ function updateInteraction() {
 
     if (
         distance <=
-        npcInteractionDistance
+        commanderKaelData.interactionDistance
     ) {
 
         interactionPrompt.style.display =
@@ -1272,7 +1485,7 @@ function openDialogue() {
 
     if (
         distance >
-        npcInteractionDistance
+        commanderKaelData.interactionDistance
     ) {
 
         return;
@@ -1305,7 +1518,7 @@ function openDialogue() {
 function updateDialogue() {
 
     dialogueName.textContent =
-        "Commander Kael";
+        commanderKaelData.name;
 
 
     dialogueText.textContent =
@@ -1337,7 +1550,9 @@ function updateDialogue() {
 function nextDialogue() {
 
     if (!dialogueOpen) {
+
         return;
+
     }
 
 
@@ -1377,245 +1592,213 @@ function closeDialogue() {
 
 
 /* =========================================================
-   PLAY BUTTON
+   UPDATE PLAYER HUD
    ========================================================= */
 
-playButton.addEventListener(
-    "click",
-    function () {
+function updatePlayerHUD() {
 
-        titleScreen.style.display =
-            "none";
+    levelElement.textContent =
+        player.level;
 
-        gameScreen.style.display =
-            "block";
+    healthElement.textContent =
+        player.health.current;
 
-        updateCamera();
+    energyElement.textContent =
+        player.energy.current;
 
-        updateInteraction();
+    xpElement.textContent =
+        player.xp;
 
-    }
-);
+
+    const healthPercent =
+        (
+            player.health.current /
+            player.health.maximum
+        ) * 100;
+
+
+    const energyPercent =
+        (
+            player.energy.current /
+            player.energy.maximum
+        ) * 100;
+
+
+    healthBar.style.width =
+        healthPercent + "%";
+
+    energyBar.style.width =
+        energyPercent + "%";
+
+}
 
 
 /* =========================================================
-   KEYBOARD
+   DRAW PLAYER
    ========================================================= */
 
-document.addEventListener(
-    "keydown",
-    function (event) {
+function drawPlayer() {
 
-        const key =
-            event.key.toLowerCase();
+    playerElement.style.left =
+        player.position.x + "px";
 
+    playerElement.style.top =
+        player.position.y + "px";
 
-        keys[key] = true;
-
-
-        /* Prevent repeated E presses */
-
-        if (
-            key === "e" &&
-            !event.repeat
-        ) {
-
-            if (dialogueOpen) {
-
-                nextDialogue();
-
-            } else {
-
-                openDialogue();
-
-            }
-
-        }
-
-
-        /* Escape closes dialogue */
-
-        if (
-            key === "escape"
-        ) {
-
-            if (dialogueOpen) {
-
-                closeDialogue();
-
-            }
-
-        }
-
-    }
-);
-
-
-document.addEventListener(
-    "keyup",
-    function (event) {
-
-        keys[
-            event.key.toLowerCase()
-        ] = false;
-
-    }
-);
+}
 
 
 /* =========================================================
    PLAYER MOVEMENT
    ========================================================= */
 
-function updatePlayer() {
+function updatePlayerMovement() {
+
+    if (dialogueOpen) {
+
+        player.movement.moving =
+            false;
+
+        return;
+
+    }
 
 
-    /*
-       Player cannot move while dialogue
-       is open.
-    */
+    let newX =
+        player.position.x;
 
-    if (!dialogueOpen) {
-
-        let newX =
-            playerX;
-
-        let newY =
-            playerY;
+    let newY =
+        player.position.y;
 
 
-        /* UP */
-
-        if (
-            keys["w"] ||
-            keys["arrowup"]
-        ) {
-
-            newY -= speed;
-
-        }
+    let moving =
+        false;
 
 
-        /* DOWN */
+    /* =====================================================
+       UP
+       ===================================================== */
 
-        if (
-            keys["s"] ||
-            keys["arrowdown"]
-        ) {
+    if (
+        keys["w"] ||
+        keys["arrowup"]
+    ) {
 
-            newY += speed;
+        newY -=
+            player.movement.speed;
 
-        }
-
-
-        /* LEFT */
-
-        if (
-            keys["a"] ||
-            keys["arrowleft"]
-        ) {
-
-            newX -= speed;
-
-        }
-
-
-        /* RIGHT */
-
-        if (
-            keys["d"] ||
-            keys["arrowright"]
-        ) {
-
-            newX += speed;
-
-        }
-
-
-        /* =================================================
-           COLLISION
-           ================================================= */
-
-        if (
-            !isColliding(
-                newX,
-                playerY
-            )
-        ) {
-
-            playerX =
-                newX;
-
-        }
-
-
-        if (
-            !isColliding(
-                playerX,
-                newY
-            )
-        ) {
-
-            playerY =
-                newY;
-
-        }
-
-
-        /* =================================================
-           WORLD BOUNDARIES
-           ================================================= */
-
-        playerX =
-            Math.max(
-                20,
-                Math.min(
-                    2380,
-                    playerX
-                )
-            );
-
-
-        playerY =
-            Math.max(
-                20,
-                Math.min(
-                    1780,
-                    playerY
-                )
-            );
+        moving = true;
 
     }
 
 
     /* =====================================================
-       DRAW PLAYER
+       DOWN
        ===================================================== */
 
-    player.style.left =
-        playerX + "px";
+    if (
+        keys["s"] ||
+        keys["arrowdown"]
+    ) {
 
-    player.style.top =
-        playerY + "px";
+        newY +=
+            player.movement.speed;
+
+        moving = true;
+
+    }
 
 
     /* =====================================================
-       CAMERA
+       LEFT
        ===================================================== */
 
-    updateCamera();
+    if (
+        keys["a"] ||
+        keys["arrowleft"]
+    ) {
+
+        newX -=
+            player.movement.speed;
+
+        moving = true;
+
+    }
 
 
     /* =====================================================
-       NPC INTERACTION
+       RIGHT
        ===================================================== */
 
-    updateInteraction();
+    if (
+        keys["d"] ||
+        keys["arrowright"]
+    ) {
+
+        newX +=
+            player.movement.speed;
+
+        moving = true;
+
+    }
 
 
-    requestAnimationFrame(
-        updatePlayer
-    );
+    player.movement.moving =
+        moving;
+
+
+    /* =====================================================
+       COLLISION
+       ===================================================== */
+
+    if (
+        !isColliding(
+            newX,
+            player.position.y
+        )
+    ) {
+
+        player.position.x =
+            newX;
+
+    }
+
+
+    if (
+        !isColliding(
+            player.position.x,
+            newY
+        )
+    ) {
+
+        player.position.y =
+            newY;
+
+    }
+
+
+    /* =====================================================
+       WORLD BOUNDARIES
+       ===================================================== */
+
+    player.position.x =
+        Math.max(
+            20,
+            Math.min(
+                2380,
+                player.position.x
+            )
+        );
+
+
+    player.position.y =
+        Math.max(
+            20,
+            Math.min(
+                1780,
+                player.position.y
+            )
+        );
 
 }
 
@@ -1634,12 +1817,12 @@ function updateCamera() {
 
 
     let cameraX =
-        playerX -
+        player.position.x -
         screenWidth / 2;
 
 
     let cameraY =
-        playerY -
+        player.position.y -
         screenHeight / 2;
 
 
@@ -1674,12 +1857,134 @@ function updateCamera() {
 
 
 /* =========================================================
+   GAME UPDATE LOOP
+   ========================================================= */
+
+function gameLoop() {
+
+    updatePlayerMovement();
+
+    drawPlayer();
+
+    updatePlayerHUD();
+
+    updateInteraction();
+
+    updateCamera();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+}
+
+
+/* =========================================================
+   PLAY BUTTON
+   ========================================================= */
+
+playButton.addEventListener(
+    "click",
+    function () {
+
+        titleScreen.style.display =
+            "none";
+
+        gameScreen.style.display =
+            "block";
+
+        drawPlayer();
+
+        updatePlayerHUD();
+
+        updateCamera();
+
+        updateInteraction();
+
+    }
+);
+
+
+/* =========================================================
+   KEYBOARD DOWN
+   ========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        const key =
+            event.key.toLowerCase();
+
+
+        keys[key] = true;
+
+
+        /* =================================================
+           INTERACTION KEY
+           ================================================= */
+
+        if (
+            key === "e" &&
+            !event.repeat
+        ) {
+
+            if (dialogueOpen) {
+
+                nextDialogue();
+
+            } else {
+
+                openDialogue();
+
+            }
+
+        }
+
+
+        /* =================================================
+           ESCAPE
+           ================================================= */
+
+        if (
+            key === "escape"
+        ) {
+
+            if (dialogueOpen) {
+
+                closeDialogue();
+
+            }
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   KEYBOARD UP
+   ========================================================= */
+
+document.addEventListener(
+    "keyup",
+    function(event) {
+
+        keys[
+            event.key.toLowerCase()
+        ] = false;
+
+    }
+);
+
+
+/* =========================================================
    DIALOGUE BUTTONS
    ========================================================= */
 
 dialogueNext.addEventListener(
     "click",
-    function () {
+    function() {
 
         nextDialogue();
 
@@ -1689,7 +1994,7 @@ dialogueNext.addEventListener(
 
 dialogueClose.addEventListener(
     "click",
-    function () {
+    function() {
 
         closeDialogue();
 
@@ -1703,7 +2008,7 @@ dialogueClose.addEventListener(
 
 window.addEventListener(
     "resize",
-    function () {
+    function() {
 
         updateCamera();
 
@@ -1712,10 +2017,19 @@ window.addEventListener(
 
 
 /* =========================================================
+   INITIALIZE PLAYER
+   ========================================================= */
+
+drawPlayer();
+
+updatePlayerHUD();
+
+
+/* =========================================================
    START GAME LOOP
    ========================================================= */
 
-updatePlayer();
+gameLoop();
 
 </script>
 

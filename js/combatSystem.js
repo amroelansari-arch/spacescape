@@ -169,7 +169,105 @@ function isWithinCombatRange(player, enemy) {
     return distance <= COMBAT_RANGE;
 }
 
-function movePlayerTowardTarget(player, enemy) {
+/* =======================================================
+   COMBAT APPROACH MOVEMENT
+   ======================================================= */
+
+function isValidMovementPosition(
+    x,
+    y
+) {
+    if (
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
+    ) {
+        return false;
+    }
+
+    if (
+        x < 0 ||
+        x > WORLD_WIDTH ||
+        y < 0 ||
+        y > WORLD_HEIGHT
+    ) {
+        return false;
+    }
+
+    return !isColliding(
+        x,
+        y
+    );
+}
+
+function getMovementCandidates(
+    dx,
+    dy,
+    speed
+) {
+    const distance =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
+
+    if (distance === 0) {
+        return [];
+    }
+
+    const angle =
+        Math.atan2(
+            dy,
+            dx
+        );
+
+    /*
+     * Try the direct route first.
+     *
+     * If that route is blocked by a building,
+     * the remaining directions allow the player
+     * to naturally steer around the obstacle.
+     */
+
+    const angleOffsets = [
+        0,
+        Math.PI / 6,
+        -Math.PI / 6,
+        Math.PI / 3,
+        -Math.PI / 3,
+        Math.PI / 2,
+        -Math.PI / 2,
+        (2 * Math.PI) / 3,
+        -(2 * Math.PI) / 3,
+        Math.PI
+    ];
+
+    return angleOffsets.map(
+        offset => {
+            const candidateAngle =
+                angle + offset;
+
+            return {
+                x:
+                    Math.cos(
+                        candidateAngle
+                    ) * speed,
+
+                y:
+                    Math.sin(
+                        candidateAngle
+                    ) * speed,
+
+                angleDifference:
+                    Math.abs(offset)
+            };
+        }
+    );
+}
+
+function movePlayerTowardTarget(
+    player,
+    enemy
+) {
     if (
         !player ||
         !enemy ||
@@ -193,13 +291,19 @@ function movePlayerTowardTarget(player, enemy) {
             dy * dy
         );
 
-    if (distance <= COMBAT_RANGE) {
-        player.movement.moving = false;
+    if (
+        distance <= COMBAT_RANGE
+    ) {
+        player.movement.moving =
+            false;
+
         return;
     }
 
     if (distance === 0) {
-        player.movement.moving = false;
+        player.movement.moving =
+            false;
+
         return;
     }
 
@@ -211,12 +315,118 @@ function movePlayerTowardTarget(player, enemy) {
             : 5;
 
     /*
-     * Move directly toward the enemy using
-     * the normalized direction vector.
+     * Never move closer than the combat range.
+     */
+
+    const moveDistance =
+        Math.min(
+            speed,
+            distance - COMBAT_RANGE
+        );
+
+    const candidates =
+        getMovementCandidates(
+            dx,
+            dy,
+            moveDistance
+        );
+
+    let bestCandidate = null;
+    let bestScore = Infinity;
+
+    for (
+        const candidate
+        of candidates
+    ) {
+        const newX =
+            player.position.x +
+            candidate.x;
+
+        const newY =
+            player.position.y +
+            candidate.y;
+
+        if (
+            !isValidMovementPosition(
+                newX,
+                newY
+            )
+        ) {
+            continue;
+        }
+
+        const newDistance =
+            getDistance(
+                newX,
+                newY,
+                enemy.position.x,
+                enemy.position.y
+            );
+
+        /*
+         * Lower score is better.
+         *
+         * Distance is the primary factor.
+         * The small angle penalty makes the player
+         * prefer continuing toward the enemy when
+         * several routes are available.
+         */
+
+        const score =
+            newDistance +
+            candidate.angleDifference *
+            8;
+
+        if (
+            newDistance <=
+            COMBAT_RANGE
+        ) {
+            bestCandidate = {
+                x: newX,
+                y: newY
+            };
+
+            bestScore = score;
+
+            break;
+        }
+
+        if (
+            score < bestScore
+        ) {
+            bestScore = score;
+
+            bestCandidate = {
+                x: newX,
+                y: newY
+            };
+        }
+    }
+
+    /*
+     * If a valid movement was found, use it.
+     */
+
+    if (bestCandidate) {
+        player.position.x =
+            bestCandidate.x;
+
+        player.position.y =
+            bestCandidate.y;
+
+        player.movement.moving =
+            true;
+
+        return;
+    }
+
+    /*
+     * Emergency fallback:
      *
-     * This is important for diagonal approaches.
-     * The player should close the actual distance
-     * to the enemy rather than favoring one axis.
+     * If every candidate is blocked, try each
+     * axis independently. This prevents the
+     * player from becoming permanently stuck
+     * against an obstacle corner.
      */
 
     const normalizedX =
@@ -225,83 +435,55 @@ function movePlayerTowardTarget(player, enemy) {
     const normalizedY =
         dy / distance;
 
-    const moveDistance =
-        Math.min(
-            speed,
-            distance - COMBAT_RANGE
-        );
-
-    const newX =
-        player.position.x +
+    const xMove =
         normalizedX *
         moveDistance;
 
-    const newY =
-        player.position.y +
+    const yMove =
         normalizedY *
         moveDistance;
 
     let moved = false;
 
-    /*
-     * First try the complete diagonal movement.
-     */
+    const xOnlyX =
+        player.position.x +
+        xMove;
 
     if (
-        newX >= 0 &&
-        newX <= WORLD_WIDTH &&
-        newY >= 0 &&
-        newY <= WORLD_HEIGHT &&
-        !isColliding(
-            newX,
-            newY
+        isValidMovementPosition(
+            xOnlyX,
+            player.position.y
         )
     ) {
-        player.position.x = newX;
-        player.position.y = newY;
+        player.position.x =
+            xOnlyX;
 
         moved = true;
     }
 
-    /*
-     * If the diagonal position is blocked by
-     * world collision, allow the player to
-     * continue along whichever individual axis
-     * remains available.
-     *
-     * This preserves normal collision behavior
-     * without breaking diagonal combat approach.
-     */
+    const yOnlyY =
+        player.position.y +
+        yMove;
 
-    if (!moved) {
-        if (
-            newX >= 0 &&
-            newX <= WORLD_WIDTH &&
-            !isColliding(
-                newX,
-                player.position.y
-            )
-        ) {
-            player.position.x = newX;
-            moved = true;
-        }
+    if (
+        isValidMovementPosition(
+            player.position.x,
+            yOnlyY
+        )
+    ) {
+        player.position.y =
+            yOnlyY;
 
-        if (
-            newY >= 0 &&
-            newY <= WORLD_HEIGHT &&
-            !isColliding(
-                player.position.x,
-                newY
-            )
-        ) {
-            player.position.y = newY;
-            moved = true;
-        }
+        moved = true;
     }
 
     player.movement.moving =
         moved;
 }
+
+/* =======================================================
+   PLAYER ATTACK
+   ======================================================= */
 
 function processPlayerAttack(
     player,
@@ -360,6 +542,10 @@ function processPlayerAttack(
     }
 }
 
+/* =======================================================
+   ENEMY ATTACK
+   ======================================================= */
+
 function processEnemyAttack(
     player,
     enemy,
@@ -417,6 +603,10 @@ function processEnemyAttack(
     }
 }
 
+/* =======================================================
+   COMBAT UPDATE
+   ======================================================= */
+
 export function updateCombat(player) {
     if (!combatState.active) {
         return;
@@ -437,6 +627,12 @@ export function updateCombat(player) {
         stopCombat();
         return;
     }
+
+    /*
+     * Keep approaching until the actual distance
+     * between the player and enemy is within the
+     * combat range.
+     */
 
     if (
         !isWithinCombatRange(

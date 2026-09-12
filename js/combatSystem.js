@@ -22,47 +22,96 @@ import {
 } from "./xp.js";
 
 import {
-    player as gamePlayer,
     applyLevelUp
 } from "./player.js";
 
 
+/* =======================================================
+   COMBAT CONSTANTS
+   ======================================================= */
+
 const PLAYER_ATTACK_SPEED = 2000;
+
 const ENEMY_ATTACK_SPEED = 2500;
+
 const COMBAT_RANGE = 100;
 
+/*
+ * Small tolerance used when determining whether
+ * the player is close enough to begin combat.
+ *
+ * This prevents the player from getting stuck
+ * a few pixels outside the exact combat range
+ * after obstacle-aware movement.
+ */
+const COMBAT_ENGAGEMENT_BUFFER = 5;
+
+const COMBAT_ENGAGEMENT_RANGE =
+    COMBAT_RANGE +
+    COMBAT_ENGAGEMENT_BUFFER;
+
+
+/* =======================================================
+   COMBAT STATE
+   ======================================================= */
 
 const combatState = {
     targetEnemyId: null,
+
     playerNextAttackTime: 0,
+
     enemyNextAttackTime: 0,
+
     active: false,
+
     engaged: false,
+
     combatEndTime: 0
 };
 
+
+/* =======================================================
+   COMBAT FEEDBACK
+   ======================================================= */
 
 const combatFeedback = [];
 
 let feedbackId = 0;
 
 
+/* =======================================================
+   GET COMBAT STATE
+   ======================================================= */
+
 export function getCombatState() {
+
     return combatState;
+
 }
 
 
+/* =======================================================
+   GET CURRENT COMBAT TARGET
+   ======================================================= */
+
 export function getCurrentCombatTarget() {
 
-    if (!combatState.targetEnemyId) {
+    if (
+        !combatState.targetEnemyId
+    ) {
         return null;
     }
 
     return getWorldEnemyById(
         combatState.targetEnemyId
     );
+
 }
 
+
+/* =======================================================
+   ADD COMBAT FEEDBACK
+   ======================================================= */
 
 function addCombatFeedback(
     targetType,
@@ -84,20 +133,35 @@ function addCombatFeedback(
     }
 
     combatFeedback.push({
+
         id: ++feedbackId,
+
         targetType,
+
         targetId,
+
         damage,
+
         x,
+
         y,
+
         isMiss
+
     });
+
 }
 
 
+/* =======================================================
+   CONSUME COMBAT FEEDBACK
+   ======================================================= */
+
 export function consumeCombatFeedback() {
 
-    if (combatFeedback.length === 0) {
+    if (
+        combatFeedback.length === 0
+    ) {
         return [];
     }
 
@@ -108,6 +172,7 @@ export function consumeCombatFeedback() {
         );
 
     return pendingFeedback;
+
 }
 
 
@@ -161,6 +226,7 @@ export function startCombat(
     );
 
     return true;
+
 }
 
 
@@ -170,7 +236,9 @@ export function startCombat(
 
 export function stopCombat() {
 
-    if (combatState.active) {
+    if (
+        combatState.active
+    ) {
 
         console.log(
             "Combat ended."
@@ -178,13 +246,24 @@ export function stopCombat() {
 
         combatState.combatEndTime =
             performance.now();
+
     }
 
-    combatState.targetEnemyId = null;
-    combatState.active = false;
-    combatState.engaged = false;
-    combatState.playerNextAttackTime = 0;
-    combatState.enemyNextAttackTime = 0;
+    combatState.targetEnemyId =
+        null;
+
+    combatState.active =
+        false;
+
+    combatState.engaged =
+        false;
+
+    combatState.playerNextAttackTime =
+        0;
+
+    combatState.enemyNextAttackTime =
+        0;
+
 }
 
 
@@ -214,7 +293,11 @@ function isWithinCombatRange(
             enemy.position.y
         );
 
-    return distance <= COMBAT_RANGE;
+    return (
+        distance <=
+        COMBAT_ENGAGEMENT_RANGE
+    );
+
 }
 
 
@@ -247,6 +330,7 @@ function isValidMovementPosition(
         x,
         y
     );
+
 }
 
 
@@ -266,7 +350,9 @@ function getMovementCandidates(
             dy * dy
         );
 
-    if (distance === 0) {
+    if (
+        distance === 0
+    ) {
         return [];
     }
 
@@ -277,41 +363,60 @@ function getMovementCandidates(
         );
 
     const angleOffsets = [
+
         0,
+
         Math.PI / 6,
+
         -Math.PI / 6,
+
         Math.PI / 3,
+
         -Math.PI / 3,
+
         Math.PI / 2,
+
         -Math.PI / 2,
+
         (2 * Math.PI) / 3,
+
         -(2 * Math.PI) / 3,
+
         Math.PI
+
     ];
 
     return angleOffsets.map(
         offset => {
 
             const candidateAngle =
-                angle + offset;
+                angle +
+                offset;
 
             return {
 
                 x:
                     Math.cos(
                         candidateAngle
-                    ) * speed,
+                    ) *
+                    speed,
 
                 y:
                     Math.sin(
                         candidateAngle
-                    ) * speed,
+                    ) *
+                    speed,
 
                 angleDifference:
-                    Math.abs(offset)
+                    Math.abs(
+                        offset
+                    )
+
             };
+
         }
     );
+
 }
 
 
@@ -347,23 +452,35 @@ function movePlayerTowardTarget(
             dy * dy
         );
 
+
+    /* ===================================================
+       ALREADY CLOSE ENOUGH
+       =================================================== */
+
     if (
-        distance <= COMBAT_RANGE
+        distance <=
+        COMBAT_ENGAGEMENT_RANGE
     ) {
 
         player.movement.moving =
             false;
 
         return;
+
     }
 
-    if (distance === 0) {
+
+    if (
+        distance === 0
+    ) {
 
         player.movement.moving =
             false;
 
         return;
+
     }
+
 
     const speed =
         Number.isFinite(
@@ -372,11 +489,22 @@ function movePlayerTowardTarget(
             ? player.movement.speed
             : 5;
 
+
+    /*
+     * Continue using the original 100-unit
+     * combat range for movement calculation.
+     *
+     * The extra 5 units are only an engagement
+     * tolerance, not a reason to stop movement
+     * prematurely.
+     */
     const moveDistance =
         Math.min(
             speed,
-            distance - COMBAT_RANGE
+            distance -
+            COMBAT_RANGE
         );
+
 
     const candidates =
         getMovementCandidates(
@@ -385,8 +513,13 @@ function movePlayerTowardTarget(
             moveDistance
         );
 
-    let bestCandidate = null;
-    let bestScore = Infinity;
+
+    let bestCandidate =
+        null;
+
+    let bestScore =
+        Infinity;
+
 
     for (
         const candidate
@@ -401,6 +534,7 @@ function movePlayerTowardTarget(
             player.position.y +
             candidate.y;
 
+
         if (
             !isValidMovementPosition(
                 newX,
@@ -410,6 +544,7 @@ function movePlayerTowardTarget(
             continue;
         }
 
+
         const newDistance =
             getDistance(
                 newX,
@@ -418,42 +553,63 @@ function movePlayerTowardTarget(
                 enemy.position.y
             );
 
+
         const score =
             newDistance +
             candidate.angleDifference *
             8;
 
+
+        /*
+         * If this movement puts the player
+         * inside the engagement range, use it
+         * immediately.
+         */
         if (
             newDistance <=
-            COMBAT_RANGE
+            COMBAT_ENGAGEMENT_RANGE
         ) {
 
             bestCandidate = {
+
                 x: newX,
+
                 y: newY
+
             };
 
             bestScore =
                 score;
 
             break;
+
         }
 
+
         if (
-            score < bestScore
+            score <
+            bestScore
         ) {
 
             bestScore =
                 score;
 
             bestCandidate = {
+
                 x: newX,
+
                 y: newY
+
             };
+
         }
+
     }
 
-    if (bestCandidate) {
+
+    if (
+        bestCandidate
+    ) {
 
         player.position.x =
             bestCandidate.x;
@@ -465,13 +621,22 @@ function movePlayerTowardTarget(
             true;
 
         return;
+
     }
 
+
+    /* ===================================================
+       AXIS FALLBACK
+       =================================================== */
+
     const normalizedX =
-        dx / distance;
+        dx /
+        distance;
 
     const normalizedY =
-        dy / distance;
+        dy /
+        distance;
+
 
     const xMove =
         normalizedX *
@@ -481,11 +646,15 @@ function movePlayerTowardTarget(
         normalizedY *
         moveDistance;
 
-    let moved = false;
+
+    let moved =
+        false;
+
 
     const xOnlyX =
         player.position.x +
         xMove;
+
 
     if (
         isValidMovementPosition(
@@ -497,12 +666,16 @@ function movePlayerTowardTarget(
         player.position.x =
             xOnlyX;
 
-        moved = true;
+        moved =
+            true;
+
     }
+
 
     const yOnlyY =
         player.position.y +
         yMove;
+
 
     if (
         isValidMovementPosition(
@@ -514,11 +687,15 @@ function movePlayerTowardTarget(
         player.position.y =
             yOnlyY;
 
-        moved = true;
+        moved =
+            true;
+
     }
+
 
     player.movement.moving =
         moved;
+
 }
 
 
@@ -539,6 +716,7 @@ function processPlayerAttack(
         return;
     }
 
+
     const result =
         performAttack(
             player,
@@ -546,15 +724,22 @@ function processPlayerAttack(
             player.attack
         );
 
+
     combatState.playerNextAttackTime =
         now +
         PLAYER_ATTACK_SPEED;
 
-    if (!result.success) {
+
+    if (
+        !result.success
+    ) {
         return;
     }
 
-    if (result.hit) {
+
+    if (
+        result.hit
+    ) {
 
         addCombatFeedback(
             "enemy",
@@ -564,6 +749,7 @@ function processPlayerAttack(
             enemy.position.y,
             false
         );
+
 
         console.log(
             `Player hits ${enemy.name} for ${result.damage}. ` +
@@ -581,10 +767,13 @@ function processPlayerAttack(
             true
         );
 
+
         console.log(
             `Player misses ${enemy.name}.`
         );
+
     }
+
 }
 
 
@@ -605,6 +794,7 @@ function processEnemyAttack(
         return;
     }
 
+
     const result =
         performAttack(
             enemy,
@@ -612,15 +802,22 @@ function processEnemyAttack(
             enemy.attack
         );
 
+
     combatState.enemyNextAttackTime =
         now +
         ENEMY_ATTACK_SPEED;
 
-    if (!result.success) {
+
+    if (
+        !result.success
+    ) {
         return;
     }
 
-    if (result.hit) {
+
+    if (
+        result.hit
+    ) {
 
         addCombatFeedback(
             "player",
@@ -630,6 +827,7 @@ function processEnemyAttack(
             player.position.y,
             false
         );
+
 
         console.log(
             `${enemy.name} hits player for ${result.damage}. ` +
@@ -647,10 +845,13 @@ function processEnemyAttack(
             true
         );
 
+
         console.log(
             `${enemy.name} misses player.`
         );
+
     }
+
 }
 
 
@@ -658,27 +859,45 @@ function processEnemyAttack(
    COMBAT UPDATE
    ======================================================= */
 
-export function updateCombat(player) {
+export function updateCombat(
+    player
+) {
 
-    if (!combatState.active) {
+    if (
+        !combatState.active
+    ) {
         return;
     }
+
 
     const enemy =
         getCurrentCombatTarget();
 
+
     if (!enemy) {
+
         stopCombat();
+
         return;
+
     }
+
 
     if (
         !isTargetAlive(player) ||
         !isTargetAlive(enemy)
     ) {
+
         stopCombat();
+
         return;
+
     }
+
+
+    /* ===================================================
+       APPROACH TARGET
+       =================================================== */
 
     if (
         !isWithinCombatRange(
@@ -693,12 +912,21 @@ export function updateCombat(player) {
         );
 
         return;
+
     }
+
+
+    /* ===================================================
+       ENGAGED
+       =================================================== */
 
     player.movement.moving =
         false;
 
-    if (!combatState.engaged) {
+
+    if (
+        !combatState.engaged
+    ) {
 
         combatState.engaged =
             true;
@@ -711,10 +939,17 @@ export function updateCombat(player) {
 
         combatState.enemyNextAttackTime =
             now;
+
     }
+
 
     const now =
         performance.now();
+
+
+    /* ===================================================
+       PLAYER ATTACK
+       =================================================== */
 
     processPlayerAttack(
         player,
@@ -722,14 +957,14 @@ export function updateCombat(player) {
         now
     );
 
-    /*
-     * Enemy has died.
-     *
-     * Award XP exactly once before
-     * combat is stopped.
-     */
 
-    if (!isTargetAlive(enemy)) {
+    /* ===================================================
+       ENEMY DEFEATED
+       =================================================== */
+
+    if (
+        !isTargetAlive(enemy)
+    ) {
 
         const xpReward =
             Number.isFinite(
@@ -738,10 +973,14 @@ export function updateCombat(player) {
                 ? enemy.xpReward
                 : 0;
 
-        if (xpReward > 0) {
+
+        if (
+            xpReward > 0
+        ) {
 
             const previousLevel =
                 player.level;
+
 
             const xpResult =
                 awardXP(
@@ -749,13 +988,16 @@ export function updateCombat(player) {
                     xpReward
                 );
 
+
             console.log(
                 `${enemy.name} defeated. ` +
                 `+${xpResult.awarded} XP.`
             );
 
+
             if (
-                xpResult.levelsGained > 0
+                xpResult.levelsGained >
+                0
             ) {
 
                 for (
@@ -766,27 +1008,40 @@ export function updateCombat(player) {
                 ) {
 
                     applyLevelUp();
+
                 }
+
 
                 console.log(
                     `Player reached level ${player.level}.`
                 );
 
+
                 console.log(
                     `Previous level: ${previousLevel}`
                 );
+
             }
+
         } else {
 
             console.log(
                 `${enemy.name} defeated.`
             );
+
         }
+
 
         stopCombat();
 
         return;
+
     }
+
+
+    /* ===================================================
+       ENEMY ATTACK
+       =================================================== */
 
     processEnemyAttack(
         player,
@@ -794,12 +1049,17 @@ export function updateCombat(player) {
         now
     );
 
-    if (!isTargetAlive(player)) {
+
+    if (
+        !isTargetAlive(player)
+    ) {
 
         console.log(
             "Player defeated."
         );
 
         stopCombat();
+
     }
+
 }

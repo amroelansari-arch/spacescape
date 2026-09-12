@@ -1,3 +1,15 @@
+
+Those are **not comments to HTML**. The browser renders them as actual text, which is why you're seeing the weird marks throughout the game.
+
+They appear around the title, building labels, NPC, HUD, interaction prompt, and dialogue because those sections were pasted with Markdown fences into the actual HTML file.
+
+We also need to add the missing `.enemy` CSS so the three enemies are actually visible.
+
+## 1. Replace `index.html` completely
+
+Use this exact version:
+
+```html id="48217"
 <!DOCTYPE html>
 
 <html lang="en">
@@ -7,9 +19,8 @@
 <meta charset="UTF-8">
 
 <meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
-
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
 >
 
 <title>SpaceScape</title>
@@ -31,7 +42,6 @@ content="width=device-width, initial-scale=1.0"
 
 <div id="title-screen">
 
-```
 <div>
 
     <h1>SpaceScape</h1>
@@ -43,7 +53,6 @@ content="width=device-width, initial-scale=1.0"
     </button>
 
 </div>
-```
 
 </div>
 
@@ -101,11 +110,9 @@ content="width=device-width, initial-scale=1.0"
     "
 >
 
-```
 <div class="building-label">
     COLONY COMMAND
 </div>
-```
 
 </div>
 
@@ -119,11 +126,9 @@ content="width=device-width, initial-scale=1.0"
     "
 >
 
-```
 <div class="building-label">
     MEDICAL CENTER
 </div>
-```
 
 </div>
 
@@ -137,11 +142,9 @@ content="width=device-width, initial-scale=1.0"
     "
 >
 
-```
 <div class="building-label">
     ENGINEERING BAY
 </div>
-```
 
 </div>
 
@@ -155,11 +158,9 @@ content="width=device-width, initial-scale=1.0"
     "
 >
 
-```
 <div class="building-label">
     TRADING POST
 </div>
-```
 
 </div>
 
@@ -280,7 +281,6 @@ content="width=device-width, initial-scale=1.0"
     "
 >
 
-```
 <div class="npc-name">
     Commander Kael
 </div>
@@ -290,7 +290,6 @@ content="width=device-width, initial-scale=1.0"
 <div class="npc-visor"></div>
 
 <div class="npc-body"></div>
-```
 
 </div>
 
@@ -309,7 +308,6 @@ content="width=device-width, initial-scale=1.0"
 
 <div id="hud">
 
-```
 <div id="hud-title">
     SPACESCAPE
 </div>
@@ -351,7 +349,6 @@ content="width=device-width, initial-scale=1.0"
     <span id="xp">0</span>
 
 </div>
-```
 
 </div>
 
@@ -369,9 +366,7 @@ content="width=device-width, initial-scale=1.0"
 
 <div id="interaction-prompt">
 
-```
 Press <span>E</span> to talk to Commander Kael
-```
 
 </div>
 
@@ -381,7 +376,6 @@ Press <span>E</span> to talk to Commander Kael
 
 <div id="dialogue">
 
-```
 <div id="dialogue-name">
     Commander Kael
 </div>
@@ -405,7 +399,6 @@ Press <span>E</span> to talk to Commander Kael
     </button>
 
 </div>
-```
 
 </div>
 

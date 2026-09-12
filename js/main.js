@@ -15,14 +15,19 @@ import {
     createDialogueController
 } from "./npc.js";
 
+
+/* =======================================================
+   DOM ELEMENTS
+   ======================================================= */
+
 const titleScreen =
-    document.getElementById("titleScreen");
+    document.getElementById("title-screen");
 
 const gameScreen =
-    document.getElementById("gameScreen");
+    document.getElementById("game-screen");
 
 const playButton =
-    document.getElementById("playButton");
+    document.getElementById("play-button");
 
 const world =
     document.getElementById("world");
@@ -31,19 +36,24 @@ const playerElement =
     document.getElementById("player");
 
 const interactionPrompt =
-    document.getElementById("interactionPrompt");
+    document.getElementById("interaction-prompt");
 
 const dialogueWindow =
-    document.getElementById("dialogueWindow");
+    document.getElementById("dialogue");
 
 const dialogueText =
-    document.getElementById("dialogueText");
+    document.getElementById("dialogue-text");
 
 const continueButton =
-    document.getElementById("continueButton");
+    document.getElementById("dialogue-next");
 
 const closeButton =
-    document.getElementById("closeButton");
+    document.getElementById("dialogue-close");
+
+
+/* =======================================================
+   HUD ELEMENTS
+   ======================================================= */
 
 const levelElement =
     document.getElementById("level");
@@ -52,24 +62,36 @@ const xpElement =
     document.getElementById("xp");
 
 const healthCurrentElement =
-    document.getElementById("healthCurrent");
+    document.getElementById("health");
 
-const healthMaximumElement =
-    document.getElementById("healthMaximum");
+const healthMaximumElement = {
+    textContent: "100"
+};
 
 const healthFillElement =
-    document.getElementById("healthFill");
+    document.getElementById("health-bar");
 
 const energyCurrentElement =
-    document.getElementById("energyCurrent");
+    document.getElementById("energy");
 
-const energyMaximumElement =
-    document.getElementById("energyMaximum");
+const energyMaximumElement = {
+    textContent: "100"
+};
 
 const energyFillElement =
-    document.getElementById("energyFill");
+    document.getElementById("energy-bar");
+
+
+/* =======================================================
+   INPUT
+   ======================================================= */
 
 const keys = {};
+
+
+/* =======================================================
+   DIALOGUE CONTROLLER
+   ======================================================= */
 
 const dialogueController =
     createDialogueController({
@@ -77,6 +99,11 @@ const dialogueController =
         dialogueText,
         continueButton
     });
+
+
+/* =======================================================
+   INTERACTION
+   ======================================================= */
 
 function updateInteraction() {
     return updateInteractionPrompt(
@@ -86,7 +113,9 @@ function updateInteraction() {
     );
 }
 
+
 function handleInteraction() {
+
     if (dialogueController.isOpen()) {
         return;
     }
@@ -103,13 +132,21 @@ function handleInteraction() {
     );
 }
 
+
+/* =======================================================
+   GAME UPDATE
+   ======================================================= */
+
 function updateGame() {
+
     updatePlayerMovement(
         keys,
         dialogueController.isOpen()
     );
 
-    drawPlayer(playerElement);
+    drawPlayer(
+        playerElement
+    );
 
     updatePlayerHUD({
         levelElement,
@@ -130,7 +167,13 @@ function updateGame() {
     );
 }
 
+
+/* =======================================================
+   GAME LOOP
+   ======================================================= */
+
 function gameLoop() {
+
     updateGame();
 
     requestAnimationFrame(
@@ -138,70 +181,121 @@ function gameLoop() {
     );
 }
 
+
+/* =======================================================
+   START GAME
+   ======================================================= */
+
 function startGame() {
+
     titleScreen.style.display =
         "none";
 
     gameScreen.style.display =
         "block";
 
-    drawPlayer(playerElement);
+    drawPlayer(
+        playerElement
+    );
 
     updateGame();
 }
+
+
+/* =======================================================
+   PLAY BUTTON
+   ======================================================= */
 
 playButton.addEventListener(
     "click",
     startGame
 );
 
+
+/* =======================================================
+   KEYBOARD DOWN
+   ======================================================= */
+
 window.addEventListener(
     "keydown",
     (event) => {
+
         keys[event.key] = true;
 
         if (
             event.key === "e" ||
             event.key === "E"
         ) {
+
             event.preventDefault();
+
             handleInteraction();
         }
     }
 );
 
+
+/* =======================================================
+   KEYBOARD UP
+   ======================================================= */
+
 window.addEventListener(
     "keyup",
     (event) => {
+
         keys[event.key] = false;
     }
 );
 
+
+/* =======================================================
+   DIALOGUE BUTTONS
+   ======================================================= */
+
 continueButton.addEventListener(
     "click",
     () => {
+
         dialogueController.nextDialogue();
     }
 );
 
+
 closeButton.addEventListener(
     "click",
     () => {
+
         dialogueController.closeDialogue();
     }
 );
 
+
+/* =======================================================
+   RESIZE
+   ======================================================= */
+
 window.addEventListener(
     "resize",
     () => {
+
         updateGame();
     }
 );
+
+
+/* =======================================================
+   INITIAL STATE
+   ======================================================= */
 
 dialogueWindow.style.display =
     "none";
 
 gameScreen.style.display =
     "none";
+
+
+/* =======================================================
+   START LOOP
+   ======================================================= */
 
 gameLoop();

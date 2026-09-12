@@ -22,16 +22,23 @@ function getWorldElement() {
 }
 
 function createEnemyElement(enemy) {
-    const world = getWorldElement();
+    const world =
+        getWorldElement();
 
-    if (!world || !enemy || !enemy.id) {
+    if (
+        !world ||
+        !enemy ||
+        !enemy.id
+    ) {
         return null;
     }
 
     const element =
         document.createElement("div");
 
-    element.className = "enemy";
+    element.className =
+        "enemy";
+
     element.dataset.enemyId =
         enemy.id;
 
@@ -48,47 +55,6 @@ function createEnemyElement(enemy) {
         "visible";
 
     /* ===================================================
-       ENEMY NAME
-       =================================================== */
-
-    const nameElement =
-        document.createElement("div");
-
-    nameElement.className =
-        "enemy-name";
-
-    nameElement.style.position =
-        "absolute";
-
-    nameElement.style.bottom =
-        "66px";
-
-    nameElement.style.left =
-        "50%";
-
-    nameElement.style.transform =
-        "translateX(-50%)";
-
-    nameElement.style.color =
-        "#ffffff";
-
-    nameElement.style.fontSize =
-        "11px";
-
-    nameElement.style.fontWeight =
-        "bold";
-
-    nameElement.style.whiteSpace =
-        "nowrap";
-
-    nameElement.style.textShadow =
-        "0 1px 3px #000000";
-
-    element.appendChild(
-        nameElement
-    );
-
-    /* ===================================================
        ENEMY LEVEL
        =================================================== */
 
@@ -102,7 +68,7 @@ function createEnemyElement(enemy) {
         "absolute";
 
     levelElement.style.top =
-        "-43px";
+        "-52px";
 
     levelElement.style.left =
         "50%";
@@ -119,6 +85,12 @@ function createEnemyElement(enemy) {
     levelElement.style.fontWeight =
         "bold";
 
+    levelElement.style.lineHeight =
+        "12px";
+
+    levelElement.style.height =
+        "12px";
+
     levelElement.style.whiteSpace =
         "nowrap";
 
@@ -127,6 +99,53 @@ function createEnemyElement(enemy) {
 
     element.appendChild(
         levelElement
+    );
+
+    /* ===================================================
+       ENEMY NAME
+       =================================================== */
+
+    const nameElement =
+        document.createElement("div");
+
+    nameElement.className =
+        "enemy-name";
+
+    nameElement.style.position =
+        "absolute";
+
+    nameElement.style.top =
+        "-36px";
+
+    nameElement.style.left =
+        "50%";
+
+    nameElement.style.transform =
+        "translateX(-50%)";
+
+    nameElement.style.color =
+        "#ffffff";
+
+    nameElement.style.fontSize =
+        "11px";
+
+    nameElement.style.fontWeight =
+        "bold";
+
+    nameElement.style.lineHeight =
+        "13px";
+
+    nameElement.style.height =
+        "13px";
+
+    nameElement.style.whiteSpace =
+        "nowrap";
+
+    nameElement.style.textShadow =
+        "0 1px 3px #000000";
+
+    element.appendChild(
+        nameElement
     );
 
     /* ===================================================
@@ -143,7 +162,7 @@ function createEnemyElement(enemy) {
         "absolute";
 
     healthContainer.style.top =
-        "-29px";
+        "-20px";
 
     healthContainer.style.left =
         "50%";

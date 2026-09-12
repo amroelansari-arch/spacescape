@@ -47,6 +47,10 @@ function createEnemyElement(enemy) {
     element.style.overflow =
         "visible";
 
+    /* ===================================================
+       ENEMY NAME
+       =================================================== */
+
     const nameElement =
         document.createElement("div");
 
@@ -57,7 +61,7 @@ function createEnemyElement(enemy) {
         "absolute";
 
     nameElement.style.bottom =
-        "48px";
+        "66px";
 
     nameElement.style.left =
         "50%";
@@ -84,6 +88,10 @@ function createEnemyElement(enemy) {
         nameElement
     );
 
+    /* ===================================================
+       ENEMY LEVEL
+       =================================================== */
+
     const levelElement =
         document.createElement("div");
 
@@ -94,7 +102,7 @@ function createEnemyElement(enemy) {
         "absolute";
 
     levelElement.style.top =
-        "-18px";
+        "-43px";
 
     levelElement.style.left =
         "50%";
@@ -121,6 +129,10 @@ function createEnemyElement(enemy) {
         levelElement
     );
 
+    /* ===================================================
+       ENEMY HEALTH BAR
+       =================================================== */
+
     const healthContainer =
         document.createElement("div");
 
@@ -131,7 +143,7 @@ function createEnemyElement(enemy) {
         "absolute";
 
     healthContainer.style.top =
-        "48px";
+        "-29px";
 
     healthContainer.style.left =
         "50%";
@@ -300,6 +312,10 @@ function removeEnemyElement(
         enemyId
     );
 }
+
+/* =======================================================
+   PLAYER HEALTH BAR
+   ======================================================= */
 
 function createPlayerHealthBar() {
     const world =
@@ -484,6 +500,10 @@ function updatePlayerHealthBar() {
         }
     }
 }
+
+/* =======================================================
+   DAMAGE SPLATS
+   ======================================================= */
 
 function createDamageNumber(
     event
@@ -700,6 +720,10 @@ function ensureDamageAnimation() {
         style
     );
 }
+
+/* =======================================================
+   MAIN RENDER
+   ======================================================= */
 
 export function renderEnemies() {
     ensureDamageAnimation();

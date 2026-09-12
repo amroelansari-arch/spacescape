@@ -11,6 +11,12 @@ import {
     getWorldEnemyById
 } from "./enemyWorld.js";
 
+import {
+    WORLD_WIDTH,
+    WORLD_HEIGHT,
+    isColliding
+} from "./world.js";
+
 
 /* =======================================================
    COMBAT SETTINGS
@@ -34,7 +40,9 @@ const combatState = {
 
     enemyNextAttackTime: 0,
 
-    active: false
+    active: false,
+
+    engaged: false
 };
 
 
@@ -66,7 +74,7 @@ export function getCurrentCombatTarget() {
 
 
 /* =======================================================
-   START COMBAT
+   START COMBAT / SELECT TARGET
    ======================================================= */
 
 export function startCombat(
@@ -94,6 +102,9 @@ export function startCombat(
     combatState.active =
         true;
 
+    combatState.engaged =
+        false;
+
     const now =
         performance.now();
 
@@ -104,7 +115,7 @@ export function startCombat(
         now;
 
     console.log(
-        `Combat started: ${enemy.name}`
+        `Target selected: ${enemy.name}`
     );
 
     return true;
@@ -129,6 +140,9 @@ export function stopCombat() {
         null;
 
     combatState.active =
+        false;
+
+    combatState.engaged =
         false;
 
     combatState.playerNextAttackTime =
@@ -168,6 +182,113 @@ function isWithinCombatRange(
         distance <=
         COMBAT_RANGE
     );
+}
+
+
+/* =======================================================
+   APPROACH TARGET
+   ======================================================= */
+
+function movePlayerTowardTarget(
+    player,
+    enemy
+) {
+    if (
+        !player ||
+        !enemy ||
+        !player.position ||
+        !enemy.position
+    ) {
+        return;
+    }
+
+    const dx =
+        enemy.position.x -
+        player.position.x;
+
+    const dy =
+        enemy.position.y -
+        player.position.y;
+
+    const distance =
+        Math.sqrt(
+            dx * dx +
+            dy * dy
+        );
+
+    if (
+        distance <= COMBAT_RANGE
+    ) {
+        player.movement.moving =
+            false;
+
+        return;
+    }
+
+    if (
+        distance === 0
+    ) {
+        player.movement.moving =
+            false;
+
+        return;
+    }
+
+    const speed =
+        Number.isFinite(
+            player.movement.speed
+        )
+            ? player.movement.speed
+            : 5;
+
+    const moveDistance =
+        Math.min(
+            speed,
+            distance - COMBAT_RANGE
+        );
+
+    const normalizedX =
+        dx / distance;
+
+    const normalizedY =
+        dy / distance;
+
+    const newX =
+        player.position.x +
+        normalizedX *
+        moveDistance;
+
+    const newY =
+        player.position.y +
+        normalizedY *
+        moveDistance;
+
+    player.movement.moving =
+        true;
+
+    if (
+        newX >= 0 &&
+        newX <= WORLD_WIDTH &&
+        !isColliding(
+            newX,
+            player.position.y
+        )
+    ) {
+        player.position.x =
+            newX;
+    }
+
+    if (
+        newY >= 0 &&
+        newY <= WORLD_HEIGHT &&
+        !isColliding(
+            player.position.x,
+            newY
+        )
+    ) {
+        player.position.y =
+            newY;
+    }
 }
 
 
@@ -294,20 +415,59 @@ export function updateCombat(
         return;
     }
 
+
+    /* ---------------------------------------------------
+       APPROACH TARGET
+       --------------------------------------------------- */
+
     if (
         !isWithinCombatRange(
             player,
             enemy
         )
     ) {
-        console.log(
-            "Target moved out of combat range."
-        );
 
-        stopCombat();
+        movePlayerTowardTarget(
+            player,
+            enemy
+        );
 
         return;
     }
+
+
+    /* ---------------------------------------------------
+       ENTER COMBAT RANGE
+       --------------------------------------------------- */
+
+    player.movement.moving =
+        false;
+
+    if (
+        !combatState.engaged
+    ) {
+
+        combatState.engaged =
+            true;
+
+        const now =
+            performance.now();
+
+        combatState.playerNextAttackTime =
+            now;
+
+        combatState.enemyNextAttackTime =
+            now;
+
+        console.log(
+            `Combat started: ${enemy.name}`
+        );
+    }
+
+
+    /* ---------------------------------------------------
+       PROCESS ATTACKS
+       --------------------------------------------------- */
 
     const now =
         performance.now();

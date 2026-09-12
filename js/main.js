@@ -26,13 +26,7 @@ import {
 } from "./enemyRenderer.js";
 
 import {
-    findNearestEnemy,
-    getDistance
-} from "./enemies.js";
-
-import {
     startCombat,
-    stopCombat,
     updateCombat,
     getCombatState
 } from "./combatSystem.js";
@@ -237,23 +231,6 @@ function handleEnemyClick(
         return;
     }
 
-    const distance =
-        getDistance(
-            player.position.x,
-            player.position.y,
-            enemy.position.x,
-            enemy.position.y
-        );
-
-    if (distance > 100) {
-
-        console.log(
-            "Enemy is too far away to attack."
-        );
-
-        return;
-    }
-
     startCombat(
         player,
         enemy
@@ -332,11 +309,11 @@ function updateGame() {
         dialogueController.isOpen()
     );
 
+    updateCombatSystem();
+
     drawPlayer(
         playerElement
     );
-
-    updateCombatSystem();
 
     renderEnemies();
 

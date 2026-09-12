@@ -1,223 +1,174 @@
 export const commanderKaelData = {
-
     id: "commander_kael",
-
+    type: "npc",
     name: "Commander Kael",
-
     position: {
-
         x: 1050,
-
         y: 650
-
     },
-
     interactionDistance: 85
-
 };
 
-
 export const kaelDialogue = [
-
     "Commander Kael: You're finally here. We've been waiting for someone capable enough to investigate what happened outside the colony.",
-
     "Commander Kael: Three miners disappeared near the Xenium fields yesterday. Their transport came back empty.",
-
     "Commander Kael: I need someone to find out what happened. Be careful. Whatever took them may still be out there.",
-
     "Commander Kael: Talk to me again when you're ready. This could be your first real assignment."
-
 ];
 
+const interactables = [
+    commanderKaelData
+];
 
-export function getDistanceToKael(
-    player
+export function getInteractables() {
+    return interactables;
+}
+
+export function getDistanceBetweenPlayerAndInteractable(
+    player,
+    interactable
 ) {
-
     const dx =
         player.position.x -
-        commanderKaelData.position.x;
+        interactable.position.x;
 
     const dy =
         player.position.y -
-        commanderKaelData.position.y;
-
+        interactable.position.y;
 
     return Math.sqrt(
         dx * dx +
         dy * dy
     );
-
 }
 
+export function getNearbyInteractable(player) {
+    let closestInteractable = null;
+    let closestDistance = Infinity;
 
-export function canInteractWithKael(
-    player
-) {
+    for (const interactable of interactables) {
+        const distance =
+            getDistanceBetweenPlayerAndInteractable(
+                player,
+                interactable
+            );
 
-    return (
-        getDistanceToKael(player) <=
-        commanderKaelData.interactionDistance
+        if (
+            distance <= interactable.interactionDistance &&
+            distance < closestDistance
+        ) {
+            closestInteractable = interactable;
+            closestDistance = distance;
+        }
+    }
+
+    return closestInteractable;
+}
+
+export function canInteractWithKael(player) {
+    return Boolean(
+        getNearbyInteractable(player)?.id ===
+        commanderKaelData.id
     );
-
 }
-
 
 export function updateInteractionPrompt(
     player,
     dialogueOpen,
     interactionPrompt
 ) {
-
     if (dialogueOpen) {
-
-        interactionPrompt.style.display =
-            "none";
-
-        return;
-
+        interactionPrompt.style.display = "none";
+        return null;
     }
 
+    const interactable =
+        getNearbyInteractable(player);
 
-    if (
-        canInteractWithKael(player)
-    ) {
-
-        interactionPrompt.style.display =
-            "block";
-
-    } else {
-
-        interactionPrompt.style.display =
-            "none";
-
+    if (!interactable) {
+        interactionPrompt.style.display = "none";
+        return null;
     }
 
+    interactionPrompt.textContent =
+        `Press E to interact with ${interactable.name}`;
+
+    interactionPrompt.style.display = "block";
+
+    return interactable;
 }
 
+export function createDialogueController(elements) {
+    let currentDialogueIndex = 0;
+    let dialogueOpen = false;
 
-export function createDialogueController(
-    elements
-) {
-
-    let dialogueOpen =
-        false;
-
-    let dialogueIndex =
-        0;
-
+    function isOpen() {
+        return dialogueOpen;
+    }
 
     function updateDialogue() {
-
-        elements.dialogueName.textContent =
-            commanderKaelData.name;
-
-
         elements.dialogueText.textContent =
-            kaelDialogue[dialogueIndex];
-
+            kaelDialogue[currentDialogueIndex];
 
         if (
-            dialogueIndex >=
+            currentDialogueIndex >=
             kaelDialogue.length - 1
         ) {
-
-            elements.dialogueNext.textContent =
-                "Finish";
-
+            elements.continueButton.textContent =
+                "Close";
         } else {
-
-            elements.dialogueNext.textContent =
+            elements.continueButton.textContent =
                 "Continue";
-
         }
-
     }
 
-
-    function openDialogue(player) {
-
-        if (
-            !canInteractWithKael(player)
-        ) {
-
+    function openDialogue(interactable) {
+        if (!interactable) {
             return;
-
         }
 
+        if (interactable.id !== commanderKaelData.id) {
+            return;
+        }
 
-        dialogueOpen =
-            true;
+        currentDialogueIndex = 0;
+        dialogueOpen = true;
 
-        dialogueIndex =
-            0;
-
-
-        elements.dialogue.style.display =
+        elements.dialogueWindow.style.display =
             "block";
 
-
-        elements.interactionPrompt.style.display =
-            "none";
-
-
         updateDialogue();
-
     }
-
 
     function nextDialogue() {
-
         if (!dialogueOpen) {
-
             return;
-
         }
-
 
         if (
-            dialogueIndex <
+            currentDialogueIndex <
             kaelDialogue.length - 1
         ) {
-
-            dialogueIndex++;
-
+            currentDialogueIndex++;
             updateDialogue();
-
         } else {
-
             closeDialogue();
-
         }
-
     }
-
 
     function closeDialogue() {
+        dialogueOpen = false;
 
-        dialogueOpen =
-            false;
-
-        elements.dialogue.style.display =
+        elements.dialogueWindow.style.display =
             "none";
 
+        currentDialogueIndex = 0;
     }
 
-
     return {
-
-        isOpen() {
-
-            return dialogueOpen;
-
-        },
-
+        isOpen,
         openDialogue,
-
         nextDialogue,
-
         closeDialogue
-
     };
-
 }

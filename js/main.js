@@ -5,359 +5,203 @@ import {
     updatePlayerHUD
 } from "./player.js";
 
-
 import {
     updateCamera
 } from "./world.js";
 
-
 import {
+    getNearbyInteractable,
     updateInteractionPrompt,
     createDialogueController
 } from "./npc.js";
 
-
-/* =========================================================
-   DOM ELEMENTS
-   ========================================================= */
-
-const playButton =
-    document.getElementById(
-        "play-button"
-    );
-
-
 const titleScreen =
-    document.getElementById(
-        "title-screen"
-    );
-
+    document.getElementById("titleScreen");
 
 const gameScreen =
-    document.getElementById(
-        "game-screen"
-    );
+    document.getElementById("gameScreen");
 
+const playButton =
+    document.getElementById("playButton");
 
 const world =
-    document.getElementById(
-        "world"
-    );
-
+    document.getElementById("world");
 
 const playerElement =
-    document.getElementById(
-        "player"
-    );
-
+    document.getElementById("player");
 
 const interactionPrompt =
-    document.getElementById(
-        "interaction-prompt"
-    );
+    document.getElementById("interactionPrompt");
 
-
-const dialogue =
-    document.getElementById(
-        "dialogue"
-    );
-
-
-const dialogueName =
-    document.getElementById(
-        "dialogue-name"
-    );
-
+const dialogueWindow =
+    document.getElementById("dialogueWindow");
 
 const dialogueText =
-    document.getElementById(
-        "dialogue-text"
-    );
+    document.getElementById("dialogueText");
 
+const continueButton =
+    document.getElementById("continueButton");
 
-const dialogueNext =
-    document.getElementById(
-        "dialogue-next"
-    );
+const closeButton =
+    document.getElementById("closeButton");
 
+const levelElement =
+    document.getElementById("level");
 
-const dialogueClose =
-    document.getElementById(
-        "dialogue-close"
-    );
+const xpElement =
+    document.getElementById("xp");
 
+const healthCurrentElement =
+    document.getElementById("healthCurrent");
 
-const hudElements = {
+const healthMaximumElement =
+    document.getElementById("healthMaximum");
 
-    level:
-        document.getElementById(
-            "level"
-        ),
+const healthFillElement =
+    document.getElementById("healthFill");
 
-    health:
-        document.getElementById(
-            "health"
-        ),
+const energyCurrentElement =
+    document.getElementById("energyCurrent");
 
-    energy:
-        document.getElementById(
-            "energy"
-        ),
+const energyMaximumElement =
+    document.getElementById("energyMaximum");
 
-    xp:
-        document.getElementById(
-            "xp"
-        ),
-
-    healthBar:
-        document.getElementById(
-            "health-bar"
-        ),
-
-    energyBar:
-        document.getElementById(
-            "energy-bar"
-        )
-
-};
-
-
-const dialogueController =
-    createDialogueController({
-
-        dialogue,
-
-        dialogueName,
-
-        dialogueText,
-
-        dialogueNext,
-
-        interactionPrompt
-
-    });
-
-
-/* =========================================================
-   INPUT
-   ========================================================= */
+const energyFillElement =
+    document.getElementById("energyFill");
 
 const keys = {};
 
+const dialogueController =
+    createDialogueController({
+        dialogueWindow,
+        dialogueText,
+        continueButton
+    });
 
-/* =========================================================
-   GAME LOOP
-   ========================================================= */
+function updateInteraction() {
+    return updateInteractionPrompt(
+        player,
+        dialogueController.isOpen(),
+        interactionPrompt
+    );
+}
 
-function gameLoop() {
+function handleInteraction() {
+    if (dialogueController.isOpen()) {
+        return;
+    }
 
+    const interactable =
+        getNearbyInteractable(player);
+
+    if (!interactable) {
+        return;
+    }
+
+    dialogueController.openDialogue(
+        interactable
+    );
+}
+
+function updateGame() {
     updatePlayerMovement(
         keys,
         dialogueController.isOpen()
     );
 
+    drawPlayer(playerElement);
 
-    drawPlayer(
-        playerElement
-    );
+    updatePlayerHUD({
+        levelElement,
+        xpElement,
+        healthCurrentElement,
+        healthMaximumElement,
+        healthFillElement,
+        energyCurrentElement,
+        energyMaximumElement,
+        energyFillElement
+    });
 
-
-    updatePlayerHUD(
-        hudElements
-    );
-
-
-    updateInteractionPrompt(
-        player,
-        dialogueController.isOpen(),
-        interactionPrompt
-    );
-
+    updateInteraction();
 
     updateCamera(
         player,
         world
     );
+}
 
+function gameLoop() {
+    updateGame();
 
     requestAnimationFrame(
         gameLoop
     );
-
 }
 
+function startGame() {
+    titleScreen.style.display =
+        "none";
 
-/* =========================================================
-   PLAY BUTTON
-   ========================================================= */
+    gameScreen.style.display =
+        "block";
+
+    drawPlayer(playerElement);
+
+    updateGame();
+}
 
 playButton.addEventListener(
     "click",
-    function() {
-
-        titleScreen.style.display =
-            "none";
-
-        gameScreen.style.display =
-            "block";
-
-
-        drawPlayer(
-            playerElement
-        );
-
-
-        updatePlayerHUD(
-            hudElements
-        );
-
-
-        updateCamera(
-            player,
-            world
-        );
-
-
-        updateInteractionPrompt(
-            player,
-            dialogueController.isOpen(),
-            interactionPrompt
-
-        );
-
-    }
+    startGame
 );
 
-
-/* =========================================================
-   KEYBOARD DOWN
-   ========================================================= */
-
-document.addEventListener(
+window.addEventListener(
     "keydown",
-    function(event) {
-
-        const key =
-            event.key.toLowerCase();
-
-
-        keys[key] =
-            true;
-
+    (event) => {
+        keys[event.key] = true;
 
         if (
-            key === "e" &&
-            !event.repeat
+            event.key === "e" ||
+            event.key === "E"
         ) {
-
-            if (
-                dialogueController.isOpen()
-            ) {
-
-                dialogueController.nextDialogue();
-
-            } else {
-
-                dialogueController.openDialogue(
-                    player
-                );
-
-            }
-
+            event.preventDefault();
+            handleInteraction();
         }
-
-
-        if (
-            key === "escape"
-        ) {
-
-            if (
-                dialogueController.isOpen()
-            ) {
-
-                dialogueController.closeDialogue();
-
-            }
-
-        }
-
     }
 );
 
-
-/* =========================================================
-   KEYBOARD UP
-   ========================================================= */
-
-document.addEventListener(
+window.addEventListener(
     "keyup",
-    function(event) {
-
-        keys[
-            event.key.toLowerCase()
-        ] = false;
-
+    (event) => {
+        keys[event.key] = false;
     }
 );
 
-
-/* =========================================================
-   DIALOGUE BUTTONS
-   ========================================================= */
-
-dialogueNext.addEventListener(
+continueButton.addEventListener(
     "click",
-    function() {
-
+    () => {
         dialogueController.nextDialogue();
-
     }
 );
 
-
-dialogueClose.addEventListener(
+closeButton.addEventListener(
     "click",
-    function() {
-
+    () => {
         dialogueController.closeDialogue();
-
     }
 );
-
-
-/* =========================================================
-   WINDOW RESIZE
-   ========================================================= */
 
 window.addEventListener(
     "resize",
-    function() {
-
-        updateCamera(
-            player,
-            world
-        );
-
+    () => {
+        updateGame();
     }
 );
 
+dialogueWindow.style.display =
+    "none";
 
-/* =========================================================
-   INITIALIZE
-   ========================================================= */
-
-drawPlayer(
-    playerElement
-);
-
-
-updatePlayerHUD(
-    hudElements
-);
-
-
-/* =========================================================
-   START GAME
-   ========================================================= */
+gameScreen.style.display =
+    "none";
 
 gameLoop();

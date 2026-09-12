@@ -16,12 +16,23 @@ import {
 } from "./npc.js";
 
 import {
-    spawnWorldEnemy
+    spawnWorldEnemy,
+    getEnemyCollection,
+    cleanupDeadWorldEnemies
 } from "./enemyWorld.js";
 
 import {
     renderEnemies
 } from "./enemyRenderer.js";
+
+import {
+    findNearestEnemy,
+    getDistance
+} from "./enemies.js";
+
+import {
+    performAttack
+} from "./combat.js";
 
 
 /* =======================================================
@@ -98,6 +109,17 @@ const keys = {};
 
 
 /* =======================================================
+   COMBAT SETTINGS
+   ======================================================= */
+
+const PLAYER_ATTACK_RANGE = 100;
+
+const PLAYER_ATTACK_COOLDOWN = 500;
+
+let lastPlayerAttackTime = 0;
+
+
+/* =======================================================
    DIALOGUE CONTROLLER
    ======================================================= */
 
@@ -148,10 +170,95 @@ function initializeEnemies() {
 
 
 /* =======================================================
+   FIND ATTACK TARGET
+   ======================================================= */
+
+function getAttackTarget() {
+
+    const enemies =
+        getEnemyCollection();
+
+    return findNearestEnemy(
+        enemies,
+        player.position.x,
+        player.position.y
+    );
+}
+
+
+/* =======================================================
+   PLAYER ATTACK
+   ======================================================= */
+
+function playerAttack() {
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+    const now =
+        performance.now();
+
+    if (
+        now -
+        lastPlayerAttackTime <
+        PLAYER_ATTACK_COOLDOWN
+    ) {
+        return;
+    }
+
+    const target =
+        getAttackTarget();
+
+    if (!target) {
+        return;
+    }
+
+    const distance =
+        getDistance(
+            player.position.x,
+            player.position.y,
+            target.position.x,
+            target.position.y
+        );
+
+    if (
+        distance >
+        PLAYER_ATTACK_RANGE
+    ) {
+        return;
+    }
+
+    const attackSucceeded =
+        performAttack(
+            player,
+            target,
+            player.attack
+        );
+
+    if (!attackSucceeded) {
+        return;
+    }
+
+    lastPlayerAttackTime =
+        now;
+
+    if (
+        target.health.current <= 0
+    ) {
+        cleanupDeadWorldEnemies();
+    }
+}
+
+
+/* =======================================================
    INTERACTION
    ======================================================= */
 
 function updateInteraction() {
+
     return updateInteractionPrompt(
         player,
         dialogueController.isOpen(),
@@ -162,12 +269,16 @@ function updateInteraction() {
 
 function handleInteraction() {
 
-    if (dialogueController.isOpen()) {
+    if (
+        dialogueController.isOpen()
+    ) {
         return;
     }
 
     const interactable =
-        getNearbyInteractable(player);
+        getNearbyInteractable(
+            player
+        );
 
     if (!interactable) {
         return;
@@ -270,6 +381,11 @@ window.addEventListener(
 
         keys[event.key] = true;
 
+
+        /* -----------------------------------------------
+           INTERACTION
+           ----------------------------------------------- */
+
         if (
             event.key === "e" ||
             event.key === "E"
@@ -278,6 +394,20 @@ window.addEventListener(
             event.preventDefault();
 
             handleInteraction();
+        }
+
+
+        /* -----------------------------------------------
+           ATTACK
+           ----------------------------------------------- */
+
+        if (
+            event.code === "Space"
+        ) {
+
+            event.preventDefault();
+
+            playerAttack();
         }
     }
 );

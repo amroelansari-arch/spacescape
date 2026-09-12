@@ -18,7 +18,7 @@ import {
 import {
     spawnWorldEnemy,
     getEnemyCollection,
-    cleanupDeadWorldEnemies
+    updateEnemyRespawns
 } from "./enemyWorld.js";
 
 import {
@@ -86,11 +86,6 @@ const closeButton =
         "dialogue-close"
     );
 
-
-/* =======================================================
-   HUD ELEMENTS
-   ======================================================= */
-
 const levelElement =
     document.getElementById(
         "level"
@@ -131,26 +126,30 @@ const energyFillElement =
 
 
 /* =======================================================
-   INPUT
+   KEYBOARD
    ======================================================= */
 
 const keys = {};
 
 
 /* =======================================================
-   DIALOGUE CONTROLLER
+   DIALOGUE
    ======================================================= */
 
 const dialogueController =
     createDialogueController({
+
         dialogueWindow,
+
         dialogueText,
+
         continueButton
+
     });
 
 
 /* =======================================================
-   ENEMY WORLD INITIALIZATION
+   INITIALIZE ENEMIES
    ======================================================= */
 
 function initializeEnemies() {
@@ -165,6 +164,7 @@ function initializeEnemies() {
         900
     );
 
+
     spawnWorldEnemy(
         "Test Enemy",
         1,
@@ -175,6 +175,7 @@ function initializeEnemies() {
         1100
     );
 
+
     spawnWorldEnemy(
         "Test Enemy",
         2,
@@ -184,11 +185,12 @@ function initializeEnemies() {
         2200,
         1400
     );
+
 }
 
 
 /* =======================================================
-   ENEMY CLICK HANDLING
+   ENEMY CLICK
    ======================================================= */
 
 function handleEnemyClick(
@@ -204,15 +206,19 @@ function handleEnemyClick(
         return;
     }
 
+
     const enemyId =
         enemyElement.dataset.enemyId;
+
 
     if (!enemyId) {
         return;
     }
 
+
     const enemies =
         getEnemyCollection();
+
 
     const enemy =
         enemies.find(
@@ -221,9 +227,11 @@ function handleEnemyClick(
                 enemyId
         );
 
+
     if (!enemy) {
         return;
     }
+
 
     if (
         dialogueController.isOpen()
@@ -231,10 +239,12 @@ function handleEnemyClick(
         return;
     }
 
+
     startCombat(
         player,
         enemy
     );
+
 }
 
 
@@ -249,6 +259,7 @@ function updateInteraction() {
         dialogueController.isOpen(),
         interactionPrompt
     );
+
 }
 
 
@@ -260,23 +271,27 @@ function handleInteraction() {
         return;
     }
 
+
     const interactable =
         getNearbyInteractable(
             player
         );
 
+
     if (!interactable) {
         return;
     }
 
+
     dialogueController.openDialogue(
         interactable
     );
+
 }
 
 
 /* =======================================================
-   COMBAT UPDATE
+   COMBAT
    ======================================================= */
 
 function updateCombatSystem() {
@@ -285,16 +300,15 @@ function updateCombatSystem() {
         player
     );
 
-    cleanupDeadWorldEnemies();
 
     const combatState =
         getCombatState();
 
-    if (
-        !combatState.active
-    ) {
+
+    if (!combatState.active) {
         return;
     }
+
 }
 
 
@@ -309,31 +323,54 @@ function updateGame() {
         dialogueController.isOpen()
     );
 
+
     updateCombatSystem();
+
+
+    /*
+     * Dead enemies are removed and their
+     * spawn points begin their respawn timers.
+     */
+    updateEnemyRespawns();
+
 
     drawPlayer(
         playerElement
     );
 
+
     renderEnemies();
 
+
     updatePlayerHUD({
+
         levelElement,
+
         xpElement,
+
         healthCurrentElement,
+
         healthMaximumElement,
+
         healthFillElement,
+
         energyCurrentElement,
+
         energyMaximumElement,
+
         energyFillElement
+
     });
 
+
     updateInteraction();
+
 
     updateCamera(
         player,
         world
     );
+
 }
 
 
@@ -348,6 +385,7 @@ function gameLoop() {
     requestAnimationFrame(
         gameLoop
     );
+
 }
 
 
@@ -363,11 +401,14 @@ function startGame() {
     gameScreen.style.display =
         "block";
 
+
     drawPlayer(
         playerElement
     );
 
+
     updateGame();
+
 }
 
 
@@ -382,7 +423,7 @@ playButton.addEventListener(
 
 
 /* =======================================================
-   WORLD CLICK
+   ENEMY CLICK
    ======================================================= */
 
 world.addEventListener(
@@ -397,9 +438,10 @@ world.addEventListener(
 
 window.addEventListener(
     "keydown",
-    (event) => {
+    event => {
 
         keys[event.key] = true;
+
 
         if (
             event.key === "e" ||
@@ -409,7 +451,9 @@ window.addEventListener(
             event.preventDefault();
 
             handleInteraction();
+
         }
+
     }
 );
 
@@ -420,15 +464,16 @@ window.addEventListener(
 
 window.addEventListener(
     "keyup",
-    (event) => {
+    event => {
 
         keys[event.key] = false;
+
     }
 );
 
 
 /* =======================================================
-   DIALOGUE BUTTONS
+   DIALOGUE CONTROLS
    ======================================================= */
 
 continueButton.addEventListener(
@@ -436,6 +481,7 @@ continueButton.addEventListener(
     () => {
 
         dialogueController.nextDialogue();
+
     }
 );
 
@@ -445,12 +491,13 @@ closeButton.addEventListener(
     () => {
 
         dialogueController.closeDialogue();
+
     }
 );
 
 
 /* =======================================================
-   RESIZE
+   WINDOW RESIZE
    ======================================================= */
 
 window.addEventListener(
@@ -458,6 +505,7 @@ window.addEventListener(
     () => {
 
         updateGame();
+
     }
 );
 
@@ -474,14 +522,9 @@ gameScreen.style.display =
 
 
 /* =======================================================
-   INITIALIZE ENEMIES
+   INITIALIZE WORLD
    ======================================================= */
 
 initializeEnemies();
-
-
-/* =======================================================
-   START LOOP
-   ======================================================= */
 
 gameLoop();

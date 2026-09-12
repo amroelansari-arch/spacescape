@@ -1,15 +1,3 @@
-
-Those are **not comments to HTML**. The browser renders them as actual text, which is why you're seeing the weird marks throughout the game.
-
-They appear around the title, building labels, NPC, HUD, interaction prompt, and dialogue because those sections were pasted with Markdown fences into the actual HTML file.
-
-We also need to add the missing `.enemy` CSS so the three enemies are actually visible.
-
-## 1. Replace `index.html` completely
-
-Use this exact version:
-
-```html id="48217"
 <!DOCTYPE html>
 
 <html lang="en">
@@ -56,6 +44,7 @@ Use this exact version:
 
 </div>
 
+
 <!-- =======================================================
      GAME SCREEN
      ======================================================= -->
@@ -66,11 +55,13 @@ Use this exact version:
 
 <div id="world">
 
+
 <!-- =======================================================
      COLONY WALL
      ======================================================= -->
 
 <div id="colony-wall"></div>
+
 
 <!-- =======================================================
      ROADS
@@ -96,6 +87,7 @@ Use this exact version:
     style="left: 1198px;"
 ></div>
 
+
 <!-- =======================================================
      BUILDINGS
      ======================================================= -->
@@ -116,6 +108,7 @@ Use this exact version:
 
 </div>
 
+
 <div
     class="building"
     style="
@@ -131,6 +124,7 @@ Use this exact version:
 </div>
 
 </div>
+
 
 <div
     class="building"
@@ -148,6 +142,7 @@ Use this exact version:
 
 </div>
 
+
 <div
     class="building"
     style="
@@ -163,6 +158,7 @@ Use this exact version:
 </div>
 
 </div>
+
 
 <!-- =======================================================
      TREES
@@ -232,6 +228,7 @@ Use this exact version:
     "
 ></div>
 
+
 <!-- =======================================================
      ROCKS
      ======================================================= -->
@@ -268,6 +265,7 @@ Use this exact version:
     "
 ></div>
 
+
 <!-- =======================================================
      COMMANDER KAEL
      ======================================================= -->
@@ -293,14 +291,17 @@ Use this exact version:
 
 </div>
 
+
 <!-- =======================================================
      PLAYER
      ======================================================= -->
 
 <div id="player"></div>
 
+
 </div>
 </div>
+
 
 <!-- =======================================================
      HUD
@@ -312,10 +313,12 @@ Use this exact version:
     SPACESCAPE
 </div>
 
+
 <div class="hud-row">
     Level:
     <span id="level">1</span>
 </div>
+
 
 <div class="hud-row">
 
@@ -330,6 +333,7 @@ Use this exact version:
 
 </div>
 
+
 <div class="hud-row">
 
     Energy:
@@ -343,6 +347,7 @@ Use this exact version:
 
 </div>
 
+
 <div class="hud-row">
 
     XP:
@@ -352,6 +357,7 @@ Use this exact version:
 
 </div>
 
+
 <!-- =======================================================
      LOCATION
      ======================================================= -->
@@ -359,6 +365,7 @@ Use this exact version:
 <div id="location">
     Aurelia Colony
 </div>
+
 
 <!-- =======================================================
      INTERACTION PROMPT
@@ -369,6 +376,7 @@ Use this exact version:
 Press <span>E</span> to talk to Commander Kael
 
 </div>
+
 
 <!-- =======================================================
      DIALOGUE
@@ -402,7 +410,9 @@ Press <span>E</span> to talk to Commander Kael
 
 </div>
 
+
 </div>
+
 
 <script
     type="module"

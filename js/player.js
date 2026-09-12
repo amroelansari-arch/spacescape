@@ -77,11 +77,16 @@ export function applyLevelUp() {
 
     player.defense += 1;
 
-    player.health.current =
-        player.health.maximum;
-
-    player.energy.current =
-        player.energy.maximum;
+    /*
+     * Leveling increases maximum HP and Energy,
+     * but does not automatically restore either one.
+     *
+     * Example:
+     *
+     * 62/100 HP -> 62/110 HP
+     *
+     * This keeps accumulated combat damage meaningful.
+     */
 
     console.log(
         `Level up! Player is now level ${player.level}.`

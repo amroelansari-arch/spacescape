@@ -87,51 +87,6 @@ const closeButton =
         "dialogue-close"
     );
 
-const levelElement =
-    document.getElementById(
-        "level"
-    );
-
-const xpElement =
-    document.getElementById(
-        "xp"
-    );
-
-const healthCurrentElement =
-    document.getElementById(
-        "health"
-    );
-
-const healthMaximumElement = {
-    textContent: "100"
-};
-
-const healthFillElement =
-    document.getElementById(
-        "health-bar"
-    );
-
-const energyCurrentElement =
-    document.getElementById(
-        "energy"
-    );
-
-const energyMaximumElement = {
-    textContent: "100"
-};
-
-const energyFillElement =
-    document.getElementById(
-        "energy-bar"
-    );
-
-
-/* =======================================================
-   KEYBOARD
-   ======================================================= */
-
-const keys = {};
-
 
 /* =======================================================
    DIALOGUE
@@ -279,7 +234,7 @@ function hideDeathScreen() {
 
 
 /* =======================================================
-   RESPawn
+   RESPAWN
    ======================================================= */
 
 function handleRespawn() {
@@ -292,9 +247,7 @@ function handleRespawn() {
 
     hideDeathScreen();
 
-    drawPlayer(
-        playerElement
-    );
+    drawPlayer();
 
     updatePlayerHUD();
 
@@ -309,31 +262,42 @@ function handleRespawn() {
 
 function initializeEnemies() {
 
+    /*
+     * Level 1 enemy.
+     */
     spawnWorldEnemy(
         "Test Enemy",
         1,
         50,
-        5,
+        12,
         2,
         1500,
         900
     );
 
+
+    /*
+     * Level 1 enemy.
+     */
     spawnWorldEnemy(
         "Test Enemy",
         1,
         50,
-        5,
+        12,
         2,
         1800,
         1100
     );
 
+
+    /*
+     * Level 2 enemy.
+     */
     spawnWorldEnemy(
         "Test Enemy",
         2,
         75,
-        8,
+        16,
         3,
         2200,
         1400
@@ -407,8 +371,10 @@ function updateInteraction() {
     if (player.isDead) {
 
         if (interactionPrompt) {
+
             interactionPrompt.style.display =
                 "none";
+
         }
 
         return;
@@ -509,22 +475,11 @@ function updateGame() {
     updateEnemyRespawns();
 
 
-    drawPlayer(
-        playerElement
-    );
+    drawPlayer();
 
     renderEnemies();
 
-    updatePlayerHUD({
-        levelElement,
-        xpElement,
-        healthCurrentElement,
-        healthMaximumElement,
-        healthFillElement,
-        energyCurrentElement,
-        energyMaximumElement,
-        energyFillElement
-    });
+    updatePlayerHUD();
 
     updateInteraction();
 
@@ -534,9 +489,7 @@ function updateGame() {
     );
 
 
-    if (
-        player.isDead
-    ) {
+    if (player.isDead) {
 
         showDeathScreen();
 
@@ -544,6 +497,10 @@ function updateGame() {
 
 }
 
+
+/* =======================================================
+   GAME LOOP
+   ======================================================= */
 
 function gameLoop() {
 
@@ -568,9 +525,7 @@ function startGame() {
     gameScreen.style.display =
         "block";
 
-    drawPlayer(
-        playerElement
-    );
+    drawPlayer();
 
     updateGame();
 

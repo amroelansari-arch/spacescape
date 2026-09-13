@@ -1,110 +1,263 @@
+export const COMBAT_STYLES = {
+
+    ACCURATE: "accurate",
+
+    AGGRESSIVE: "aggressive",
+
+    DEFENSIVE: "defensive"
+
+};
+
+
 /* =======================================================
-   APPLY DAMAGE
+   COMBAT STYLE MODIFIERS
+   ======================================================= */
+
+export const COMBAT_STYLE_MODIFIERS = {
+
+    accurate: {
+
+        accuracyMultiplier: 1.15,
+
+        damageMultiplier: 0.90,
+
+        defenseMultiplier: 1.00
+
+    },
+
+    aggressive: {
+
+        accuracyMultiplier: 0.90,
+
+        damageMultiplier: 1.20,
+
+        defenseMultiplier: 0.90
+
+    },
+
+    defensive: {
+
+        accuracyMultiplier: 0.80,
+
+        damageMultiplier: 0.85,
+
+        defenseMultiplier: 1.20
+
+    }
+
+};
+
+
+/* =======================================================
+   COMBAT STYLE VALIDATION
+   ======================================================= */
+
+export function isValidCombatStyle(
+    combatStyle
+) {
+
+    return (
+        combatStyle ===
+            COMBAT_STYLES.ACCURATE ||
+
+        combatStyle ===
+            COMBAT_STYLES.AGGRESSIVE ||
+
+        combatStyle ===
+            COMBAT_STYLES.DEFENSIVE
+    );
+
+}
+
+
+/* =======================================================
+   COMBAT DAMAGE
    ======================================================= */
 
 export function applyDamage(
     target,
     amount
 ) {
+
     if (
         !target ||
         !target.health ||
         !Number.isFinite(amount) ||
         amount <= 0
     ) {
+
         return false;
+
     }
 
-    target.health.current = Math.max(
-        0,
-        target.health.current - amount
-    );
+
+    target.health.current =
+        Math.max(
+            0,
+            target.health.current -
+            amount
+        );
+
 
     return true;
+
 }
 
 
 /* =======================================================
-   HEAL TARGET
+   HEAL
    ======================================================= */
 
 export function healTarget(
     target,
     amount
 ) {
+
     if (
         !target ||
         !target.health ||
         !Number.isFinite(amount) ||
         amount <= 0
     ) {
+
         return false;
+
     }
 
-    target.health.current = Math.min(
-        target.health.maximum,
-        target.health.current + amount
-    );
+
+    target.health.current =
+        Math.min(
+            target.health.maximum,
+            target.health.current +
+            amount
+        );
+
 
     return true;
+
 }
 
 
 /* =======================================================
-   TARGET ALIVE
+   TARGET STATE
    ======================================================= */
 
 export function isTargetAlive(
     target
 ) {
+
     if (
         !target ||
         !target.health
     ) {
+
         return false;
+
     }
 
-    return target.health.current > 0;
+
+    return (
+        target.health.current > 0
+    );
+
 }
 
-
-/* =======================================================
-   TARGET DEAD
-   ======================================================= */
 
 export function isTargetDead(
     target
 ) {
-    return !isTargetAlive(target);
+
+    return !isTargetAlive(
+        target
+    );
+
 }
 
 
 /* =======================================================
-   DAMAGE CALCULATION
+   BASE DAMAGE
    ======================================================= */
 
 export function calculateDamage(
     attackPower,
     defense
 ) {
-    if (
-        !Number.isFinite(attackPower) ||
-        attackPower <= 0
-    ) {
-        return 0;
-    }
 
     if (
-        !Number.isFinite(defense) ||
+        !Number.isFinite(
+            attackPower
+        ) ||
+        attackPower <= 0
+    ) {
+
+        return 0;
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            defense
+        ) ||
         defense < 0
     ) {
+
         defense = 0;
+
     }
+
 
     return Math.max(
         1,
-        attackPower - defense
+        attackPower -
+        defense
     );
+
+}
+
+
+/* =======================================================
+   STYLE DAMAGE
+   ======================================================= */
+
+export function calculateStyledDamage(
+    attackPower,
+    defense,
+    combatStyle = COMBAT_STYLES.ACCURATE
+) {
+
+    const baseDamage =
+        calculateDamage(
+            attackPower,
+            defense
+        );
+
+
+    if (
+        !isValidCombatStyle(
+            combatStyle
+        )
+    ) {
+
+        return baseDamage;
+
+    }
+
+
+    const modifier =
+        COMBAT_STYLE_MODIFIERS[
+            combatStyle
+        ];
+
+
+    return Math.max(
+        1,
+        Math.round(
+            baseDamage *
+            modifier.damageMultiplier
+        )
+    );
+
 }
 
 
@@ -116,19 +269,30 @@ export function calculateHitChance(
     attackPower,
     defense
 ) {
-    if (
-        !Number.isFinite(attackPower) ||
-        attackPower <= 0
-    ) {
-        return 0;
-    }
 
     if (
-        !Number.isFinite(defense) ||
+        !Number.isFinite(
+            attackPower
+        ) ||
+        attackPower <= 0
+    ) {
+
+        return 0;
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            defense
+        ) ||
         defense < 0
     ) {
+
         defense = 0;
+
     }
+
 
     const chance =
         attackPower /
@@ -137,6 +301,7 @@ export function calculateHitChance(
             defense
         );
 
+
     return Math.max(
         0.20,
         Math.min(
@@ -144,54 +309,119 @@ export function calculateHitChance(
             chance
         )
     );
+
 }
 
 
 /* =======================================================
-   HIT ROLL
+   STYLE HIT CHANCE
    ======================================================= */
 
-export function rollAttackHit(
+export function calculateStyledHitChance(
     attackPower,
-    defense
+    defense,
+    combatStyle = COMBAT_STYLES.ACCURATE
 ) {
-    const hitChance =
+
+    const baseChance =
         calculateHitChance(
             attackPower,
             defense
         );
 
-    return Math.random() < hitChance;
+
+    if (
+        !isValidCombatStyle(
+            combatStyle
+        )
+    ) {
+
+        return baseChance;
+
+    }
+
+
+    const modifier =
+        COMBAT_STYLE_MODIFIERS[
+            combatStyle
+        ];
+
+
+    return Math.max(
+        0.20,
+        Math.min(
+            0.90,
+            baseChance *
+            modifier.accuracyMultiplier
+        )
+    );
+
 }
 
 
 /* =======================================================
-   DAMAGE ROLL
+   ROLL ATTACK HIT
+   ======================================================= */
+
+export function rollAttackHit(
+    attackPower,
+    defense,
+    combatStyle = COMBAT_STYLES.ACCURATE
+) {
+
+    const hitChance =
+        calculateStyledHitChance(
+            attackPower,
+            defense,
+            combatStyle
+        );
+
+
+    return (
+        Math.random() <
+        hitChance
+    );
+
+}
+
+
+/* =======================================================
+   ROLL DAMAGE
    ======================================================= */
 
 export function rollDamage(
     attackPower,
-    defense
+    defense,
+    combatStyle = COMBAT_STYLES.ACCURATE
 ) {
+
     const maximumDamage =
-        calculateDamage(
+        calculateStyledDamage(
             attackPower,
-            defense
+            defense,
+            combatStyle
         );
+
 
     const minimumDamage =
         Math.max(
             1,
             Math.floor(
-                maximumDamage * 0.50
+                maximumDamage *
+                0.50
             )
         );
 
+
     if (
-        maximumDamage <= minimumDamage
+        maximumDamage <=
+        minimumDamage
     ) {
+
         return maximumDamage;
+
     }
+
 
     return (
         Math.floor(
@@ -204,6 +434,7 @@ export function rollDamage(
         ) +
         minimumDamage
     );
+
 }
 
 
@@ -214,70 +445,123 @@ export function rollDamage(
 export function performAttack(
     attacker,
     target,
-    attackPower
+    attackPower,
+    combatStyle = COMBAT_STYLES.ACCURATE
 ) {
+
     if (
         !attacker ||
         !target ||
-        !Number.isFinite(attackPower) ||
+        !Number.isFinite(
+            attackPower
+        ) ||
         attackPower <= 0
     ) {
+
         return {
+
             success: false,
+
             hit: false,
+
             damage: 0
+
         };
+
     }
 
-    if (!isTargetAlive(attacker)) {
+
+    if (
+        !isTargetAlive(
+            attacker
+        )
+    ) {
+
         return {
+
             success: false,
+
             hit: false,
+
             damage: 0
+
         };
+
     }
 
-    if (!isTargetAlive(target)) {
+
+    if (
+        !isTargetAlive(
+            target
+        )
+    ) {
+
         return {
+
             success: false,
+
             hit: false,
+
             damage: 0
+
         };
+
     }
+
 
     const defense =
-        Number.isFinite(target.defense)
+        Number.isFinite(
+            target.defense
+        )
             ? target.defense
             : 0;
+
 
     const hit =
         rollAttackHit(
             attackPower,
-            defense
+            defense,
+            combatStyle
         );
 
+
     if (!hit) {
+
         return {
+
             success: true,
+
             hit: false,
+
             damage: 0
+
         };
+
     }
+
 
     const damage =
         rollDamage(
             attackPower,
-            defense
+            defense,
+            combatStyle
         );
+
 
     applyDamage(
         target,
         damage
     );
 
+
     return {
+
         success: true,
+
         hit: true,
+
         damage
+
     };
+
 }

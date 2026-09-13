@@ -23,6 +23,11 @@ import {
     getSkillXPToNextLevel
 } from "./skills.js";
 
+import {
+    COMBAT_STYLES,
+    isValidCombatStyle
+} from "./combat.js";
+
 
 /* =======================================================
    PLAYER
@@ -40,25 +45,10 @@ export const player = {
         y: 900
     },
 
-
-    /*
-     * Health remains a direct player resource for now.
-     *
-     * Later, maximum health will be derived from
-     * the Vitality skill.
-     */
-
     health: {
         current: 100,
         maximum: 100
     },
-
-
-    /*
-     * Energy remains in the player architecture,
-     * but we are NOT implementing Energy abilities
-     * or regeneration in this batch.
-     */
 
     energy: {
         current: 100,
@@ -67,13 +57,10 @@ export const player = {
 
 
     /*
-     * LEGACY PLAYER LEVEL
+     * Legacy generic level.
      *
-     * This remains temporarily because the current
-     * combat system still uses the generic XP system.
-     *
-     * It will eventually be replaced by calculated
-     * SpaceScape Combat Level.
+     * This remains temporarily while the new
+     * individual skill system is being connected.
      */
 
     level: 1,
@@ -82,11 +69,10 @@ export const player = {
 
 
     /*
-     * LEGACY COMBAT STATS
+     * Legacy combat stats.
      *
-     * These remain temporarily so existing combat
-     * continues functioning while the new skill
-     * architecture is introduced.
+     * These remain temporarily so the current
+     * combat system remains compatible.
      */
 
     attack: 10,
@@ -94,15 +80,18 @@ export const player = {
     defense: 5,
 
 
+    /*
+     * Current passive combat style.
+     *
+     * Accurate is the default.
+     */
+
+    combatStyle:
+        COMBAT_STYLES.ACCURATE,
+
+
     isDead: false,
 
-
-    /*
-     * Individual SpaceScape skills.
-     *
-     * These are now the foundation of the long-term
-     * character progression system.
-     */
 
     skills:
         createSkills(),
@@ -128,14 +117,48 @@ export const player = {
 
 
 /* =======================================================
-   COMBAT SKILL HELPERS
+   COMBAT STYLE
    ======================================================= */
 
-/*
- * These functions expose the new individual combat
- * skills without changing the existing combat system yet.
- */
+export function setCombatStyle(
+    combatStyle
+) {
 
+    if (
+        !isValidCombatStyle(
+            combatStyle
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    player.combatStyle =
+        combatStyle;
+
+
+    console.log(
+        `Combat style changed to: ${combatStyle}`
+    );
+
+
+    return true;
+
+}
+
+
+export function getCombatStyle() {
+
+    return player.combatStyle;
+
+}
+
+
+/* =======================================================
+   COMBAT SKILL HELPERS
+   ======================================================= */
 
 export function getPlayerAttackLevel() {
 
@@ -178,7 +201,7 @@ export function getPlayerVitalityLevel() {
 
 
 /* =======================================================
-   COMBAT SKILL XP
+   COMBAT SKILL XP HELPERS
    ======================================================= */
 
 export function getPlayerAttackXPToNextLevel() {
@@ -225,17 +248,6 @@ export function getPlayerVitalityXPToNextLevel() {
    LEGACY LEVEL UP
    ======================================================= */
 
-/*
- * TEMPORARY
- *
- * The current combat system still uses the generic
- * player level. Therefore this function remains intact
- * for this batch.
- *
- * We will replace this system after the individual
- * combat skills and combat styles are implemented.
- */
-
 export function applyLevelUp() {
 
     player.health.maximum += 10;
@@ -247,14 +259,10 @@ export function applyLevelUp() {
     player.defense += 1;
 
 
-    /*
-     * Leveling increases maximum HP and Energy,
-     * but does not automatically restore either one.
-     */
-
     console.log(
-        `Level up! Player is now level ${player.level}.`
+        `Legacy level up! Player is now level ${player.level}.`
     );
+
 
     console.log(
         `Legacy stats increased: ` +
@@ -274,7 +282,9 @@ export function applyLevelUp() {
 export function handlePlayerDeath() {
 
     if (player.isDead) {
+
         return false;
+
     }
 
 
@@ -495,7 +505,9 @@ export function drawPlayer() {
 
 
     if (!playerElement) {
+
         return;
+
     }
 
 
@@ -558,12 +570,11 @@ export function updatePlayerHUD() {
 
 
     /*
-     * The current HUD still displays the legacy
-     * player level and XP.
+     * The existing HUD still displays the legacy
+     * player level and XP temporarily.
      *
-     * This will be changed to Combat Level and
-     * individual skill information when the
-     * Character Interface is built.
+     * The Character Interface will replace this
+     * with the SpaceScape Combat Level and skills.
      */
 
     if (levelElement) {

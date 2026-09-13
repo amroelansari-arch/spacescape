@@ -52,7 +52,6 @@ export const player = {
         maximum: 100
     },
 
-
     /*
      * Current passive combat style.
      *
@@ -62,9 +61,7 @@ export const player = {
     combatStyle:
         COMBAT_STYLES.ACCURATE,
 
-
     isDead: false,
-
 
     /*
      * Individual SpaceScape skills.
@@ -76,24 +73,100 @@ export const player = {
     skills:
         createSkills(),
 
-
     inventory:
         createInventory(),
 
-
     equipment:
         createEquipment(),
-
 
     movement: {
 
         speed: 5,
 
-        moving: false
+        moving: false,
+
+        /*
+         * Automatic world-interaction target.
+         *
+         * Example:
+         *
+         * {
+         *     type: "item",
+         *     id: "...",
+         *     x: 1300,
+         *     y: 900
+         * }
+         *
+         * This is intentionally generic so it can
+         * later support enemies, NPCs, resources,
+         * doors, containers, etc.
+         */
+
+        target: null
 
     }
 
 };
+
+
+/* =======================================================
+   MOVEMENT TARGET
+   ======================================================= */
+
+export function setMovementTarget(
+    type,
+    id,
+    x,
+    y
+) {
+
+    if (
+        typeof type !== "string" ||
+        !type ||
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
+    ) {
+
+        return false;
+
+    }
+
+
+    player.movement.target = {
+
+        type,
+
+        id:
+            id || null,
+
+        x,
+
+        y
+
+    };
+
+
+    return true;
+
+}
+
+
+export function getMovementTarget() {
+
+    return player.movement.target;
+
+}
+
+
+export function clearMovementTarget() {
+
+    player.movement.target =
+        null;
+
+    player.movement.moving =
+        false;
+
+}
 
 
 /* =======================================================
@@ -277,11 +350,13 @@ export function handlePlayerDeath() {
     }
 
 
-    player.health.current = 0;
+    player.health.current =
+        0;
 
-    player.isDead = true;
+    player.isDead =
+        true;
 
-    player.movement.moving = false;
+    clearMovementTarget();
 
 
     console.log(
@@ -314,9 +389,10 @@ export function respawnPlayer() {
         player.energy.maximum;
 
 
-    player.isDead = false;
+    player.isDead =
+        false;
 
-    player.movement.moving = false;
+    clearMovementTarget();
 
 
     console.log(
@@ -363,6 +439,10 @@ export function updatePlayerMovement() {
     let dy = 0;
 
 
+    /* ===================================================
+       MANUAL KEYBOARD MOVEMENT
+       =================================================== */
+
     if (
         keys["w"] ||
         keys["ArrowUp"]
@@ -403,6 +483,84 @@ export function updatePlayerMovement() {
     }
 
 
+    /*
+     * Manual movement takes priority over
+     * automatic world-object movement.
+     */
+
+    if (
+        dx !== 0 ||
+        dy !== 0
+    ) {
+
+        clearMovementTarget();
+
+    }
+
+
+    /* ===================================================
+       AUTOMATIC TARGET MOVEMENT
+       =================================================== */
+
+    if (
+        dx === 0 &&
+        dy === 0 &&
+        player.movement.target
+    ) {
+
+        const target =
+            player.movement.target;
+
+
+        const targetDX =
+            target.x -
+            player.position.x;
+
+        const targetDY =
+            target.y -
+            player.position.y;
+
+
+        const distance =
+            Math.sqrt(
+                targetDX * targetDX +
+                targetDY * targetDY
+            );
+
+
+        /*
+         * Stop automatically when we are
+         * reasonably close to the target.
+         *
+         * The actual interaction system
+         * decides what happens next.
+         */
+
+        if (distance <= 70) {
+
+            player.movement.moving =
+                false;
+
+            return;
+
+        }
+
+
+        dx =
+            targetDX /
+            distance;
+
+        dy =
+            targetDY /
+            distance;
+
+    }
+
+
+    /* ===================================================
+       NO MOVEMENT
+       =================================================== */
+
     if (
         dx === 0 &&
         dy === 0
@@ -432,7 +590,6 @@ export function updatePlayerMovement() {
         magnitude *
         player.movement.speed;
 
-
     dy =
         dy /
         magnitude *
@@ -443,11 +600,14 @@ export function updatePlayerMovement() {
         player.position.x +
         dx;
 
-
     const newY =
         player.position.y +
         dy;
 
+
+    /* ===================================================
+       X MOVEMENT + COLLISION
+       =================================================== */
 
     if (
         newX >= 0 &&
@@ -463,6 +623,10 @@ export function updatePlayerMovement() {
 
     }
 
+
+    /* ===================================================
+       Y MOVEMENT + COLLISION
+       =================================================== */
 
     if (
         newY >= 0 &&
@@ -503,10 +667,8 @@ export function drawPlayer() {
     playerElement.style.left =
         `${player.position.x}px`;
 
-
     playerElement.style.top =
         `${player.position.y}px`;
-
 
     playerElement.style.opacity =
         player.isDead
@@ -527,30 +689,25 @@ export function updatePlayerHUD() {
             "level"
         );
 
-
     const xpElement =
         document.getElementById(
             "xp"
         );
-
 
     const healthElement =
         document.getElementById(
             "health"
         );
 
-
     const healthBar =
         document.getElementById(
             "health-bar"
         );
 
-
     const energyElement =
         document.getElementById(
             "energy"
         );
-
 
     const energyBar =
         document.getElementById(
@@ -569,7 +726,6 @@ export function updatePlayerHUD() {
 
     const attackLevel =
         getPlayerAttackLevel();
-
 
     const attackXP =
         getPlayerAttackXP();
@@ -645,7 +801,8 @@ window.addEventListener(
     "keydown",
     event => {
 
-        keys[event.key] = true;
+        keys[event.key] =
+            true;
 
     }
 );
@@ -655,7 +812,8 @@ window.addEventListener(
     "keyup",
     event => {
 
-        keys[event.key] = false;
+        keys[event.key] =
+            false;
 
     }
 );

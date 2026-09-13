@@ -1,4 +1,6 @@
-import "./characterInterface.js";
+import {
+    setCharacterInterfaceAvailability
+} from "./characterInterface.js";
 
 import {
     player,
@@ -534,6 +536,16 @@ function startGame() {
     gameScreen.style.display =
         "block";
 
+
+    /*
+     * Character becomes available only
+     * after the player enters the game.
+     */
+    setCharacterInterfaceAvailability(
+        true
+    );
+
+
     drawPlayer();
 
     updateGame();
@@ -627,6 +639,16 @@ dialogueWindow.style.display =
 
 gameScreen.style.display =
     "none";
+
+
+/*
+ * Explicitly keep Character unavailable
+ * while the title screen is showing.
+ */
+setCharacterInterfaceAvailability(
+    false
+);
+
 
 createDeathOverlay();
 

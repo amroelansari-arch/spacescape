@@ -19,7 +19,6 @@ import {
 } from "./combatLevel.js";
 
 import {
-    SKILL_NAMES,
     getSkillLevel,
     getCurrentSkillXP,
     getSkillXPToNextLevel
@@ -46,8 +45,18 @@ export const CHARACTER_TABS = {
 
 const characterState = {
     isOpen: false,
-    activeTab: CHARACTER_TABS.COMBAT
+    activeTab: CHARACTER_TABS.COMBAT,
+    gameAvailable: false
 };
+
+
+/* =======================================================
+   DOM ELEMENTS
+   ======================================================= */
+
+let characterButton = null;
+let characterInterface = null;
+let characterContent = null;
 
 
 /* =======================================================
@@ -55,6 +64,10 @@ const characterState = {
    ======================================================= */
 
 export function openCharacterInterface() {
+
+    if (!characterState.gameAvailable) {
+        return;
+    }
 
     characterState.isOpen = true;
 
@@ -73,6 +86,10 @@ export function closeCharacterInterface() {
 
 
 export function toggleCharacterInterface() {
+
+    if (!characterState.gameAvailable) {
+        return;
+    }
 
     characterState.isOpen =
         !characterState.isOpen;
@@ -126,6 +143,31 @@ export function getCharacterTabs() {
 
 
 /* =======================================================
+   GAME AVAILABILITY
+   ======================================================= */
+
+export function setCharacterInterfaceAvailability(
+    available
+) {
+
+    characterState.gameAvailable =
+        Boolean(available);
+
+    if (
+        !characterState.gameAvailable
+    ) {
+
+        characterState.isOpen =
+            false;
+
+    }
+
+    updateCharacterInterface();
+
+}
+
+
+/* =======================================================
    COMBAT SUMMARY
    ======================================================= */
 
@@ -164,241 +206,6 @@ export function getCharacterCombatSummary(
 
 
 /* =======================================================
-   DOM ELEMENTS
-   ======================================================= */
-
-let characterButton = null;
-
-let characterInterface = null;
-
-let characterContent = null;
-
-
-/* =======================================================
-   CREATE CHARACTER INTERFACE
-   ======================================================= */
-
-function createCharacterInterface() {
-
-    if (characterInterface) {
-        return;
-    }
-
-
-    /* ===================================================
-       CHARACTER BUTTON
-       =================================================== */
-
-    characterButton =
-        document.createElement(
-            "button"
-        );
-
-    characterButton.id =
-        "character-button";
-
-    characterButton.textContent =
-        "CHARACTER";
-
-    characterButton.addEventListener(
-        "click",
-        () => {
-
-            toggleCharacterInterface();
-
-        }
-    );
-
-    document.body.appendChild(
-        characterButton
-    );
-
-
-    /* ===================================================
-       CHARACTER WINDOW
-       =================================================== */
-
-    characterInterface =
-        document.createElement(
-            "div"
-        );
-
-    characterInterface.id =
-        "character-interface";
-
-
-    /* ===================================================
-       HEADER
-       =================================================== */
-
-    const header =
-        document.createElement(
-            "div"
-        );
-
-    header.className =
-        "character-header";
-
-
-    const title =
-        document.createElement(
-            "div"
-        );
-
-    title.className =
-        "character-title";
-
-    title.textContent =
-        "CHARACTER";
-
-
-    const close =
-        document.createElement(
-            "button"
-        );
-
-    close.className =
-        "character-close";
-
-    close.textContent =
-        "×";
-
-    close.addEventListener(
-        "click",
-        () => {
-
-            closeCharacterInterface();
-
-        }
-    );
-
-
-    header.appendChild(
-        title
-    );
-
-    header.appendChild(
-        close
-    );
-
-
-    /* ===================================================
-       TABS
-       =================================================== */
-
-    const tabs =
-        document.createElement(
-            "div"
-        );
-
-    tabs.className =
-        "character-tabs";
-
-
-    const tabDefinitions = [
-        [
-            CHARACTER_TABS.COMBAT,
-            "COMBAT"
-        ],
-        [
-            CHARACTER_TABS.SKILLS,
-            "SKILLS"
-        ],
-        [
-            CHARACTER_TABS.INVENTORY,
-            "INVENTORY"
-        ],
-        [
-            CHARACTER_TABS.EQUIPMENT,
-            "EQUIPMENT"
-        ],
-        [
-            CHARACTER_TABS.QUESTS,
-            "QUESTS"
-        ],
-        [
-            CHARACTER_TABS.MAP,
-            "MAP"
-        ]
-    ];
-
-
-    for (
-        const [
-            tab,
-            label
-        ]
-        of tabDefinitions
-    ) {
-
-        const button =
-            document.createElement(
-                "button"
-            );
-
-        button.className =
-            "character-tab";
-
-        button.dataset.tab =
-            tab;
-
-        button.textContent =
-            label;
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                setCharacterTab(
-                    tab
-                );
-
-            }
-        );
-
-        tabs.appendChild(
-            button
-        );
-
-    }
-
-
-    /* ===================================================
-       CONTENT
-       =================================================== */
-
-    characterContent =
-        document.createElement(
-            "div"
-        );
-
-    characterContent.className =
-        "character-content";
-
-
-    characterInterface.appendChild(
-        header
-    );
-
-    characterInterface.appendChild(
-        tabs
-    );
-
-    characterInterface.appendChild(
-        characterContent
-    );
-
-    document.body.appendChild(
-        characterInterface
-    );
-
-
-    updateCharacterInterface();
-
-}
-
-
-/* =======================================================
    FORMAT XP
    ======================================================= */
 
@@ -412,10 +219,10 @@ function formatXP(value) {
 
 
 /* =======================================================
-   CREATE SKILL ROW
+   CREATE SKILL CARD
    ======================================================= */
 
-function createSkillRow(
+function createSkillCard(
     skillName,
     displayName,
     skillLevel,
@@ -423,22 +230,29 @@ function createSkillRow(
     xpToNextLevel
 ) {
 
-    const row =
+    const card =
         document.createElement(
             "div"
         );
 
-    row.className =
-        "character-skill-row";
+    card.className =
+        "skill-card";
+
+    card.dataset.skill =
+        skillName;
 
 
-    const left =
+    /* ---------------------------------------------------
+       TOP
+       --------------------------------------------------- */
+
+    const top =
         document.createElement(
             "div"
         );
 
-    left.className =
-        "character-skill-left";
+    top.className =
+        "skill-card-top";
 
 
     const name =
@@ -447,7 +261,7 @@ function createSkillRow(
         );
 
     name.className =
-        "character-skill-name";
+        "skill-name";
 
     name.textContent =
         displayName;
@@ -459,29 +273,26 @@ function createSkillRow(
         );
 
     level.className =
-        "character-skill-level";
+        "skill-level";
 
     level.textContent =
-        `Level ${skillLevel}`;
+        skillLevel >= 99
+            ? "99"
+            : String(skillLevel);
 
 
-    left.appendChild(
+    top.appendChild(
         name
     );
 
-    left.appendChild(
+    top.appendChild(
         level
     );
 
 
-    const right =
-        document.createElement(
-            "div"
-        );
-
-    right.className =
-        "character-skill-right";
-
+    /* ---------------------------------------------------
+       XP
+       --------------------------------------------------- */
 
     const xp =
         document.createElement(
@@ -489,14 +300,15 @@ function createSkillRow(
         );
 
     xp.className =
-        "character-skill-xp";
+        "skill-xp";
+
 
     if (
         skillLevel >= 99
     ) {
 
         xp.textContent =
-            "MAX";
+            "MAX LEVEL";
 
     } else {
 
@@ -510,52 +322,126 @@ function createSkillRow(
     }
 
 
-    const remaining =
+    /* ---------------------------------------------------
+       XP REMAINING
+       --------------------------------------------------- */
+
+    const next =
         document.createElement(
             "div"
         );
 
-    remaining.className =
-        "character-skill-remaining";
+    next.className =
+        "skill-next";
+
 
     if (
         skillLevel >= 99
     ) {
 
-        remaining.textContent =
+        next.textContent =
             "Maximum level";
 
     } else {
 
-        remaining.textContent =
+        next.textContent =
             `${formatXP(xpToNextLevel)} XP to next level`;
 
     }
 
 
-    right.appendChild(
+    /* ---------------------------------------------------
+       PROGRESS
+       --------------------------------------------------- */
+
+    const progress =
+        document.createElement(
+            "div"
+        );
+
+    progress.className =
+        "skill-progress";
+
+
+    const progressBar =
+        document.createElement(
+            "div"
+        );
+
+    progressBar.className =
+        "skill-progress-bar";
+
+
+    let progressPercent =
+        0;
+
+
+    if (
+        skillLevel >= 99
+    ) {
+
+        progressPercent =
+            100;
+
+    } else {
+
+        const totalXP =
+            currentXP +
+            xpToNextLevel;
+
+        if (
+            totalXP > 0
+        ) {
+
+            progressPercent =
+                (
+                    currentXP /
+                    totalXP
+                ) *
+                100;
+
+        }
+
+    }
+
+
+    progressBar.style.width =
+        `${Math.max(
+            0,
+            Math.min(
+                100,
+                progressPercent
+            )
+        )}%`;
+
+
+    progress.appendChild(
+        progressBar
+    );
+
+
+    /* ---------------------------------------------------
+       BUILD CARD
+       --------------------------------------------------- */
+
+    card.appendChild(
+        top
+    );
+
+    card.appendChild(
         xp
     );
 
-    right.appendChild(
-        remaining
+    card.appendChild(
+        next
+    );
+
+    card.appendChild(
+        progress
     );
 
 
-    row.appendChild(
-        left
-    );
-
-    row.appendChild(
-        right
-    );
-
-
-    row.dataset.skill =
-        skillName;
-
-
-    return row;
+    return card;
 
 }
 
@@ -621,7 +507,7 @@ function getSkillDisplayName(
 
 
 /* =======================================================
-   SKILL SECTION
+   CREATE SKILL SECTION
    ======================================================= */
 
 function createSkillSection(
@@ -635,7 +521,7 @@ function createSkillSection(
         );
 
     section.className =
-        "character-skill-section";
+        "skills-section";
 
 
     const title =
@@ -650,9 +536,13 @@ function createSkillSection(
         titleText;
 
 
-    section.appendChild(
-        title
-    );
+    const grid =
+        document.createElement(
+            "div"
+        );
+
+    grid.className =
+        "skills-grid";
 
 
     for (
@@ -679,8 +569,8 @@ function createSkillSection(
             );
 
 
-        const row =
-            createSkillRow(
+        const card =
+            createSkillCard(
                 skillName,
                 getSkillDisplayName(
                     skillName
@@ -691,14 +581,141 @@ function createSkillSection(
             );
 
 
-        section.appendChild(
-            row
+        grid.appendChild(
+            card
         );
 
     }
 
 
+    section.appendChild(
+        title
+    );
+
+    section.appendChild(
+        grid
+    );
+
+
     return section;
+
+}
+
+
+/* =======================================================
+   CREATE COMBAT SKILL CARD
+   ======================================================= */
+
+function createCombatSkillCard(
+    name,
+    level,
+    xp,
+    xpToNext
+) {
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+    card.className =
+        "combat-skill-card";
+
+
+    const skillName =
+        document.createElement(
+            "div"
+        );
+
+    skillName.className =
+        "combat-skill-name";
+
+    skillName.textContent =
+        name;
+
+
+    const skillLevel =
+        document.createElement(
+            "div"
+        );
+
+    skillLevel.className =
+        "combat-skill-level";
+
+    skillLevel.textContent =
+        level;
+
+
+    const skillXP =
+        document.createElement(
+            "div"
+        );
+
+    skillXP.className =
+        "combat-skill-xp";
+
+
+    if (
+        level >= 99
+    ) {
+
+        skillXP.textContent =
+            "MAX LEVEL";
+
+    } else {
+
+        const totalXP =
+            xp +
+            xpToNext;
+
+        skillXP.textContent =
+            `${formatXP(xp)} / ${formatXP(totalXP)} XP`;
+
+    }
+
+
+    const skillNext =
+        document.createElement(
+            "div"
+        );
+
+    skillNext.className =
+        "combat-skill-next";
+
+
+    if (
+        level >= 99
+    ) {
+
+        skillNext.textContent =
+            "Maximum level";
+
+    } else {
+
+        skillNext.textContent =
+            `${formatXP(xpToNext)} XP to next level`;
+
+    }
+
+
+    card.appendChild(
+        skillName
+    );
+
+    card.appendChild(
+        skillLevel
+    );
+
+    card.appendChild(
+        skillXP
+    );
+
+    card.appendChild(
+        skillNext
+    );
+
+
+    return card;
 
 }
 
@@ -719,6 +736,10 @@ function renderCombatTab() {
         );
 
 
+    /* ---------------------------------------------------
+       COMBAT LEVEL
+       --------------------------------------------------- */
+
     const combatLevelPanel =
         document.createElement(
             "div"
@@ -733,11 +754,11 @@ function renderCombatTab() {
             "div"
         );
 
-    combatLabel.textContent =
-        "COMBAT LEVEL";
-
     combatLabel.className =
         "combat-level-label";
+
+    combatLabel.textContent =
+        "COMBAT LEVEL";
 
 
     const combatLevel =
@@ -745,11 +766,11 @@ function renderCombatTab() {
             "div"
         );
 
-    combatLevel.textContent =
-        summary.combatLevel;
-
     combatLevel.className =
         "combat-level-value";
+
+    combatLevel.textContent =
+        summary.combatLevel;
 
 
     combatLevelPanel.appendChild(
@@ -760,11 +781,14 @@ function renderCombatTab() {
         combatLevel
     );
 
-
     characterContent.appendChild(
         combatLevelPanel
     );
 
+
+    /* ---------------------------------------------------
+       COMBAT SKILLS
+       --------------------------------------------------- */
 
     const skillsTitle =
         document.createElement(
@@ -783,46 +807,39 @@ function renderCombatTab() {
     );
 
 
+    const combatGrid =
+        document.createElement(
+            "div"
+        );
+
+    combatGrid.className =
+        "combat-skill-grid";
+
+
     const combatSkills = [
         [
             "Attack",
             summary.attack,
-            getPlayerAttackXP(
-                player
-            ),
-            getPlayerAttackXPToNextLevel(
-                player
-            )
+            getPlayerAttackXP(player),
+            getPlayerAttackXPToNextLevel(player)
         ],
         [
             "Strength",
             summary.strength,
-            getPlayerStrengthXP(
-                player
-            ),
-            getPlayerStrengthXPToNextLevel(
-                player
-            )
+            getPlayerStrengthXP(player),
+            getPlayerStrengthXPToNextLevel(player)
         ],
         [
             "Defense",
             summary.defense,
-            getPlayerDefenseXP(
-                player
-            ),
-            getPlayerDefenseXPToNextLevel(
-                player
-            )
+            getPlayerDefenseXP(player),
+            getPlayerDefenseXPToNextLevel(player)
         ],
         [
             "Vitality",
             summary.vitality,
-            getPlayerVitalityXP(
-                player
-            ),
-            getPlayerVitalityXPToNextLevel(
-                player
-            )
+            getPlayerVitalityXP(player),
+            getPlayerVitalityXPToNextLevel(player)
         ]
     ];
 
@@ -837,21 +854,26 @@ function renderCombatTab() {
         of combatSkills
     ) {
 
-        const row =
-            createSkillRow(
-                name.toLowerCase(),
+        combatGrid.appendChild(
+            createCombatSkillCard(
                 name,
                 level,
                 xp,
                 xpToNext
-            );
-
-        characterContent.appendChild(
-            row
+            )
         );
 
     }
 
+
+    characterContent.appendChild(
+        combatGrid
+    );
+
+
+    /* ---------------------------------------------------
+       CURRENT STATUS
+       --------------------------------------------------- */
 
     const statusTitle =
         document.createElement(
@@ -876,35 +898,74 @@ function renderCombatTab() {
         );
 
     status.className =
-        "character-status";
+        "character-status-grid";
 
 
-    status.innerHTML = `
-        <div>
-            <span>Health</span>
-            <strong>
-                ${player.health.current}
-                /
-                ${player.health.maximum}
-            </strong>
-        </div>
+    const statusRows = [
+        [
+            "Health",
+            `${player.health.current} / ${player.health.maximum}`
+        ],
+        [
+            "Energy",
+            `${player.energy.current} / ${player.energy.maximum}`
+        ],
+        [
+            "Combat Style",
+            player.combatStyle
+        ]
+    ];
 
-        <div>
-            <span>Energy</span>
-            <strong>
-                ${player.energy.current}
-                /
-                ${player.energy.maximum}
-            </strong>
-        </div>
 
-        <div>
-            <span>Combat Style</span>
-            <strong>
-                ${player.combatStyle}
-            </strong>
-        </div>
-    `;
+    for (
+        const [
+            label,
+            value
+        ]
+        of statusRows
+    ) {
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.className =
+            "character-status-row";
+
+
+        const labelElement =
+            document.createElement(
+                "span"
+            );
+
+        labelElement.textContent =
+            label;
+
+
+        const valueElement =
+            document.createElement(
+                "strong"
+            );
+
+        valueElement.textContent =
+            value;
+
+
+        row.appendChild(
+            labelElement
+        );
+
+        row.appendChild(
+            valueElement
+        );
+
+
+        status.appendChild(
+            row
+        );
+
+    }
 
 
     characterContent.appendChild(
@@ -923,6 +984,10 @@ function renderSkillsTab() {
     characterContent.innerHTML =
         "";
 
+
+    /* ---------------------------------------------------
+       HEADING
+       --------------------------------------------------- */
 
     const heading =
         document.createElement(
@@ -957,7 +1022,11 @@ function renderSkillsTab() {
     );
 
 
-    const combatSection =
+    /* ---------------------------------------------------
+       SECTIONS
+       --------------------------------------------------- */
+
+    characterContent.appendChild(
         createSkillSection(
             "COMBAT",
             [
@@ -966,20 +1035,22 @@ function renderSkillsTab() {
                 "defense",
                 "vitality"
             ]
-        );
+        )
+    );
 
 
-    const specializationSection =
+    characterContent.appendChild(
         createSkillSection(
             "COMBAT SPECIALIZATION",
             [
                 "ballistics",
                 "energyWeapons"
             ]
-        );
+        )
+    );
 
 
-    const gatheringSection =
+    characterContent.appendChild(
         createSkillSection(
             "GATHERING",
             [
@@ -987,10 +1058,11 @@ function renderSkillsTab() {
                 "salvaging",
                 "xenobiology"
             ]
-        );
+        )
+    );
 
 
-    const technicalSection =
+    characterContent.appendChild(
         createSkillSection(
             "TECHNICAL",
             [
@@ -999,30 +1071,14 @@ function renderSkillsTab() {
                 "hacking",
                 "navigation"
             ]
-        );
-
-
-    characterContent.appendChild(
-        combatSection
-    );
-
-    characterContent.appendChild(
-        specializationSection
-    );
-
-    characterContent.appendChild(
-        gatheringSection
-    );
-
-    characterContent.appendChild(
-        technicalSection
+        )
     );
 
 }
 
 
 /* =======================================================
-   RENDER PLACEHOLDER TABS
+   RENDER PLACEHOLDER TAB
    ======================================================= */
 
 function renderComingSoonTab(
@@ -1047,11 +1103,11 @@ function renderComingSoonTab(
             "div"
         );
 
-    heading.textContent =
-        title;
-
     heading.className =
         "character-coming-soon-title";
+
+    heading.textContent =
+        title;
 
 
     const message =
@@ -1059,11 +1115,11 @@ function renderComingSoonTab(
             "div"
         );
 
+    message.className =
+        "character-coming-soon-text";
+
     message.textContent =
         "This system is under construction.";
-
-    message.className =
-        "character-coming-soon-message";
 
 
     container.appendChild(
@@ -1089,11 +1145,41 @@ function renderComingSoonTab(
 function updateCharacterInterface() {
 
     if (
-        !characterInterface
+        !characterInterface ||
+        !characterButton
     ) {
         return;
     }
 
+
+    /* ---------------------------------------------------
+       GAME AVAILABILITY
+       --------------------------------------------------- */
+
+    if (
+        characterState.gameAvailable
+    ) {
+
+        characterButton.style.display =
+            "block";
+
+    } else {
+
+        characterButton.style.display =
+            "none";
+
+        characterInterface.classList.remove(
+            "character-interface-open"
+        );
+
+        return;
+
+    }
+
+
+    /* ---------------------------------------------------
+       OPEN / CLOSED
+       --------------------------------------------------- */
 
     if (
         characterState.isOpen
@@ -1112,9 +1198,13 @@ function updateCharacterInterface() {
     }
 
 
+    /* ---------------------------------------------------
+       ACTIVE TAB
+       --------------------------------------------------- */
+
     const tabButtons =
         characterInterface.querySelectorAll(
-            ".character-tab"
+            ".character-interface-tab"
         );
 
 
@@ -1127,13 +1217,13 @@ function updateCharacterInterface() {
             ) {
 
                 button.classList.add(
-                    "character-tab-active"
+                    "active"
                 );
 
             } else {
 
                 button.classList.remove(
-                    "character-tab-active"
+                    "active"
                 );
 
             }
@@ -1141,6 +1231,10 @@ function updateCharacterInterface() {
         }
     );
 
+
+    /* ---------------------------------------------------
+       CONTENT
+       --------------------------------------------------- */
 
     switch (
         characterState.activeTab
@@ -1201,6 +1295,236 @@ function updateCharacterInterface() {
 
 
 /* =======================================================
+   CREATE CHARACTER INTERFACE
+   ======================================================= */
+
+function createCharacterInterface() {
+
+    if (
+        characterInterface
+    ) {
+        return;
+    }
+
+
+    /* ===================================================
+       CHARACTER BUTTON
+       =================================================== */
+
+    characterButton =
+        document.createElement(
+            "button"
+        );
+
+    characterButton.id =
+        "character-button";
+
+    characterButton.textContent =
+        "CHARACTER";
+
+    characterButton.addEventListener(
+        "click",
+        () => {
+
+            toggleCharacterInterface();
+
+        }
+    );
+
+
+    document.body.appendChild(
+        characterButton
+    );
+
+
+    /* ===================================================
+       CHARACTER WINDOW
+       =================================================== */
+
+    characterInterface =
+        document.createElement(
+            "div"
+        );
+
+    characterInterface.id =
+        "character-interface";
+
+
+    /* ===================================================
+       HEADER
+       =================================================== */
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+    header.className =
+        "character-interface-header";
+
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+    title.className =
+        "character-interface-title";
+
+    title.textContent =
+        "CHARACTER";
+
+
+    const close =
+        document.createElement(
+            "button"
+        );
+
+    close.className =
+        "character-interface-close";
+
+    close.textContent =
+        "×";
+
+    close.addEventListener(
+        "click",
+        () => {
+
+            closeCharacterInterface();
+
+        }
+    );
+
+
+    header.appendChild(
+        title
+    );
+
+    header.appendChild(
+        close
+    );
+
+
+    /* ===================================================
+       TABS
+       =================================================== */
+
+    const tabs =
+        document.createElement(
+            "div"
+        );
+
+    tabs.className =
+        "character-interface-tabs";
+
+
+    const tabDefinitions = [
+        [
+            CHARACTER_TABS.COMBAT,
+            "COMBAT"
+        ],
+        [
+            CHARACTER_TABS.SKILLS,
+            "SKILLS"
+        ],
+        [
+            CHARACTER_TABS.INVENTORY,
+            "INVENTORY"
+        ],
+        [
+            CHARACTER_TABS.EQUIPMENT,
+            "EQUIPMENT"
+        ],
+        [
+            CHARACTER_TABS.QUESTS,
+            "QUESTS"
+        ],
+        [
+            CHARACTER_TABS.MAP,
+            "MAP"
+        ]
+    ];
+
+
+    for (
+        const [
+            tab,
+            label
+        ]
+        of tabDefinitions
+    ) {
+
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.className =
+            "character-interface-tab";
+
+        button.dataset.tab =
+            tab;
+
+        button.textContent =
+            label;
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                setCharacterTab(
+                    tab
+                );
+
+            }
+        );
+
+
+        tabs.appendChild(
+            button
+        );
+
+    }
+
+
+    /* ===================================================
+       CONTENT
+       =================================================== */
+
+    characterContent =
+        document.createElement(
+            "div"
+        );
+
+    characterContent.className =
+        "character-interface-content";
+
+
+    characterInterface.appendChild(
+        header
+    );
+
+    characterInterface.appendChild(
+        tabs
+    );
+
+    characterInterface.appendChild(
+        characterContent
+    );
+
+
+    document.body.appendChild(
+        characterInterface
+    );
+
+
+    updateCharacterInterface();
+
+}
+
+
+/* =======================================================
    KEYBOARD SHORTCUT
    ======================================================= */
 
@@ -1209,22 +1533,35 @@ window.addEventListener(
     event => {
 
         if (
-            event.key === "c" ||
-            event.key === "C"
+            event.key !== "c" &&
+            event.key !== "C"
         ) {
+            return;
+        }
 
-            if (
+
+        if (
+            event.target &&
+            (
                 event.target.tagName ===
                 "INPUT" ||
+
                 event.target.tagName ===
                 "TEXTAREA"
-            ) {
-                return;
-            }
-
-            toggleCharacterInterface();
-
+            )
+        ) {
+            return;
         }
+
+
+        if (
+            !characterState.gameAvailable
+        ) {
+            return;
+        }
+
+
+        toggleCharacterInterface();
 
     }
 );

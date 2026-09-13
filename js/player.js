@@ -1,6 +1,12 @@
 import { createSkills } from "./skills.js";
-import { createInventory } from "./inventory.js";
-import { createEquipment } from "./equipment.js";
+
+import {
+    createInventory
+} from "./inventory.js";
+
+import {
+    createEquipment
+} from "./equipment.js";
 
 import {
     WORLD_WIDTH,
@@ -11,6 +17,11 @@ import {
 import {
     getXPToNextLevel
 } from "./xp.js";
+
+import {
+    getSkillLevel,
+    getSkillXPToNextLevel
+} from "./skills.js";
 
 
 /* =======================================================
@@ -29,43 +40,201 @@ export const player = {
         y: 900
     },
 
+
+    /*
+     * Health remains a direct player resource for now.
+     *
+     * Later, maximum health will be derived from
+     * the Vitality skill.
+     */
+
     health: {
         current: 100,
         maximum: 100
     },
+
+
+    /*
+     * Energy remains in the player architecture,
+     * but we are NOT implementing Energy abilities
+     * or regeneration in this batch.
+     */
 
     energy: {
         current: 100,
         maximum: 100
     },
 
+
+    /*
+     * LEGACY PLAYER LEVEL
+     *
+     * This remains temporarily because the current
+     * combat system still uses the generic XP system.
+     *
+     * It will eventually be replaced by calculated
+     * SpaceScape Combat Level.
+     */
+
     level: 1,
 
     xp: 0,
+
+
+    /*
+     * LEGACY COMBAT STATS
+     *
+     * These remain temporarily so existing combat
+     * continues functioning while the new skill
+     * architecture is introduced.
+     */
 
     attack: 10,
 
     defense: 5,
 
+
     isDead: false,
 
-    skills: createSkills(),
 
-    inventory: createInventory(),
+    /*
+     * Individual SpaceScape skills.
+     *
+     * These are now the foundation of the long-term
+     * character progression system.
+     */
 
-    equipment: createEquipment(),
+    skills:
+        createSkills(),
+
+
+    inventory:
+        createInventory(),
+
+
+    equipment:
+        createEquipment(),
+
 
     movement: {
+
         speed: 5,
+
         moving: false
+
     }
 
 };
 
 
 /* =======================================================
-   LEVEL UP
+   COMBAT SKILL HELPERS
    ======================================================= */
+
+/*
+ * These functions expose the new individual combat
+ * skills without changing the existing combat system yet.
+ */
+
+
+export function getPlayerAttackLevel() {
+
+    return getSkillLevel(
+        player.skills,
+        "attack"
+    );
+
+}
+
+
+export function getPlayerStrengthLevel() {
+
+    return getSkillLevel(
+        player.skills,
+        "strength"
+    );
+
+}
+
+
+export function getPlayerDefenseLevel() {
+
+    return getSkillLevel(
+        player.skills,
+        "defense"
+    );
+
+}
+
+
+export function getPlayerVitalityLevel() {
+
+    return getSkillLevel(
+        player.skills,
+        "vitality"
+    );
+
+}
+
+
+/* =======================================================
+   COMBAT SKILL XP
+   ======================================================= */
+
+export function getPlayerAttackXPToNextLevel() {
+
+    return getSkillXPToNextLevel(
+        player.skills,
+        "attack"
+    );
+
+}
+
+
+export function getPlayerStrengthXPToNextLevel() {
+
+    return getSkillXPToNextLevel(
+        player.skills,
+        "strength"
+    );
+
+}
+
+
+export function getPlayerDefenseXPToNextLevel() {
+
+    return getSkillXPToNextLevel(
+        player.skills,
+        "defense"
+    );
+
+}
+
+
+export function getPlayerVitalityXPToNextLevel() {
+
+    return getSkillXPToNextLevel(
+        player.skills,
+        "vitality"
+    );
+
+}
+
+
+/* =======================================================
+   LEGACY LEVEL UP
+   ======================================================= */
+
+/*
+ * TEMPORARY
+ *
+ * The current combat system still uses the generic
+ * player level. Therefore this function remains intact
+ * for this batch.
+ *
+ * We will replace this system after the individual
+ * combat skills and combat styles are implemented.
+ */
 
 export function applyLevelUp() {
 
@@ -77,15 +246,10 @@ export function applyLevelUp() {
 
     player.defense += 1;
 
+
     /*
      * Leveling increases maximum HP and Energy,
      * but does not automatically restore either one.
-     *
-     * Example:
-     *
-     * 62/100 HP -> 62/110 HP
-     *
-     * This keeps accumulated combat damage meaningful.
      */
 
     console.log(
@@ -93,7 +257,7 @@ export function applyLevelUp() {
     );
 
     console.log(
-        `Stats increased: ` +
+        `Legacy stats increased: ` +
         `Health ${player.health.maximum}, ` +
         `Energy ${player.energy.maximum}, ` +
         `Attack ${player.attack}, ` +
@@ -113,15 +277,18 @@ export function handlePlayerDeath() {
         return false;
     }
 
+
     player.health.current = 0;
 
     player.isDead = true;
 
     player.movement.moving = false;
 
+
     console.log(
         "Player died."
     );
+
 
     return true;
 
@@ -140,15 +307,18 @@ export function respawnPlayer() {
     player.position.y =
         player.respawnPosition.y;
 
+
     player.health.current =
         player.health.maximum;
 
     player.energy.current =
         player.energy.maximum;
 
+
     player.isDead = false;
 
     player.movement.moving = false;
+
 
     console.log(
         `Player respawned at ` +
@@ -173,6 +343,7 @@ export function updatePlayerMovement() {
 
     }
 
+
     if (
         document
             .getElementById("dialogue")
@@ -187,8 +358,11 @@ export function updatePlayerMovement() {
 
     }
 
+
     let dx = 0;
+
     let dy = 0;
+
 
     if (
         keys["w"] ||
@@ -199,6 +373,7 @@ export function updatePlayerMovement() {
 
     }
 
+
     if (
         keys["s"] ||
         keys["ArrowDown"]
@@ -207,6 +382,7 @@ export function updatePlayerMovement() {
         dy += 1;
 
     }
+
 
     if (
         keys["a"] ||
@@ -217,6 +393,7 @@ export function updatePlayerMovement() {
 
     }
 
+
     if (
         keys["d"] ||
         keys["ArrowRight"]
@@ -225,6 +402,7 @@ export function updatePlayerMovement() {
         dx += 1;
 
     }
+
 
     if (
         dx === 0 &&
@@ -238,8 +416,10 @@ export function updatePlayerMovement() {
 
     }
 
+
     player.movement.moving =
         true;
+
 
     const magnitude =
         Math.sqrt(
@@ -247,23 +427,28 @@ export function updatePlayerMovement() {
             dy * dy
         );
 
+
     dx =
         dx /
         magnitude *
         player.movement.speed;
+
 
     dy =
         dy /
         magnitude *
         player.movement.speed;
 
+
     const newX =
         player.position.x +
         dx;
 
+
     const newY =
         player.position.y +
         dy;
+
 
     if (
         newX >= 0 &&
@@ -278,6 +463,7 @@ export function updatePlayerMovement() {
             newX;
 
     }
+
 
     if (
         newY >= 0 &&
@@ -303,17 +489,23 @@ export function updatePlayerMovement() {
 export function drawPlayer() {
 
     const playerElement =
-        document.getElementById("player");
+        document.getElementById(
+            "player"
+        );
+
 
     if (!playerElement) {
         return;
     }
 
+
     playerElement.style.left =
         `${player.position.x}px`;
 
+
     playerElement.style.top =
         `${player.position.y}px`;
+
 
     playerElement.style.opacity =
         player.isDead
@@ -330,23 +522,49 @@ export function drawPlayer() {
 export function updatePlayerHUD() {
 
     const levelElement =
-        document.getElementById("level");
+        document.getElementById(
+            "level"
+        );
+
 
     const xpElement =
-        document.getElementById("xp");
+        document.getElementById(
+            "xp"
+        );
+
 
     const healthElement =
-        document.getElementById("health");
+        document.getElementById(
+            "health"
+        );
+
 
     const healthBar =
-        document.getElementById("health-bar");
+        document.getElementById(
+            "health-bar"
+        );
+
 
     const energyElement =
-        document.getElementById("energy");
+        document.getElementById(
+            "energy"
+        );
+
 
     const energyBar =
-        document.getElementById("energy-bar");
+        document.getElementById(
+            "energy-bar"
+        );
 
+
+    /*
+     * The current HUD still displays the legacy
+     * player level and XP.
+     *
+     * This will be changed to Combat Level and
+     * individual skill information when the
+     * Character Interface is built.
+     */
 
     if (levelElement) {
 
@@ -413,6 +631,7 @@ export function updatePlayerHUD() {
 
 const keys = {};
 
+
 window.addEventListener(
     "keydown",
     event => {
@@ -421,6 +640,7 @@ window.addEventListener(
 
     }
 );
+
 
 window.addEventListener(
     "keyup",

@@ -442,11 +442,29 @@ export function rollDamage(
    PERFORM ATTACK
    ======================================================= */
 
+/*
+ * attackPower controls ACCURACY.
+ *
+ * damagePower controls DAMAGE.
+ *
+ * defenseOverride allows the combat system to use
+ * a calculated defense value instead of relying on
+ * target.defense.
+ *
+ * This lets SpaceScape use:
+ *
+ * Attack skill     → accuracy
+ * Strength skill   → damage
+ * Defense skill    → incoming resistance
+ */
+
 export function performAttack(
     attacker,
     target,
     attackPower,
-    combatStyle = COMBAT_STYLES.ACCURATE
+    combatStyle = COMBAT_STYLES.ACCURATE,
+    damagePower = attackPower,
+    defenseOverride = null
 ) {
 
     if (
@@ -456,6 +474,26 @@ export function performAttack(
             attackPower
         ) ||
         attackPower <= 0
+    ) {
+
+        return {
+
+            success: false,
+
+            hit: false,
+
+            damage: 0
+
+        };
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            damagePower
+        ) ||
+        damagePower <= 0
     ) {
 
         return {
@@ -509,12 +547,29 @@ export function performAttack(
     }
 
 
-    const defense =
+    let defense;
+
+
+    if (
         Number.isFinite(
-            target.defense
-        )
-            ? target.defense
-            : 0;
+            defenseOverride
+        ) &&
+        defenseOverride >= 0
+    ) {
+
+        defense =
+            defenseOverride;
+
+    } else {
+
+        defense =
+            Number.isFinite(
+                target.defense
+            )
+                ? target.defense
+                : 0;
+
+    }
 
 
     const hit =
@@ -542,7 +597,7 @@ export function performAttack(
 
     const damage =
         rollDamage(
-            attackPower,
+            damagePower,
             defense,
             combatStyle
         );

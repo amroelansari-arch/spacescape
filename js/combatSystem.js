@@ -1,6 +1,8 @@
 import {
     performAttack,
-    isTargetAlive
+    isTargetAlive,
+    COMBAT_STYLES,
+    COMBAT_STYLE_MODIFIERS
 } from "./combat.js";
 
 import {
@@ -18,7 +20,8 @@ import {
 } from "./world.js";
 
 import {
-    awardSkillXP
+    awardSkillXP,
+    getSkillLevel
 } from "./skills.js";
 
 import {
@@ -39,13 +42,6 @@ const COMBAT_ENGAGEMENT_RANGE =
     COMBAT_RANGE +
     COMBAT_ENGAGEMENT_BUFFER;
 
-/*
- * Once combat has started, the player is free to
- * move around normally.
- *
- * Combat only disengages when the player gets
- * this far away from the enemy.
- */
 const COMBAT_DISENGAGEMENT_RANGE = 250;
 
 
@@ -53,23 +49,25 @@ const COMBAT_DISENGAGEMENT_RANGE = 250;
    COMBAT XP
    ======================================================= */
 
-/*
- * SpaceScape awards combat XP based on damage dealt.
- *
- * Every 1 damage dealt = 4 primary combat XP.
- *
- * Vitality receives 25% of the primary combat XP.
- *
- * Therefore:
- *
- * 1 damage
- * = 4 primary combat XP
- * = 1 Vitality XP
- */
-
 const COMBAT_XP_PER_DAMAGE = 4;
 
 const VITALITY_XP_PERCENT = 0.25;
+
+
+/* =======================================================
+   VITALITY
+   ======================================================= */
+
+/*
+ * Vitality 1 = 100 HP.
+ *
+ * Every Vitality level above 1 grants
+ * 5 additional maximum HP.
+ */
+
+const BASE_PLAYER_HEALTH = 100;
+
+const HEALTH_PER_VITALITY_LEVEL = 5;
 
 
 /* =======================================================
@@ -199,6 +197,208 @@ export function consumeCombatFeedback() {
 
 
 /* =======================================================
+   PLAYER SKILLS
+   ======================================================= */
+
+function getPlayerAttackLevel(
+    player
+) {
+
+    return getSkillLevel(
+        player.skills,
+        "attack"
+    );
+
+}
+
+
+function getPlayerStrengthLevel(
+    player
+) {
+
+    return getSkillLevel(
+        player.skills,
+        "strength"
+    );
+
+}
+
+
+function getPlayerDefenseLevel(
+    player
+) {
+
+    return getSkillLevel(
+        player.skills,
+        "defense"
+    );
+
+}
+
+
+function getPlayerVitalityLevel(
+    player
+) {
+
+    return getSkillLevel(
+        player.skills,
+        "vitality"
+    );
+
+}
+
+
+/* =======================================================
+   VITALITY HEALTH
+   ======================================================= */
+
+function calculatePlayerMaximumHealth(
+    player
+) {
+
+    const vitalityLevel =
+        getPlayerVitalityLevel(
+            player
+        );
+
+
+    return (
+        BASE_PLAYER_HEALTH +
+        (
+            Math.max(
+                1,
+                vitalityLevel
+            ) -
+            1
+        ) *
+        HEALTH_PER_VITALITY_LEVEL
+    );
+
+}
+
+
+/*
+ * Synchronize maximum HP with Vitality.
+ *
+ * If Vitality levels up while the player is alive,
+ * the new maximum HP is added to current HP as well.
+ */
+
+function syncPlayerVitalityHealth(
+    player,
+    previousMaximumHealth = null
+) {
+
+    if (
+        !player ||
+        !player.health
+    ) {
+
+        return;
+
+    }
+
+
+    const newMaximumHealth =
+        calculatePlayerMaximumHealth(
+            player
+        );
+
+
+    const oldMaximumHealth =
+        Number.isFinite(
+            previousMaximumHealth
+        )
+            ? previousMaximumHealth
+            : player.health.maximum;
+
+
+    if (
+        newMaximumHealth >
+        oldMaximumHealth
+    ) {
+
+        const healthIncrease =
+            newMaximumHealth -
+            oldMaximumHealth;
+
+
+        player.health.maximum =
+            newMaximumHealth;
+
+
+        player.health.current =
+            Math.min(
+                newMaximumHealth,
+                player.health.current +
+                healthIncrease
+            );
+
+
+        return;
+
+    }
+
+
+    player.health.maximum =
+        newMaximumHealth;
+
+
+    player.health.current =
+        Math.min(
+            player.health.current,
+            newMaximumHealth
+        );
+
+}
+
+
+/* =======================================================
+   EFFECTIVE PLAYER DEFENSE
+   ======================================================= */
+
+function getEffectivePlayerDefense(
+    player
+) {
+
+    const defenseLevel =
+        getPlayerDefenseLevel(
+            player
+        );
+
+
+    const combatStyle =
+        getCombatStyle();
+
+
+    let defenseMultiplier =
+        1;
+
+
+    if (
+        COMBAT_STYLE_MODIFIERS[
+            combatStyle
+        ]
+    ) {
+
+        defenseMultiplier =
+            COMBAT_STYLE_MODIFIERS[
+                combatStyle
+            ].defenseMultiplier;
+
+    }
+
+
+    return Math.max(
+        0,
+        defenseLevel *
+        defenseMultiplier
+    );
+
+}
+
+
+/* =======================================================
    START COMBAT
    ======================================================= */
 
@@ -237,14 +437,6 @@ export function startCombat(
         true;
 
 
-    /*
-     * Combat begins in the approach phase.
-     *
-     * The player will automatically move toward
-     * the selected enemy until engagement range
-     * is reached.
-     */
-
     combatState.engaged =
         false;
 
@@ -265,6 +457,11 @@ export function startCombat(
         now;
 
 
+    syncPlayerVitalityHealth(
+        player
+    );
+
+
     console.log(
         `Target selected: ${enemy.name}`
     );
@@ -272,6 +469,15 @@ export function startCombat(
 
     console.log(
         `Combat style: ${getCombatStyle()}`
+    );
+
+
+    console.log(
+        `Combat skills: ` +
+        `Attack ${getPlayerAttackLevel(player)}, ` +
+        `Strength ${getPlayerStrengthLevel(player)}, ` +
+        `Defense ${getPlayerDefenseLevel(player)}, ` +
+        `Vitality ${getPlayerVitalityLevel(player)}`
     );
 
 
@@ -833,18 +1039,13 @@ function awardCombatXPForDamage(
         getCombatStyle();
 
 
-    /*
-     * Determine which combat skill receives
-     * the primary XP.
-     */
-
     let primarySkill =
         null;
 
 
     if (
         combatStyle ===
-        "accurate"
+        COMBAT_STYLES.ACCURATE
     ) {
 
         primarySkill =
@@ -852,7 +1053,7 @@ function awardCombatXPForDamage(
 
     } else if (
         combatStyle ===
-        "aggressive"
+        COMBAT_STYLES.AGGRESSIVE
     ) {
 
         primarySkill =
@@ -860,7 +1061,7 @@ function awardCombatXPForDamage(
 
     } else if (
         combatStyle ===
-        "defensive"
+        COMBAT_STYLES.DEFENSIVE
     ) {
 
         primarySkill =
@@ -886,6 +1087,10 @@ function awardCombatXPForDamage(
         VITALITY_XP_PERCENT;
 
 
+    const previousMaximumHealth =
+        player.health.maximum;
+
+
     const primaryResult =
         awardSkillXP(
             player.skills,
@@ -900,6 +1105,12 @@ function awardCombatXPForDamage(
             "vitality",
             vitalityXP
         );
+
+
+    syncPlayerVitalityHealth(
+        player,
+        previousMaximumHealth
+    );
 
 
     console.log(
@@ -927,7 +1138,9 @@ function awardCombatXPForDamage(
 
         console.log(
             `Vitality reached level ` +
-            `${vitalityResult.currentLevel}.`
+            `${vitalityResult.currentLevel}. ` +
+            `Maximum HP is now ` +
+            `${player.health.maximum}.`
         );
 
     }
@@ -974,12 +1187,34 @@ function processPlayerAttack(
         getCombatStyle();
 
 
+    const attackLevel =
+        getPlayerAttackLevel(
+            player
+        );
+
+
+    const strengthLevel =
+        getPlayerStrengthLevel(
+            player
+        );
+
+
+    /*
+     * Attack controls accuracy.
+     *
+     * Strength controls damage.
+     *
+     * Enemy defense remains an independent
+     * enemy stat.
+     */
+
     const result =
         performAttack(
             player,
             enemy,
-            player.attack,
-            combatStyle
+            attackLevel,
+            combatStyle,
+            strengthLevel
         );
 
 
@@ -1001,11 +1236,6 @@ function processPlayerAttack(
         result.hit
     ) {
 
-        /*
-         * XP is awarded immediately when damage
-         * is successfully dealt.
-         */
-
         awardCombatXPForDamage(
             player,
             result.damage
@@ -1025,7 +1255,9 @@ function processPlayerAttack(
         console.log(
             `Player hits ${enemy.name} for ${result.damage}. ` +
             `${enemy.health.current}/${enemy.health.maximum} HP remaining. ` +
-            `Style: ${combatStyle}`
+            `Style: ${combatStyle}. ` +
+            `Attack ${attackLevel}, ` +
+            `Strength ${strengthLevel}`
         );
 
     } else {
@@ -1043,7 +1275,8 @@ function processPlayerAttack(
         console.log(
             `Player misses ${enemy.name}. ` +
             `No combat XP awarded. ` +
-            `Style: ${combatStyle}`
+            `Style: ${combatStyle}. ` +
+            `Attack ${attackLevel}`
         );
 
     }
@@ -1071,11 +1304,20 @@ function processEnemyAttack(
     }
 
 
+    const playerDefense =
+        getEffectivePlayerDefense(
+            player
+        );
+
+
     const result =
         performAttack(
             enemy,
             player,
-            enemy.attack
+            enemy.attack,
+            COMBAT_STYLES.ACCURATE,
+            enemy.attack,
+            playerDefense
         );
 
 
@@ -1109,7 +1351,8 @@ function processEnemyAttack(
 
         console.log(
             `${enemy.name} hits player for ${result.damage}. ` +
-            `${player.health.current}/${player.health.maximum} HP remaining.`
+            `${player.health.current}/${player.health.maximum} HP remaining. ` +
+            `Player Defense ${getPlayerDefenseLevel(player)}`
         );
 
     } else {
@@ -1125,7 +1368,8 @@ function processEnemyAttack(
 
 
         console.log(
-            `${enemy.name} misses player.`
+            `${enemy.name} misses player. ` +
+            `Player Defense ${getPlayerDefenseLevel(player)}`
         );
 
     }
@@ -1159,6 +1403,16 @@ export function updateCombat(
         return;
 
     }
+
+
+    /*
+     * Keep HP synchronized with Vitality even when
+     * combat is not responsible for the level change.
+     */
+
+    syncPlayerVitalityHealth(
+        player
+    );
 
 
     const enemy =
@@ -1196,14 +1450,9 @@ export function updateCombat(
     }
 
 
-    /*
-     * ===================================================
-     * APPROACH PHASE
-     * ===================================================
-     *
-     * Before combat is engaged, the player is
-     * automatically moved toward the selected enemy.
-     */
+    /* ===================================================
+       APPROACH PHASE
+       =================================================== */
 
     if (
         !combatState.engaged
@@ -1255,17 +1504,9 @@ export function updateCombat(
     }
 
 
-    /*
-     * ===================================================
-     * ACTIVE COMBAT
-     * ===================================================
-     *
-     * Once engaged, automatic approach is completely
-     * disabled.
-     *
-     * The player can now move freely using normal
-     * player controls.
-     */
+    /* ===================================================
+       ACTIVE COMBAT
+       =================================================== */
 
     if (
         isOutsideCombatDisengagementRange(
@@ -1297,14 +1538,6 @@ export function updateCombat(
         now
     );
 
-
-    /*
-     * If the enemy died from the player's attack,
-     * combat ends normally.
-     *
-     * There is NO XP award here because XP was
-     * already awarded when the damage was dealt.
-     */
 
     if (
         !isTargetAlive(enemy)

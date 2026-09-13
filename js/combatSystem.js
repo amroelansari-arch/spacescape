@@ -39,6 +39,15 @@ const COMBAT_ENGAGEMENT_RANGE =
     COMBAT_RANGE +
     COMBAT_ENGAGEMENT_BUFFER;
 
+/*
+ * Once combat has started, the player is free to
+ * move around normally.
+ *
+ * Combat only disengages when the player gets
+ * this far away from the enemy.
+ */
+const COMBAT_DISENGAGEMENT_RANGE = 250;
+
 
 /* =======================================================
    COMBAT XP
@@ -228,6 +237,14 @@ export function startCombat(
         true;
 
 
+    /*
+     * Combat begins in the approach phase.
+     *
+     * The player will automatically move toward
+     * the selected enemy until engagement range
+     * is reached.
+     */
+
     combatState.engaged =
         false;
 
@@ -339,6 +356,44 @@ function isWithinCombatRange(
     return (
         distance <=
         COMBAT_ENGAGEMENT_RANGE
+    );
+
+}
+
+
+/* =======================================================
+   COMBAT DISENGAGEMENT
+   ======================================================= */
+
+function isOutsideCombatDisengagementRange(
+    player,
+    enemy
+) {
+
+    if (
+        !player ||
+        !enemy ||
+        !player.position ||
+        !enemy.position
+    ) {
+
+        return true;
+
+    }
+
+
+    const distance =
+        getDistance(
+            player.position.x,
+            player.position.y,
+            enemy.position.x,
+            enemy.position.y
+        );
+
+
+    return (
+        distance >
+        COMBAT_DISENGAGEMENT_RANGE
     );
 
 }
@@ -1141,46 +1196,93 @@ export function updateCombat(
     }
 
 
-    if (
-        !isWithinCombatRange(
-            player,
-            enemy
-        )
-    ) {
-
-        movePlayerTowardTarget(
-            player,
-            enemy
-        );
-
-
-        return;
-
-    }
-
-
-    player.movement.moving =
-        false;
-
+    /*
+     * ===================================================
+     * APPROACH PHASE
+     * ===================================================
+     *
+     * Before combat is engaged, the player is
+     * automatically moved toward the selected enemy.
+     */
 
     if (
         !combatState.engaged
     ) {
 
-        combatState.engaged =
-            true;
+        if (
+            isWithinCombatRange(
+                player,
+                enemy
+            )
+        ) {
+
+            combatState.engaged =
+                true;
 
 
-        const now =
-            performance.now();
+            const now =
+                performance.now();
 
 
-        combatState.playerNextAttackTime =
-            now;
+            combatState.playerNextAttackTime =
+                now;
 
 
-        combatState.enemyNextAttackTime =
-            now;
+            combatState.enemyNextAttackTime =
+                now;
+
+
+            player.movement.moving =
+                false;
+
+
+            console.log(
+                `Combat engaged with ${enemy.name}.`
+            );
+
+        } else {
+
+            movePlayerTowardTarget(
+                player,
+                enemy
+            );
+
+
+            return;
+
+        }
+
+    }
+
+
+    /*
+     * ===================================================
+     * ACTIVE COMBAT
+     * ===================================================
+     *
+     * Once engaged, automatic approach is completely
+     * disabled.
+     *
+     * The player can now move freely using normal
+     * player controls.
+     */
+
+    if (
+        isOutsideCombatDisengagementRange(
+            player,
+            enemy
+        )
+    ) {
+
+        console.log(
+            `Player moved too far from ${enemy.name}. ` +
+            `Combat disengaged.`
+        );
+
+
+        stopCombat();
+
+        return;
 
     }
 

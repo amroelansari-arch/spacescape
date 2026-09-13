@@ -49,14 +49,65 @@ export const CHARACTER_TABS = {
 
 
 /* =======================================================
+   CHARACTER TAB DEFINITIONS
+   ======================================================= */
+
+const CHARACTER_TAB_DEFINITIONS = [
+
+    {
+        tab: CHARACTER_TABS.COMBAT,
+        label: "Combat",
+        icon: "⚔"
+    },
+
+    {
+        tab: CHARACTER_TABS.SKILLS,
+        label: "Skills",
+        icon: "✦"
+    },
+
+    {
+        tab: CHARACTER_TABS.INVENTORY,
+        label: "Inventory",
+        icon: "▣"
+    },
+
+    {
+        tab: CHARACTER_TABS.EQUIPMENT,
+        label: "Equipment",
+        icon: "◆"
+    },
+
+    {
+        tab: CHARACTER_TABS.QUESTS,
+        label: "Quests",
+        icon: "◇"
+    },
+
+    {
+        tab: CHARACTER_TABS.MAP,
+        label: "Map",
+        icon: "⌖"
+    }
+
+];
+
+
+/* =======================================================
    CHARACTER STATE
    ======================================================= */
 
 const characterState = {
+
     isOpen: false,
-    activeTab: CHARACTER_TABS.COMBAT,
+
+    activeTab:
+        CHARACTER_TABS.COMBAT,
+
     gameAvailable: false,
+
     selectedInventoryItem: null
+
 };
 
 
@@ -65,7 +116,9 @@ const characterState = {
    ======================================================= */
 
 let characterButton = null;
+
 let characterInterface = null;
+
 let characterContent = null;
 
 
@@ -90,7 +143,7 @@ export function closeCharacterInterface() {
 
     characterState.isOpen = false;
 
-    closeInventoryPopup();
+    removeInventoryItemPopup();
 
     updateCharacterInterface();
 
@@ -105,10 +158,6 @@ export function toggleCharacterInterface() {
 
     characterState.isOpen =
         !characterState.isOpen;
-
-    if (!characterState.isOpen) {
-        closeInventoryPopup();
-    }
 
     updateCharacterInterface();
 
@@ -142,7 +191,7 @@ export function setCharacterTab(tab) {
         characterState.selectedInventoryItem =
             null;
 
-        closeInventoryPopup();
+        removeInventoryItemPopup();
 
     }
 
@@ -187,7 +236,10 @@ export function setCharacterInterfaceAvailability(
         characterState.isOpen =
             false;
 
-        closeInventoryPopup();
+        characterState.selectedInventoryItem =
+            null;
+
+        removeInventoryItemPopup();
 
     }
 
@@ -205,6 +257,7 @@ export function getCharacterCombatSummary(
 ) {
 
     return {
+
         combatLevel:
             getPlayerCombatLevel(
                 currentPlayer
@@ -229,6 +282,7 @@ export function getCharacterCombatSummary(
             getPlayerVitalityLevel(
                 currentPlayer
             )
+
     };
 
 }
@@ -1076,7 +1130,7 @@ function renderSkillsTab() {
 
 
 /* =======================================================
-   INVENTORY ITEM ICON
+   INVENTORY ITEM SYMBOL
    ======================================================= */
 
 function getInventoryItemSymbol(
@@ -1101,6 +1155,30 @@ function getInventoryItemSymbol(
 
 
 /* =======================================================
+   REMOVE INVENTORY POPUP
+   ======================================================= */
+
+function removeInventoryItemPopup() {
+
+    if (!characterInterface) {
+        return;
+    }
+
+    const existingPopup =
+        characterInterface.querySelector(
+            ".inventory-item-popup-overlay"
+        );
+
+    if (existingPopup) {
+
+        existingPopup.remove();
+
+    }
+
+}
+
+
+/* =======================================================
    CREATE INVENTORY SLOT
    ======================================================= */
 
@@ -1115,15 +1193,27 @@ function createInventorySlot(
         );
 
     slot.className =
-        "skill-card";
+        "skill-card inventory-slot";
 
-    slot.style.cursor =
-        inventoryItem
-            ? "pointer"
-            : "default";
+    if (inventoryItem) {
 
-    slot.style.minHeight =
-        "100px";
+        slot.classList.add(
+            "inventory-slot-filled"
+        );
+
+        slot.style.cursor =
+            "pointer";
+
+    } else {
+
+        slot.classList.add(
+            "inventory-slot-empty"
+        );
+
+        slot.style.cursor =
+            "default";
+
+    }
 
 
     if (!inventoryItem) {
@@ -1261,7 +1351,9 @@ function createInventorySlot(
 
     slot.addEventListener(
         "click",
-        () => {
+        event => {
+
+            event.stopPropagation();
 
             characterState.selectedInventoryItem =
                 inventoryItem.id;
@@ -1284,7 +1376,8 @@ function createInventorySlot(
 function createInventoryActionButton(
     label,
     enabled,
-    action
+    action,
+    primary = false
 ) {
 
     const button =
@@ -1293,13 +1386,24 @@ function createInventoryActionButton(
         );
 
     button.className =
-        "inventory-action-button";
+        "inventory-item-popup-button";
+
+
+    if (primary) {
+
+        button.classList.add(
+            "primary"
+        );
+
+    }
+
 
     button.textContent =
         label;
 
     button.disabled =
         !enabled;
+
 
     button.addEventListener(
         "click",
@@ -1323,39 +1427,15 @@ function createInventoryActionButton(
 
 
 /* =======================================================
-   CLOSE INVENTORY POPUP
-   ======================================================= */
-
-function closeInventoryPopup() {
-
-    if (!characterInterface) {
-        return;
-    }
-
-    const popup =
-        characterInterface.querySelector(
-            ".inventory-item-popup-overlay"
-        );
-
-    if (popup) {
-
-        popup.remove();
-
-    }
-
-}
-
-
-/* =======================================================
-   CREATE INVENTORY POPUP
+   CREATE INVENTORY ITEM POPUP
    ======================================================= */
 
 function createInventoryItemPopup(
-    selectedInventoryItem,
-    selectedItem
+    inventoryItem,
+    item
 ) {
 
-    closeInventoryPopup();
+    removeInventoryItemPopup();
 
 
     const overlay =
@@ -1369,14 +1449,21 @@ function createInventoryItemPopup(
 
     overlay.addEventListener(
         "click",
-        () => {
+        event => {
 
-            characterState.selectedInventoryItem =
-                null;
+            if (
+                event.target ===
+                overlay
+            ) {
 
-            closeInventoryPopup();
+                characterState.selectedInventoryItem =
+                    null;
 
-            updateCharacterInterface();
+                removeInventoryItemPopup();
+
+                updateCharacterInterface();
+
+            }
 
         }
     );
@@ -1402,7 +1489,7 @@ function createInventoryItemPopup(
 
 
     /* ---------------------------------------------------
-       POPUP HEADER
+       HEADER
        --------------------------------------------------- */
 
     const header =
@@ -1411,7 +1498,7 @@ function createInventoryItemPopup(
         );
 
     header.className =
-        "inventory-popup-header";
+        "inventory-item-popup-header";
 
 
     const title =
@@ -1420,10 +1507,10 @@ function createInventoryItemPopup(
         );
 
     title.className =
-        "inventory-popup-title";
+        "inventory-item-popup-title";
 
     title.textContent =
-        selectedItem.name;
+        item.name;
 
 
     const closeButton =
@@ -1432,7 +1519,7 @@ function createInventoryItemPopup(
         );
 
     closeButton.className =
-        "inventory-popup-close";
+        "inventory-item-popup-close";
 
     closeButton.textContent =
         "×";
@@ -1448,7 +1535,7 @@ function createInventoryItemPopup(
             characterState.selectedInventoryItem =
                 null;
 
-            closeInventoryPopup();
+            removeInventoryItemPopup();
 
             updateCharacterInterface();
 
@@ -1466,31 +1553,8 @@ function createInventoryItemPopup(
 
 
     /* ---------------------------------------------------
-       ITEM DETAILS
+       INFORMATION
        --------------------------------------------------- */
-
-    const details =
-        document.createElement(
-            "div"
-        );
-
-    details.className =
-        "inventory-popup-details";
-
-
-    const icon =
-        document.createElement(
-            "div"
-        );
-
-    icon.className =
-        "inventory-popup-icon";
-
-    icon.textContent =
-        getInventoryItemSymbol(
-            selectedItem
-        );
-
 
     const info =
         document.createElement(
@@ -1498,7 +1562,7 @@ function createInventoryItemPopup(
         );
 
     info.className =
-        "inventory-popup-info";
+        "inventory-item-popup-info";
 
 
     const type =
@@ -1507,60 +1571,22 @@ function createInventoryItemPopup(
         );
 
     type.className =
-        "inventory-popup-type";
+        "inventory-item-popup-type";
 
     type.textContent =
-        String(
-            selectedItem.type
-        ).toUpperCase();
-
-
-    const quantity =
-        document.createElement(
-            "div"
-        );
-
-    quantity.className =
-        "inventory-popup-quantity";
-
-    quantity.textContent =
-        `QUANTITY ×${selectedInventoryItem.quantity}`;
+        `${String(
+            item.type
+        ).toUpperCase()} • QUANTITY ${inventoryItem.quantity}`;
 
 
     info.appendChild(
         type
     );
 
-    info.appendChild(
-        quantity
-    );
-
-
-    details.appendChild(
-        icon
-    );
-
-    details.appendChild(
-        info
-    );
-
-
-    popup.appendChild(
-        header
-    );
-
-    popup.appendChild(
-        details
-    );
-
-
-    /* ---------------------------------------------------
-       EFFECT
-       --------------------------------------------------- */
 
     if (
-        selectedItem.effect &&
-        selectedItem.effect.type === "heal"
+        item.effect &&
+        item.effect.type === "heal"
     ) {
 
         const effect =
@@ -1569,12 +1595,13 @@ function createInventoryItemPopup(
             );
 
         effect.className =
-            "inventory-popup-effect";
+            "inventory-item-popup-effect";
 
         effect.textContent =
-            `HEALS ${selectedItem.effect.amount} HP`;
+            `Restores ${item.effect.amount} HP.`;
 
-        popup.appendChild(
+
+        info.appendChild(
             effect
         );
 
@@ -1585,17 +1612,17 @@ function createInventoryItemPopup(
        ACTIONS
        --------------------------------------------------- */
 
-    const actionArea =
+    const actions =
         document.createElement(
             "div"
         );
 
-    actionArea.className =
-        "inventory-popup-actions";
+    actions.className =
+        "inventory-item-popup-actions";
 
 
     const canUse =
-        selectedItem.type ===
+        item.type ===
         "consumable";
 
 
@@ -1605,32 +1632,27 @@ function createInventoryItemPopup(
             canUse,
             () => {
 
-                const itemId =
-                    selectedInventoryItem.id;
-
-
                 const used =
                     useItem(
                         player,
                         player.inventory,
-                        itemId
+                        inventoryItem.id
                     );
-
 
                 if (!used) {
                     return;
                 }
 
 
-                const remaining =
-                    player.inventory.items.find(
-                        item =>
-                            item.id ===
-                            itemId
+                const stillExists =
+                    player.inventory.items.some(
+                        currentItem =>
+                            currentItem.id ===
+                            inventoryItem.id
                     );
 
 
-                if (!remaining) {
+                if (!stillExists) {
 
                     characterState.selectedInventoryItem =
                         null;
@@ -1640,7 +1662,8 @@ function createInventoryItemPopup(
 
                 updateCharacterInterface();
 
-            }
+            },
+            true
         );
 
 
@@ -1650,32 +1673,27 @@ function createInventoryItemPopup(
             true,
             () => {
 
-                const itemId =
-                    selectedInventoryItem.id;
-
-
                 const removed =
                     removeItem(
                         player.inventory,
-                        itemId,
+                        inventoryItem.id,
                         1
                     );
-
 
                 if (!removed) {
                     return;
                 }
 
 
-                const remaining =
-                    player.inventory.items.find(
-                        item =>
-                            item.id ===
-                            itemId
+                const stillExists =
+                    player.inventory.items.some(
+                        currentItem =>
+                            currentItem.id ===
+                            inventoryItem.id
                     );
 
 
-                if (!remaining) {
+                if (!stillExists) {
 
                     characterState.selectedInventoryItem =
                         null;
@@ -1689,49 +1707,25 @@ function createInventoryItemPopup(
         );
 
 
-    actionArea.appendChild(
+    actions.appendChild(
         useButton
     );
 
-    actionArea.appendChild(
+    actions.appendChild(
         dropButton
     );
 
 
-    const cancelButton =
-        document.createElement(
-            "button"
-        );
-
-    cancelButton.className =
-        "inventory-popup-cancel";
-
-    cancelButton.textContent =
-        "CLOSE";
-
-
-    cancelButton.addEventListener(
-        "click",
-        () => {
-
-            characterState.selectedInventoryItem =
-                null;
-
-            closeInventoryPopup();
-
-            updateCharacterInterface();
-
-        }
+    popup.appendChild(
+        header
     );
-
-
-    actionArea.appendChild(
-        cancelButton
-    );
-
 
     popup.appendChild(
-        actionArea
+        info
+    );
+
+    popup.appendChild(
+        actions
     );
 
 
@@ -1748,94 +1742,16 @@ function createInventoryItemPopup(
 
 
 /* =======================================================
-   RENDER INVENTORY POPUP
-   ======================================================= */
-
-function renderInventoryPopup() {
-
-    closeInventoryPopup();
-
-
-    if (
-        !characterState.selectedInventoryItem
-    ) {
-        return;
-    }
-
-
-    const inventory =
-        player.inventory;
-
-
-    if (
-        !inventory ||
-        !Array.isArray(
-            inventory.items
-        )
-    ) {
-
-        characterState.selectedInventoryItem =
-            null;
-
-        return;
-
-    }
-
-
-    const selectedInventoryItem =
-        inventory.items.find(
-            item =>
-                item.id ===
-                characterState.selectedInventoryItem
-        );
-
-
-    if (
-        !selectedInventoryItem
-    ) {
-
-        characterState.selectedInventoryItem =
-            null;
-
-        return;
-
-    }
-
-
-    const selectedItem =
-        getItem(
-            selectedInventoryItem.id
-        );
-
-
-    if (!selectedItem) {
-
-        characterState.selectedInventoryItem =
-            null;
-
-        return;
-
-    }
-
-
-    createInventoryItemPopup(
-        selectedInventoryItem,
-        selectedItem
-    );
-
-}
-
-
-/* =======================================================
    RENDER INVENTORY TAB
    ======================================================= */
 
 function renderInventoryTab() {
 
-    closeInventoryPopup();
-
     characterContent.innerHTML =
         "";
+
+
+    removeInventoryItemPopup();
 
 
     const inventory =
@@ -1908,7 +1824,7 @@ function renderInventoryTab() {
         );
 
     grid.className =
-        "skills-grid";
+        "skills-grid inventory-grid";
 
 
     for (
@@ -1938,10 +1854,56 @@ function renderInventoryTab() {
 
 
     /* ---------------------------------------------------
-       POPUP
+       SELECTED ITEM POPUP
        --------------------------------------------------- */
 
-    renderInventoryPopup();
+    const selectedItemId =
+        characterState.selectedInventoryItem;
+
+
+    if (!selectedItemId) {
+        return;
+    }
+
+
+    const selectedInventoryItem =
+        inventory.items.find(
+            item =>
+                item.id ===
+                selectedItemId
+        );
+
+
+    if (!selectedInventoryItem) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+        return;
+
+    }
+
+
+    const selectedItem =
+        getItem(
+            selectedInventoryItem.id
+        );
+
+
+    if (!selectedItem) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+        return;
+
+    }
+
+
+    createInventoryItemPopup(
+        selectedInventoryItem,
+        selectedItem
+    );
 
 }
 
@@ -2037,7 +1999,7 @@ function updateCharacterInterface() {
             "character-interface-open"
         );
 
-        closeInventoryPopup();
+        removeInventoryItemPopup();
 
         return;
 
@@ -2058,7 +2020,7 @@ function updateCharacterInterface() {
             "character-interface-open"
         );
 
-        closeInventoryPopup();
+        removeInventoryItemPopup();
 
     }
 
@@ -2091,6 +2053,11 @@ function updateCharacterInterface() {
 
         }
     );
+
+
+    if (!characterState.isOpen) {
+        return;
+    }
 
 
     switch (
@@ -2207,63 +2174,7 @@ function createCharacterInterface() {
 
 
     /* ===================================================
-       HEADER
-       =================================================== */
-
-    const header =
-        document.createElement(
-            "div"
-        );
-
-    header.className =
-        "character-interface-header";
-
-
-    const title =
-        document.createElement(
-            "div"
-        );
-
-    title.className =
-        "character-interface-title";
-
-    title.textContent =
-        "CHARACTER";
-
-
-    const close =
-        document.createElement(
-            "button"
-        );
-
-    close.className =
-        "character-interface-close";
-
-    close.textContent =
-        "×";
-
-
-    close.addEventListener(
-        "click",
-        () => {
-
-            closeCharacterInterface();
-
-        }
-    );
-
-
-    header.appendChild(
-        title
-    );
-
-    header.appendChild(
-        close
-    );
-
-
-    /* ===================================================
-       TABS
+       TOP NAVIGATION
        =================================================== */
 
     const tabs =
@@ -2275,47 +2186,9 @@ function createCharacterInterface() {
         "character-interface-tabs";
 
 
-    const tabDefinitions = [
-
-        [
-            CHARACTER_TABS.COMBAT,
-            "COMBAT"
-        ],
-
-        [
-            CHARACTER_TABS.SKILLS,
-            "SKILLS"
-        ],
-
-        [
-            CHARACTER_TABS.INVENTORY,
-            "INVENTORY"
-        ],
-
-        [
-            CHARACTER_TABS.EQUIPMENT,
-            "EQUIPMENT"
-        ],
-
-        [
-            CHARACTER_TABS.QUESTS,
-            "QUESTS"
-        ],
-
-        [
-            CHARACTER_TABS.MAP,
-            "MAP"
-        ]
-
-    ];
-
-
     for (
-        const [
-            tab,
-            label
-        ]
-        of tabDefinitions
+        const definition
+        of CHARACTER_TAB_DEFINITIONS
     ) {
 
         const button =
@@ -2327,10 +2200,27 @@ function createCharacterInterface() {
             "character-interface-tab";
 
         button.dataset.tab =
-            tab;
+            definition.tab;
 
-        button.textContent =
-            label;
+        button.title =
+            definition.label;
+
+
+        const icon =
+            document.createElement(
+                "span"
+            );
+
+        icon.className =
+            "character-interface-tab-icon";
+
+        icon.textContent =
+            definition.icon;
+
+
+        button.appendChild(
+            icon
+        );
 
 
         button.addEventListener(
@@ -2338,7 +2228,7 @@ function createCharacterInterface() {
             () => {
 
                 setCharacterTab(
-                    tab
+                    definition.tab
                 );
 
             }
@@ -2353,6 +2243,42 @@ function createCharacterInterface() {
 
 
     /* ===================================================
+       MINIMIZE BUTTON
+       =================================================== */
+
+    const minimizeButton =
+        document.createElement(
+            "button"
+        );
+
+    minimizeButton.className =
+        "character-interface-minimize";
+
+    minimizeButton.textContent =
+        "—";
+
+    minimizeButton.title =
+        "Minimize Character";
+
+
+    minimizeButton.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            closeCharacterInterface();
+
+        }
+    );
+
+
+    tabs.appendChild(
+        minimizeButton
+    );
+
+
+    /* ===================================================
        CONTENT
        =================================================== */
 
@@ -2364,10 +2290,6 @@ function createCharacterInterface() {
     characterContent.className =
         "character-interface-content";
 
-
-    characterInterface.appendChild(
-        header
-    );
 
     characterInterface.appendChild(
         tabs

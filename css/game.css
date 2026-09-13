@@ -652,18 +652,25 @@ body {
 
 
 /* =========================================================
-   CHARACTER BUTTON
+   CHARACTER BUTTON / COLLAPSED BAR
    ========================================================= */
 
 #character-button {
     position: fixed;
 
-    top: 65px;
     right: 15px;
+    bottom: 15px;
 
-    padding: 11px 16px;
+    min-width: 155px;
 
-    background: rgba(0, 0, 0, 0.82);
+    padding: 10px 16px;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(38, 46, 56, 0.98),
+            rgba(12, 16, 22, 0.98)
+        );
 
     border: 1px solid #68737c;
 
@@ -671,42 +678,47 @@ body {
 
     color: #ffffff;
 
-    font-size: 13px;
+    font-size: 12px;
     font-weight: bold;
 
     letter-spacing: 1px;
 
     cursor: pointer;
 
-    z-index: 250;
+    z-index: 510;
 
     box-shadow:
-        0 4px 15px rgba(0, 0, 0, 0.3);
+        0 5px 18px rgba(0, 0, 0, 0.45);
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
 }
 
 #character-button:hover {
-    background: rgba(35, 42, 50, 0.96);
+    background:
+        linear-gradient(
+            180deg,
+            rgba(52, 62, 73, 0.98),
+            rgba(18, 23, 30, 0.98)
+        );
 
     border-color: #9aa4b2;
 }
 
 
 /* =========================================================
-   CHARACTER WINDOW
+   CHARACTER INTERFACE
    ========================================================= */
 
 #character-interface {
     position: fixed;
 
-    left: 50%;
-    top: 50%;
+    right: 15px;
+    bottom: 15px;
 
-    width: min(760px, calc(100vw - 40px));
-    height: min(620px, calc(100vh - 80px));
-
-    transform:
-        translate(-50%, -50%)
-        scale(0.96);
+    width: 430px;
+    height: 485px;
 
     display: none;
 
@@ -715,16 +727,16 @@ body {
     background:
         linear-gradient(
             180deg,
-            rgba(22, 28, 35, 0.98),
-            rgba(8, 11, 18, 0.98)
+            rgba(22, 28, 35, 0.99),
+            rgba(8, 11, 18, 0.99)
         );
 
-    border: 2px solid #68737c;
+    border: 1px solid #68737c;
 
-    border-radius: 10px;
+    border-radius: 8px;
 
     box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.7);
+        0 15px 45px rgba(0, 0, 0, 0.65);
 
     overflow: hidden;
 
@@ -733,109 +745,124 @@ body {
 
 #character-interface.character-interface-open {
     display: flex;
-
-    transform:
-        translate(-50%, -50%)
-        scale(1);
 }
 
 
 /* =========================================================
-   CHARACTER HEADER
-   ========================================================= */
-
-.character-interface-header {
-    display: flex;
-
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 16px 20px;
-
-    background: rgba(0, 0, 0, 0.45);
-
-    border-bottom: 1px solid #39414a;
-}
-
-.character-interface-title {
-    color: #e8d27b;
-
-    font-size: 19px;
-    font-weight: bold;
-
-    letter-spacing: 2px;
-}
-
-.character-interface-close {
-    width: 34px;
-    height: 34px;
-
-    border: none;
-    border-radius: 5px;
-
-    background: #39414a;
-
-    color: #ffffff;
-
-    font-size: 24px;
-    line-height: 1;
-
-    cursor: pointer;
-}
-
-.character-interface-close:hover {
-    background: #4a535d;
-}
-
-
-/* =========================================================
-   CHARACTER TABS
+   CHARACTER TOP NAVIGATION
    ========================================================= */
 
 .character-interface-tabs {
     display: flex;
 
-    flex-wrap: wrap;
+    flex-shrink: 0;
 
-    background: rgba(0, 0, 0, 0.28);
+    height: 48px;
+
+    background:
+        rgba(0, 0, 0, 0.48);
 
     border-bottom: 1px solid #39414a;
 }
 
 .character-interface-tab {
+    position: relative;
+
     flex: 1;
 
-    min-width: 90px;
+    min-width: 0;
 
-    padding: 12px 10px;
+    height: 48px;
+
+    padding: 0;
 
     border: none;
+
     border-right: 1px solid #303740;
 
     background: transparent;
 
-    color: #9aa4b2;
-
-    font-size: 13px;
-    font-weight: bold;
+    color: #7f8a95;
 
     cursor: pointer;
-}
 
-.character-interface-tab:last-child {
-    border-right: none;
+    transition:
+        background 0.12s ease,
+        color 0.12s ease;
 }
 
 .character-interface-tab:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background:
+        rgba(255, 255, 255, 0.05);
 
     color: #ffffff;
 }
 
 .character-interface-tab.active {
-    background: #303740;
+    background:
+        #303740;
 
     color: #e8d27b;
+}
+
+.character-interface-tab.active::after {
+    content: "";
+
+    position: absolute;
+
+    left: 8px;
+    right: 8px;
+    bottom: 0;
+
+    height: 2px;
+
+    background: #e8d27b;
+}
+
+.character-interface-tab-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 100%;
+
+    font-size: 21px;
+    line-height: 1;
+}
+
+
+/* =========================================================
+   CHARACTER MINIMIZE BUTTON
+   ========================================================= */
+
+.character-interface-minimize {
+    flex: 0 0 42px;
+
+    height: 48px;
+
+    border: none;
+
+    background:
+        rgba(0, 0, 0, 0.2);
+
+    border-left: 1px solid #303740;
+
+    color: #9aa4b2;
+
+    font-size: 22px;
+
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.character-interface-minimize:hover {
+    background:
+        rgba(255, 255, 255, 0.06);
+
+    color: #ffffff;
 }
 
 
@@ -846,9 +873,29 @@ body {
 .character-interface-content {
     flex: 1;
 
+    min-height: 0;
+
     overflow-y: auto;
 
-    padding: 22px;
+    padding: 16px;
+}
+
+.character-interface-content::-webkit-scrollbar {
+    width: 7px;
+}
+
+.character-interface-content::-webkit-scrollbar-track {
+    background: #10151b;
+}
+
+.character-interface-content::-webkit-scrollbar-thumb {
+    background: #39414a;
+
+    border-radius: 5px;
+}
+
+.character-interface-content::-webkit-scrollbar-thumb:hover {
+    background: #68737c;
 }
 
 
@@ -862,9 +909,9 @@ body {
     align-items: center;
     justify-content: space-between;
 
-    padding: 18px 22px;
+    padding: 14px 17px;
 
-    margin-bottom: 25px;
+    margin-bottom: 18px;
 
     background:
         linear-gradient(
@@ -875,13 +922,13 @@ body {
 
     border: 1px solid #68737c;
 
-    border-radius: 8px;
+    border-radius: 7px;
 }
 
 .combat-level-label {
     color: #c8d0d8;
 
-    font-size: 15px;
+    font-size: 12px;
     font-weight: bold;
 
     letter-spacing: 1px;
@@ -890,7 +937,7 @@ body {
 .combat-level-value {
     color: #e8d27b;
 
-    font-size: 38px;
+    font-size: 30px;
     font-weight: bold;
 }
 
@@ -900,11 +947,11 @@ body {
    ========================================================= */
 
 .character-section-title {
-    margin: 18px 0 10px 0;
+    margin: 15px 0 8px 0;
 
     color: #9aa4b2;
 
-    font-size: 12px;
+    font-size: 11px;
     font-weight: bold;
 
     letter-spacing: 1.5px;
@@ -921,49 +968,50 @@ body {
     grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
-    gap: 10px;
+    gap: 8px;
 }
 
 .combat-skill-card {
-    padding: 14px;
+    padding: 11px;
 
-    background: rgba(0, 0, 0, 0.32);
+    background:
+        rgba(0, 0, 0, 0.32);
 
     border: 1px solid #39414a;
 
-    border-radius: 7px;
+    border-radius: 6px;
 }
 
 .combat-skill-name {
     color: #d8dde3;
 
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
 }
 
 .combat-skill-level {
-    margin-top: 4px;
+    margin-top: 3px;
 
     color: #e8d27b;
 
-    font-size: 27px;
+    font-size: 24px;
     font-weight: bold;
 }
 
 .combat-skill-xp {
-    margin-top: 3px;
+    margin-top: 2px;
 
     color: #b8c1ca;
 
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .combat-skill-next {
-    margin-top: 5px;
+    margin-top: 4px;
 
     color: #7f8a95;
 
-    font-size: 11px;
+    font-size: 10px;
 }
 
 
@@ -971,11 +1019,26 @@ body {
    SKILLS TAB
    ========================================================= */
 
-/*
-   The Skills tab uses the same visual language as the
-   Combat tab, but expands it into a full RPG-style
-   skill-card grid.
-*/
+.character-skills-heading {
+    color: #d8dde3;
+
+    font-size: 17px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+
+    margin-bottom: 4px;
+}
+
+.character-skills-description {
+    color: #7f8a95;
+
+    font-size: 11px;
+
+    line-height: 1.4;
+
+    margin-bottom: 14px;
+}
 
 .skills-grid,
 .skill-grid,
@@ -985,7 +1048,7 @@ body {
     grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
-    gap: 12px;
+    gap: 9px;
 
     width: 100%;
 }
@@ -993,22 +1056,22 @@ body {
 .skills-section,
 .skill-section,
 .character-skill-section {
-    margin-bottom: 22px;
+    margin-bottom: 17px;
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    SKILL CARD
-   --------------------------------------------------------- */
+   ========================================================= */
 
 .skill-card,
 .skills-card,
 .character-skill-card {
     position: relative;
 
-    min-height: 112px;
+    min-height: 98px;
 
-    padding: 15px 16px;
+    padding: 12px 13px;
 
     background:
         linear-gradient(
@@ -1019,10 +1082,10 @@ body {
 
     border: 1px solid #39414a;
 
-    border-radius: 8px;
+    border-radius: 7px;
 
     box-shadow:
-        0 3px 10px rgba(0, 0, 0, 0.22);
+        0 3px 8px rgba(0, 0, 0, 0.2);
 
     transition:
         border-color 0.15s ease,
@@ -1046,9 +1109,23 @@ body {
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
+   SKILL CARD TOP
+   ========================================================= */
+
+.skill-card-top {
+    display: flex;
+
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 8px;
+}
+
+
+/* =========================================================
    SKILL NAME
-   --------------------------------------------------------- */
+   ========================================================= */
 
 .skill-card .skill-name,
 .skills-card .skill-name,
@@ -1058,16 +1135,16 @@ body {
 .character-skill-name {
     color: #d8dde3;
 
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
 
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    SKILL LEVEL
-   --------------------------------------------------------- */
+   ========================================================= */
 
 .skill-card .skill-level,
 .skills-card .skill-level,
@@ -1075,18 +1152,18 @@ body {
 .skill-card-level,
 .skills-card-level,
 .character-skill-level {
-    margin-top: 5px;
+    margin-top: 4px;
 
     color: #e8d27b;
 
-    font-size: 26px;
+    font-size: 22px;
     font-weight: bold;
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    SKILL XP
-   --------------------------------------------------------- */
+   ========================================================= */
 
 .skill-card .skill-xp,
 .skills-card .skill-xp,
@@ -1094,17 +1171,17 @@ body {
 .skill-card-xp,
 .skills-card-xp,
 .character-skill-xp {
-    margin-top: 4px;
+    margin-top: 3px;
 
     color: #b8c1ca;
 
-    font-size: 12px;
+    font-size: 11px;
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    XP TO NEXT LEVEL
-   --------------------------------------------------------- */
+   ========================================================= */
 
 .skill-card .skill-next,
 .skills-card .skill-next,
@@ -1112,17 +1189,17 @@ body {
 .skill-card-next,
 .skills-card-next,
 .character-skill-next {
-    margin-top: 4px;
+    margin-top: 3px;
 
     color: #7f8a95;
 
-    font-size: 11px;
+    font-size: 10px;
 }
 
 
-/* ---------------------------------------------------------
+/* =========================================================
    SKILL PROGRESS BAR
-   --------------------------------------------------------- */
+   ========================================================= */
 
 .skill-card .skill-progress,
 .skills-card .skill-progress,
@@ -1130,9 +1207,9 @@ body {
 .skill-progress {
     width: 100%;
 
-    height: 5px;
+    height: 4px;
 
-    margin-top: 10px;
+    margin-top: 8px;
 
     background: #20262d;
 
@@ -1158,346 +1235,6 @@ body {
 
 
 /* =========================================================
-   INVENTORY
-   ========================================================= */
-
-.inventory-item-symbol {
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    min-height: 38px;
-
-    margin: 8px 0;
-
-    color: #e8d27b;
-
-    font-size: 30px;
-    font-weight: bold;
-
-    text-align: center;
-}
-
-.inventory-slot-selected {
-    border-color: #e8d27b !important;
-
-    box-shadow:
-        0 0 14px rgba(232, 210, 123, 0.28);
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(58, 55, 40, 0.9),
-            rgba(17, 18, 20, 0.9)
-        ) !important;
-}
-
-
-/* =========================================================
-   INVENTORY ITEM POPUP
-   ========================================================= */
-
-.inventory-item-popup-overlay {
-    position: absolute;
-
-    inset: 0;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    padding: 30px;
-
-    background:
-        rgba(0, 0, 0, 0.58);
-
-    z-index: 1000;
-
-    animation:
-        inventoryPopupFadeIn 0.12s ease-out;
-}
-
-.inventory-item-popup {
-    width: min(390px, calc(100% - 20px));
-
-    padding: 0;
-
-    background:
-        linear-gradient(
-            155deg,
-            rgba(31, 39, 48, 0.99),
-            rgba(8, 11, 18, 0.99)
-        );
-
-    border: 1px solid #68737c;
-
-    border-radius: 10px;
-
-    box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.75),
-        0 0 25px rgba(0, 0, 0, 0.35);
-
-    overflow: hidden;
-
-    animation:
-        inventoryPopupOpen 0.14s ease-out;
-}
-
-
-/* ---------------------------------------------------------
-   POPUP HEADER
-   --------------------------------------------------------- */
-
-.inventory-popup-header {
-    display: flex;
-
-    align-items: center;
-    justify-content: space-between;
-
-    padding: 15px 17px;
-
-    background:
-        rgba(0, 0, 0, 0.38);
-
-    border-bottom: 1px solid #39414a;
-}
-
-.inventory-popup-title {
-    color: #e8d27b;
-
-    font-size: 18px;
-    font-weight: bold;
-
-    letter-spacing: 0.5px;
-}
-
-.inventory-popup-close {
-    width: 30px;
-    height: 30px;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
-    border: none;
-    border-radius: 5px;
-
-    background: #39414a;
-
-    color: #ffffff;
-
-    font-size: 21px;
-    line-height: 1;
-
-    cursor: pointer;
-}
-
-.inventory-popup-close:hover {
-    background: #4a535d;
-}
-
-
-/* ---------------------------------------------------------
-   POPUP ITEM DETAILS
-   --------------------------------------------------------- */
-
-.inventory-popup-details {
-    display: flex;
-
-    align-items: center;
-
-    gap: 15px;
-
-    padding: 18px;
-}
-
-.inventory-popup-icon {
-    width: 62px;
-    height: 62px;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    flex-shrink: 0;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(58, 69, 80, 0.85),
-            rgba(15, 20, 27, 0.9)
-        );
-
-    border: 1px solid #68737c;
-
-    border-radius: 8px;
-
-    color: #e8d27b;
-
-    font-size: 32px;
-    font-weight: bold;
-}
-
-.inventory-popup-info {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 7px;
-}
-
-.inventory-popup-type {
-    color: #9aa4b2;
-
-    font-size: 12px;
-    font-weight: bold;
-
-    letter-spacing: 1.5px;
-}
-
-.inventory-popup-quantity {
-    color: #d8dde3;
-
-    font-size: 14px;
-    font-weight: bold;
-}
-
-
-/* ---------------------------------------------------------
-   POPUP EFFECT
-   --------------------------------------------------------- */
-
-.inventory-popup-effect {
-    margin:
-        0 18px 16px 18px;
-
-    padding: 10px 12px;
-
-    background:
-        rgba(232, 210, 123, 0.08);
-
-    border: 1px solid rgba(232, 210, 123, 0.25);
-
-    border-radius: 6px;
-
-    color: #e8d27b;
-
-    font-size: 12px;
-    font-weight: bold;
-
-    letter-spacing: 0.5px;
-}
-
-
-/* ---------------------------------------------------------
-   POPUP ACTIONS
-   --------------------------------------------------------- */
-
-.inventory-popup-actions {
-    display: flex;
-
-    gap: 8px;
-
-    padding: 14px 18px 18px 18px;
-
-    border-top: 1px solid #303740;
-}
-
-.inventory-action-button,
-.inventory-popup-cancel {
-    flex: 1;
-
-    min-height: 38px;
-
-    padding: 9px 13px;
-
-    border: 1px solid #68737c;
-
-    border-radius: 6px;
-
-    background: #303740;
-
-    color: #ffffff;
-
-    font-size: 12px;
-    font-weight: bold;
-
-    letter-spacing: 0.5px;
-
-    cursor: pointer;
-
-    transition:
-        background 0.15s ease,
-        border-color 0.15s ease;
-}
-
-.inventory-action-button:hover:not(:disabled) {
-    background: #4a535d;
-
-    border-color: #9aa4b2;
-}
-
-.inventory-action-button:disabled {
-    opacity: 0.35;
-
-    cursor: not-allowed;
-}
-
-.inventory-popup-cancel {
-    background: transparent;
-
-    border-color: #39414a;
-
-    color: #9aa4b2;
-}
-
-.inventory-popup-cancel:hover {
-    background: #303740;
-
-    border-color: #68737c;
-
-    color: #ffffff;
-}
-
-
-/* ---------------------------------------------------------
-   POPUP ANIMATIONS
-   --------------------------------------------------------- */
-
-@keyframes inventoryPopupFadeIn {
-
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
-
-}
-
-@keyframes inventoryPopupOpen {
-
-    from {
-        opacity: 0;
-        transform: scale(0.94) translateY(6px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-
-}
-
-
-/* =========================================================
    CURRENT STATUS
    ========================================================= */
 
@@ -1512,7 +1249,7 @@ body {
 
     border: 1px solid #303740;
 
-    border-radius: 7px;
+    border-radius: 6px;
 
     overflow: hidden;
 }
@@ -1523,19 +1260,251 @@ body {
     align-items: center;
     justify-content: space-between;
 
-    padding: 13px 15px;
+    padding: 10px 12px;
 
-    background: rgba(0, 0, 0, 0.32);
+    background:
+        rgba(0, 0, 0, 0.32);
 
     color: #b8c1ca;
 
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .character-status-row strong {
     color: #ffffff;
 
     font-weight: bold;
+}
+
+
+/* =========================================================
+   INVENTORY
+   ========================================================= */
+
+.inventory-grid {
+    margin-top: 4px;
+}
+
+.inventory-slot {
+    min-height: 92px;
+
+    user-select: none;
+}
+
+.inventory-slot-filled {
+    cursor: pointer;
+}
+
+.inventory-slot-empty {
+    cursor: default;
+
+    opacity: 0.72;
+}
+
+.inventory-slot-selected {
+    border-color: #e8d27b !important;
+
+    box-shadow:
+        0 0 12px rgba(232, 210, 123, 0.2);
+}
+
+.inventory-item-symbol {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 30px;
+
+    margin: 5px 0;
+
+    color: #e8d27b;
+
+    font-size: 25px;
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   INVENTORY ITEM POPUP
+   ========================================================= */
+
+.inventory-item-popup-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: 20;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background:
+        rgba(0, 0, 0, 0.18);
+}
+
+.inventory-item-popup {
+    width: min(300px, 100%);
+
+    padding: 16px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(38, 46, 56, 0.99),
+            rgba(8, 11, 18, 0.99)
+        );
+
+    border: 1px solid #68737c;
+
+    border-radius: 8px;
+
+    box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.7);
+
+    animation:
+        inventoryPopupIn 0.1s ease-out;
+}
+
+@keyframes inventoryPopupIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            scale(1);
+    }
+
+}
+
+.inventory-item-popup-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding-bottom: 10px;
+
+    margin-bottom: 12px;
+
+    border-bottom: 1px solid #39414a;
+}
+
+.inventory-item-popup-title {
+    color: #e8d27b;
+
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.inventory-item-popup-close {
+    width: 28px;
+    height: 28px;
+
+    border: none;
+
+    border-radius: 5px;
+
+    background: #39414a;
+
+    color: #ffffff;
+
+    font-size: 19px;
+
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.inventory-item-popup-close:hover {
+    background: #4a535d;
+}
+
+.inventory-item-popup-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 6px;
+
+    color: #b8c1ca;
+
+    font-size: 12px;
+}
+
+.inventory-item-popup-type {
+    color: #9aa4b2;
+
+    font-size: 10px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+}
+
+.inventory-item-popup-effect {
+    color: #d8dde3;
+
+    font-size: 12px;
+}
+
+.inventory-item-popup-actions {
+    display: flex;
+
+    gap: 8px;
+
+    margin-top: 15px;
+}
+
+.inventory-item-popup-button {
+    flex: 1;
+
+    padding: 9px 12px;
+
+    border: 1px solid #68737c;
+
+    border-radius: 5px;
+
+    background: #303740;
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.inventory-item-popup-button:hover:not(:disabled) {
+    background: #4a535d;
+
+    border-color: #9aa4b2;
+}
+
+.inventory-item-popup-button.primary {
+    background: #68737c;
+
+    color: #ffffff;
+}
+
+.inventory-item-popup-button.primary:hover:not(:disabled) {
+    background: #7f8a95;
+}
+
+.inventory-item-popup-button:disabled {
+    opacity: 0.4;
+
+    cursor: not-allowed;
 }
 
 
@@ -1559,16 +1528,16 @@ body {
 .character-coming-soon-title {
     color: #e8d27b;
 
-    font-size: 24px;
+    font-size: 21px;
     font-weight: bold;
 
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .character-coming-soon-text {
     color: #7f8a95;
 
-    font-size: 14px;
+    font-size: 12px;
 }
 
 
@@ -1578,28 +1547,30 @@ body {
 
 @media (max-width: 700px) {
 
-    #character-button {
-        top: 65px;
-        right: 15px;
-    }
-
-
     #character-interface {
-        width: calc(100vw - 20px);
-        height: calc(100vh - 30px);
+        right: 10px;
+        bottom: 10px;
+
+        width: min(
+            390px,
+            calc(100vw - 20px)
+        );
+
+        height: min(
+            500px,
+            calc(100vh - 70px)
+        );
     }
 
-
-    .character-interface-tab {
-        min-width: 33.333%;
+    #character-button {
+        right: 10px;
+        bottom: 10px;
     }
-
 
     .combat-skill-grid {
         grid-template-columns:
             1fr;
     }
-
 
     .skills-grid,
     .skill-grid,
@@ -1608,44 +1579,72 @@ body {
             1fr;
     }
 
-
-    .inventory-item-popup-overlay {
-        padding: 20px;
-    }
-
 }
 
 
- /* =========================================================
-    SMALL SCREENS
-    ========================================================= */
+/* =========================================================
+   SMALL SCREENS
+   ========================================================= */
 
 @media (max-width: 450px) {
 
+    #character-interface {
+        right: 5px;
+        bottom: 5px;
+
+        width: calc(100vw - 10px);
+
+        height: calc(100vh - 65px);
+
+        border-radius: 7px;
+    }
+
+    #character-button {
+        right: 5px;
+        bottom: 5px;
+
+        min-width: 140px;
+    }
+
     .character-interface-content {
-        padding: 15px;
+        padding: 12px;
+    }
+
+    .character-interface-tabs {
+        height: 44px;
     }
 
     .character-interface-tab {
-        min-width: 50%;
+        height: 44px;
+    }
+
+    .character-interface-tab-icon {
+        font-size: 18px;
+    }
+
+    .character-interface-minimize {
+        flex-basis: 38px;
+
+        height: 44px;
     }
 
     .combat-level-panel {
-        padding: 15px;
+        padding: 12px;
     }
 
     .combat-level-value {
-        font-size: 32px;
+        font-size: 27px;
     }
 
+    .inventory-item-popup {
+        width: min(
+            280px,
+            100%
+        );
+    }
 
-    .inventory-popup-actions {
+    .inventory-item-popup-actions {
         flex-direction: column;
-    }
-
-    .inventory-action-button,
-    .inventory-popup-cancel {
-        width: 100%;
     }
 
 }

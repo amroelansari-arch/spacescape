@@ -54,19 +54,6 @@ export const player = {
 
 
     /*
-     * Current combat stats.
-     *
-     * These remain temporarily while the combat
-     * calculation is transitioned to use the
-     * individual combat skills directly.
-     */
-
-    attack: 10,
-
-    defense: 5,
-
-
-    /*
      * Current passive combat style.
      *
      * Accurate is the default.
@@ -82,7 +69,7 @@ export const player = {
     /*
      * Individual SpaceScape skills.
      *
-     * These are now the authoritative progression
+     * These are the authoritative progression
      * system for player skills.
      */
 

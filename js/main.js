@@ -1,3 +1,5 @@
+import "./characterInterface.js";
+
 import {
     player,
     updatePlayerMovement,

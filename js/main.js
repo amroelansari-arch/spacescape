@@ -36,6 +36,27 @@ import {
     getCombatState
 } from "./combatSystem.js";
 
+import {
+    createWorldItem,
+    getWorldItems,
+    findWorldItemById,
+    removeWorldItem,
+    getDistanceToWorldItem
+} from "./itemWorld.js";
+
+import {
+    renderWorldItems,
+    isWithinItemPickupRange
+} from "./itemRenderer.js";
+
+import {
+    getItem
+} from "./items.js";
+
+import {
+    addItem
+} from "./inventory.js";
+
 
 /* =======================================================
    DOM ELEMENTS
@@ -273,9 +294,6 @@ function handleRespawn() {
 
 function initializeEnemies() {
 
-    /*
-     * Level 1 enemy.
-     */
     spawnWorldEnemy(
         "Test Enemy",
         1,
@@ -287,9 +305,6 @@ function initializeEnemies() {
     );
 
 
-    /*
-     * Level 1 enemy.
-     */
     spawnWorldEnemy(
         "Test Enemy",
         1,
@@ -301,9 +316,6 @@ function initializeEnemies() {
     );
 
 
-    /*
-     * Level 2 enemy.
-     */
     spawnWorldEnemy(
         "Test Enemy",
         2,
@@ -312,6 +324,161 @@ function initializeEnemies() {
         3,
         2200,
         1400
+    );
+
+}
+
+
+/* =======================================================
+   INITIALIZE WORLD ITEMS
+   ======================================================= */
+
+function initializeWorldItems() {
+
+    /*
+     * First real world item.
+     *
+     * This is intentionally placed close enough
+     * to the starting player position to make
+     * the acquisition system easy to test.
+     */
+
+    createWorldItem(
+        "laser_rifle",
+        1300,
+        900,
+        1
+    );
+
+}
+
+
+/* =======================================================
+   ITEM CLICK
+   ======================================================= */
+
+function handleWorldItemClick(
+    event
+) {
+
+    if (player.isDead) {
+        return;
+    }
+
+    const itemElement =
+        event.target.closest(
+            ".world-item"
+        );
+
+    if (!itemElement) {
+        return;
+    }
+
+    const worldItemId =
+        itemElement.dataset.worldItemId;
+
+    if (!worldItemId) {
+        return;
+    }
+
+    const worldItem =
+        findWorldItemById(
+            worldItemId
+        );
+
+    if (!worldItem) {
+        return;
+    }
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+
+    /*
+     * The player must actually be near
+     * the item to pick it up.
+     */
+
+    if (
+        !isWithinItemPickupRange(
+            player,
+            worldItem
+        )
+    ) {
+
+        console.log(
+            "Move closer to pick up this item."
+        );
+
+        return;
+
+    }
+
+
+    const itemDefinition =
+        getItem(
+            worldItem.itemId
+        );
+
+    if (!itemDefinition) {
+
+        console.warn(
+            "Unknown world item:",
+            worldItem.itemId
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Attempt to add the item to inventory.
+     *
+     * If the inventory is full,
+     * addItem() returns false and
+     * the world item remains.
+     */
+
+    const added =
+        addItem(
+            player.inventory,
+            worldItem.itemId,
+            worldItem.quantity
+        );
+
+
+    if (!added) {
+
+        console.log(
+            "Inventory is full. Item remains in the world."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Inventory acquisition succeeded.
+     * Remove the item from the world.
+     */
+
+    removeWorldItem(
+        worldItem
+    );
+
+
+    console.log(
+        `${itemDefinition.name} picked up.`
+    );
+
+    console.log(
+        "Inventory:",
+        player.inventory
     );
 
 }
@@ -483,12 +650,15 @@ function updateGame() {
      * Dead enemies are removed and their
      * spawn points begin their respawn timers.
      */
+
     updateEnemyRespawns();
 
 
     drawPlayer();
 
     renderEnemies();
+
+    renderWorldItems();
 
     updatePlayerHUD();
 
@@ -541,6 +711,7 @@ function startGame() {
      * Character becomes available only
      * after the player enters the game.
      */
+
     setCharacterInterfaceAvailability(
         true
     );
@@ -562,6 +733,19 @@ playButton.addEventListener(
     startGame
 );
 
+
+/*
+ * World clicks are deliberately checked
+ * for items first.
+ *
+ * If the click is not an item,
+ * enemy targeting continues to work.
+ */
+
+world.addEventListener(
+    "click",
+    handleWorldItemClick
+);
 
 world.addEventListener(
     "click",
@@ -641,10 +825,6 @@ gameScreen.style.display =
     "none";
 
 
-/*
- * Explicitly keep Character unavailable
- * while the title screen is showing.
- */
 setCharacterInterfaceAvailability(
     false
 );
@@ -653,5 +833,7 @@ setCharacterInterfaceAvailability(
 createDeathOverlay();
 
 initializeEnemies();
+
+initializeWorldItems();
 
 gameLoop();

@@ -1,3 +1,7 @@
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
 * {
     box-sizing: border-box;
 }
@@ -644,4 +648,426 @@ body {
     z-index: 100;
 
     color: #c8d0d8;
+}
+
+
+/* =========================================================
+   CHARACTER BUTTON
+   ========================================================= */
+
+#character-button {
+    position: fixed;
+
+    top: 65px;
+    right: 15px;
+
+    padding: 11px 16px;
+
+    background: rgba(0, 0, 0, 0.82);
+
+    border: 1px solid #68737c;
+
+    border-radius: 7px;
+
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+
+    cursor: pointer;
+
+    z-index: 250;
+
+    box-shadow:
+        0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+#character-button:hover {
+    background: rgba(35, 42, 50, 0.96);
+
+    border-color: #9aa4b2;
+}
+
+
+/* =========================================================
+   CHARACTER WINDOW
+   ========================================================= */
+
+#character-interface {
+    position: fixed;
+
+    left: 50%;
+    top: 50%;
+
+    width: min(760px, calc(100vw - 40px));
+    height: min(620px, calc(100vh - 80px));
+
+    transform:
+        translate(-50%, -50%)
+        scale(0.96);
+
+    display: none;
+
+    flex-direction: column;
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(22, 28, 35, 0.98),
+            rgba(8, 11, 18, 0.98)
+        );
+
+    border: 2px solid #68737c;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.7);
+
+    overflow: hidden;
+
+    z-index: 500;
+}
+
+#character-interface.character-interface-open {
+    display: flex;
+
+    transform:
+        translate(-50%, -50%)
+        scale(1);
+}
+
+
+/* =========================================================
+   CHARACTER HEADER
+   ========================================================= */
+
+.character-interface-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 16px 20px;
+
+    background: rgba(0, 0, 0, 0.45);
+
+    border-bottom: 1px solid #39414a;
+}
+
+.character-interface-title {
+    color: #e8d27b;
+
+    font-size: 19px;
+    font-weight: bold;
+
+    letter-spacing: 2px;
+}
+
+.character-interface-close {
+    width: 34px;
+    height: 34px;
+
+    border: none;
+    border-radius: 5px;
+
+    background: #39414a;
+
+    color: #ffffff;
+
+    font-size: 24px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.character-interface-close:hover {
+    background: #4a535d;
+}
+
+
+/* =========================================================
+   CHARACTER TABS
+   ========================================================= */
+
+.character-interface-tabs {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    background: rgba(0, 0, 0, 0.28);
+
+    border-bottom: 1px solid #39414a;
+}
+
+.character-interface-tab {
+    flex: 1;
+
+    min-width: 90px;
+
+    padding: 12px 10px;
+
+    border: none;
+    border-right: 1px solid #303740;
+
+    background: transparent;
+
+    color: #9aa4b2;
+
+    font-size: 13px;
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+.character-interface-tab:last-child {
+    border-right: none;
+}
+
+.character-interface-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+
+    color: #ffffff;
+}
+
+.character-interface-tab.active {
+    background: #303740;
+
+    color: #e8d27b;
+}
+
+
+/* =========================================================
+   CHARACTER CONTENT
+   ========================================================= */
+
+.character-interface-content {
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 22px;
+}
+
+
+/* =========================================================
+   COMBAT LEVEL
+   ========================================================= */
+
+.combat-level-panel {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 18px 22px;
+
+    margin-bottom: 25px;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(58, 69, 80, 0.75),
+            rgba(27, 34, 42, 0.75)
+        );
+
+    border: 1px solid #68737c;
+
+    border-radius: 8px;
+}
+
+.combat-level-label {
+    color: #c8d0d8;
+
+    font-size: 15px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+}
+
+.combat-level-value {
+    color: #e8d27b;
+
+    font-size: 38px;
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   CHARACTER SECTION TITLES
+   ========================================================= */
+
+.character-section-title {
+    margin: 18px 0 10px 0;
+
+    color: #9aa4b2;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    letter-spacing: 1.5px;
+}
+
+
+/* =========================================================
+   COMBAT SKILLS
+   ========================================================= */
+
+.combat-skill-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 10px;
+}
+
+.combat-skill-card {
+    padding: 14px;
+
+    background: rgba(0, 0, 0, 0.32);
+
+    border: 1px solid #39414a;
+
+    border-radius: 7px;
+}
+
+.combat-skill-name {
+    color: #d8dde3;
+
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.combat-skill-level {
+    margin-top: 4px;
+
+    color: #e8d27b;
+
+    font-size: 27px;
+    font-weight: bold;
+}
+
+.combat-skill-xp {
+    margin-top: 3px;
+
+    color: #b8c1ca;
+
+    font-size: 12px;
+}
+
+.combat-skill-next {
+    margin-top: 5px;
+
+    color: #7f8a95;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   CURRENT STATUS
+   ========================================================= */
+
+.character-status-grid {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 1px;
+
+    background: #303740;
+
+    border: 1px solid #303740;
+
+    border-radius: 7px;
+
+    overflow: hidden;
+}
+
+.character-status-row {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 13px 15px;
+
+    background: rgba(0, 0, 0, 0.32);
+
+    color: #b8c1ca;
+
+    font-size: 14px;
+}
+
+.character-status-row strong {
+    color: #ffffff;
+
+    font-weight: bold;
+}
+
+
+/* =========================================================
+   COMING SOON TABS
+   ========================================================= */
+
+.character-coming-soon {
+    min-height: 300px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+}
+
+.character-coming-soon-title {
+    color: #e8d27b;
+
+    font-size: 24px;
+    font-weight: bold;
+
+    margin-bottom: 10px;
+}
+
+.character-coming-soon-text {
+    color: #7f8a95;
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   CHARACTER RESPONSIVE LAYOUT
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    #character-button {
+        top: 65px;
+        right: 15px;
+    }
+
+
+    #character-interface {
+        width: calc(100vw - 20px);
+        height: calc(100vh - 30px);
+    }
+
+
+    .character-interface-tab {
+        min-width: 33.333%;
+    }
+
+
+    .combat-skill-grid {
+        grid-template-columns:
+            1fr;
+    }
+
 }

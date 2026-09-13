@@ -23,7 +23,6 @@ import {
 
 import {
     getCombatStyle,
-    applyLevelUp,
     handlePlayerDeath
 } from "./player.js";
 
@@ -39,6 +38,29 @@ const COMBAT_ENGAGEMENT_BUFFER = 5;
 const COMBAT_ENGAGEMENT_RANGE =
     COMBAT_RANGE +
     COMBAT_ENGAGEMENT_BUFFER;
+
+
+/* =======================================================
+   COMBAT XP
+   ======================================================= */
+
+/*
+ * SpaceScape awards combat XP based on damage dealt.
+ *
+ * Every 1 damage dealt = 4 primary combat XP.
+ *
+ * Vitality receives 25% of the primary combat XP.
+ *
+ * Therefore:
+ *
+ * 1 damage
+ * = 4 primary combat XP
+ * = 1 Vitality XP
+ */
+
+const COMBAT_XP_PER_DAMAGE = 4;
+
+const VITALITY_XP_PERCENT = 0.25;
 
 
 /* =======================================================
@@ -733,6 +755,147 @@ function movePlayerTowardTarget(
 
 
 /* =======================================================
+   AWARD COMBAT XP FOR DAMAGE
+   ======================================================= */
+
+function awardCombatXPForDamage(
+    player,
+    damage
+) {
+
+    if (
+        !player ||
+        !Number.isFinite(damage) ||
+        damage <= 0
+    ) {
+
+        return null;
+
+    }
+
+
+    const combatStyle =
+        getCombatStyle();
+
+
+    /*
+     * Determine which combat skill receives
+     * the primary XP.
+     */
+
+    let primarySkill =
+        null;
+
+
+    if (
+        combatStyle ===
+        "accurate"
+    ) {
+
+        primarySkill =
+            "attack";
+
+    } else if (
+        combatStyle ===
+        "aggressive"
+    ) {
+
+        primarySkill =
+            "strength";
+
+    } else if (
+        combatStyle ===
+        "defensive"
+    ) {
+
+        primarySkill =
+            "defense";
+
+    }
+
+
+    if (!primarySkill) {
+
+        return null;
+
+    }
+
+
+    const primaryXP =
+        damage *
+        COMBAT_XP_PER_DAMAGE;
+
+
+    const vitalityXP =
+        primaryXP *
+        VITALITY_XP_PERCENT;
+
+
+    const primaryResult =
+        awardSkillXP(
+            player.skills,
+            primarySkill,
+            primaryXP
+        );
+
+
+    const vitalityResult =
+        awardSkillXP(
+            player.skills,
+            "vitality",
+            vitalityXP
+        );
+
+
+    console.log(
+        `Combat XP: ${damage} damage ` +
+        `→ ${primaryXP} ${primarySkill} XP + ` +
+        `${vitalityXP} Vitality XP.`
+    );
+
+
+    if (
+        primaryResult.levelsGained > 0
+    ) {
+
+        console.log(
+            `${primarySkill} reached level ` +
+            `${primaryResult.currentLevel}.`
+        );
+
+    }
+
+
+    if (
+        vitalityResult.levelsGained > 0
+    ) {
+
+        console.log(
+            `Vitality reached level ` +
+            `${vitalityResult.currentLevel}.`
+        );
+
+    }
+
+
+    return {
+
+        primarySkill,
+
+        primaryXP,
+
+        vitalityXP,
+
+        primaryResult,
+
+        vitalityResult
+
+    };
+
+}
+
+
+/* =======================================================
    PLAYER ATTACK
    ======================================================= */
 
@@ -783,6 +946,17 @@ function processPlayerAttack(
         result.hit
     ) {
 
+        /*
+         * XP is awarded immediately when damage
+         * is successfully dealt.
+         */
+
+        awardCombatXPForDamage(
+            player,
+            result.damage
+        );
+
+
         addCombatFeedback(
             "enemy",
             enemy.id,
@@ -813,6 +987,7 @@ function processPlayerAttack(
 
         console.log(
             `Player misses ${enemy.name}. ` +
+            `No combat XP awarded. ` +
             `Style: ${combatStyle}`
         );
 
@@ -896,123 +1071,6 @@ function processEnemyAttack(
 
         console.log(
             `${enemy.name} misses player.`
-        );
-
-    }
-
-}
-
-
-/* =======================================================
-   AWARD COMBAT XP
-   ======================================================= */
-
-function awardCombatXP(
-    player
-) {
-
-    const combatStyle =
-        getCombatStyle();
-
-
-    /*
-     * Temporary combat XP value.
-     *
-     * We will eventually make enemy XP rewards
-     * more sophisticated based on enemy level,
-     * difficulty, and other factors.
-     */
-
-    const combatXP =
-        50;
-
-
-    const vitalityXP =
-        Math.floor(
-            combatXP *
-            0.25
-        );
-
-
-    let primarySkill =
-        null;
-
-
-    if (
-        combatStyle ===
-        "accurate"
-    ) {
-
-        primarySkill =
-            "attack";
-
-    } else if (
-        combatStyle ===
-        "aggressive"
-    ) {
-
-        primarySkill =
-            "strength";
-
-    } else if (
-        combatStyle ===
-        "defensive"
-    ) {
-
-        primarySkill =
-            "defense";
-
-    }
-
-
-    if (!primarySkill) {
-
-        return;
-
-    }
-
-
-    const primaryResult =
-        awardSkillXP(
-            player.skills,
-            primarySkill,
-            combatXP
-        );
-
-
-    const vitalityResult =
-        awardSkillXP(
-            player.skills,
-            "vitality",
-            vitalityXP
-        );
-
-
-    console.log(
-        `${primarySkill} XP +${primaryResult.awarded}. ` +
-        `Vitality XP +${vitalityResult.awarded}.`
-    );
-
-
-    if (
-        primaryResult.levelsGained > 0
-    ) {
-
-        console.log(
-            `${primarySkill} reached level ` +
-            `${primaryResult.currentLevel}.`
-        );
-
-    }
-
-
-    if (
-        vitalityResult.levelsGained > 0
-    ) {
-
-        console.log(
-            `Vitality reached level ` +
-            `${vitalityResult.currentLevel}.`
         );
 
     }
@@ -1138,14 +1196,17 @@ export function updateCombat(
     );
 
 
+    /*
+     * If the enemy died from the player's attack,
+     * combat ends normally.
+     *
+     * There is NO XP award here because XP was
+     * already awarded when the damage was dealt.
+     */
+
     if (
         !isTargetAlive(enemy)
     ) {
-
-        awardCombatXP(
-            player
-        );
-
 
         console.log(
             `${enemy.name} defeated.`

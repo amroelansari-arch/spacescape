@@ -15,11 +15,8 @@ import {
 } from "./world.js";
 
 import {
-    getXPToNextLevel
-} from "./xp.js";
-
-import {
     getSkillLevel,
+    getCurrentSkillXP,
     getSkillXPToNextLevel
 } from "./skills.js";
 
@@ -57,22 +54,11 @@ export const player = {
 
 
     /*
-     * Legacy generic level.
+     * Current combat stats.
      *
-     * This remains temporarily while the new
-     * individual skill system is being connected.
-     */
-
-    level: 1,
-
-    xp: 0,
-
-
-    /*
-     * Legacy combat stats.
-     *
-     * These remain temporarily so the current
-     * combat system remains compatible.
+     * These remain temporarily while the combat
+     * calculation is transitioned to use the
+     * individual combat skills directly.
      */
 
     attack: 10,
@@ -92,6 +78,13 @@ export const player = {
 
     isDead: false,
 
+
+    /*
+     * Individual SpaceScape skills.
+     *
+     * These are now the authoritative progression
+     * system for player skills.
+     */
 
     skills:
         createSkills(),
@@ -204,6 +197,46 @@ export function getPlayerVitalityLevel() {
    COMBAT SKILL XP HELPERS
    ======================================================= */
 
+export function getPlayerAttackXP() {
+
+    return getCurrentSkillXP(
+        player.skills,
+        "attack"
+    );
+
+}
+
+
+export function getPlayerStrengthXP() {
+
+    return getCurrentSkillXP(
+        player.skills,
+        "strength"
+    );
+
+}
+
+
+export function getPlayerDefenseXP() {
+
+    return getCurrentSkillXP(
+        player.skills,
+        "defense"
+    );
+
+}
+
+
+export function getPlayerVitalityXP() {
+
+    return getCurrentSkillXP(
+        player.skills,
+        "vitality"
+    );
+
+}
+
+
 export function getPlayerAttackXPToNextLevel() {
 
     return getSkillXPToNextLevel(
@@ -239,37 +272,6 @@ export function getPlayerVitalityXPToNextLevel() {
     return getSkillXPToNextLevel(
         player.skills,
         "vitality"
-    );
-
-}
-
-
-/* =======================================================
-   LEGACY LEVEL UP
-   ======================================================= */
-
-export function applyLevelUp() {
-
-    player.health.maximum += 10;
-
-    player.energy.maximum += 10;
-
-    player.attack += 2;
-
-    player.defense += 1;
-
-
-    console.log(
-        `Legacy level up! Player is now level ${player.level}.`
-    );
-
-
-    console.log(
-        `Legacy stats increased: ` +
-        `Health ${player.health.maximum}, ` +
-        `Energy ${player.energy.maximum}, ` +
-        `Attack ${player.attack}, ` +
-        `Defense ${player.defense}.`
     );
 
 }
@@ -570,17 +572,26 @@ export function updatePlayerHUD() {
 
 
     /*
-     * The existing HUD still displays the legacy
-     * player level and XP temporarily.
+     * The old generic player level and XP system
+     * has been retired.
      *
-     * The Character Interface will replace this
-     * with the SpaceScape Combat Level and skills.
+     * Until the permanent Character Interface is
+     * built, the existing HUD uses Attack as the
+     * temporary primary combat progression display.
      */
+
+    const attackLevel =
+        getPlayerAttackLevel();
+
+
+    const attackXP =
+        getPlayerAttackXP();
+
 
     if (levelElement) {
 
         levelElement.textContent =
-            player.level;
+            attackLevel;
 
     }
 
@@ -588,10 +599,10 @@ export function updatePlayerHUD() {
     if (xpElement) {
 
         xpElement.textContent =
-            player.xp;
+            attackXP;
 
         xpElement.title =
-            `${getXPToNextLevel(player)} XP to next level`;
+            `${getPlayerAttackXPToNextLevel()} XP to Attack level ${attackLevel + 1}`;
 
     }
 

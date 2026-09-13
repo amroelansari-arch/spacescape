@@ -30,8 +30,15 @@ import {
 } from "./items.js";
 
 import {
-    removeItem
+    removeItem,
+    addItem
 } from "./inventory.js";
+
+import {
+    getEquippedItem,
+    equipItem,
+    unequipItem
+} from "./equipment.js";
 
 
 /* =======================================================
@@ -94,6 +101,50 @@ const CHARACTER_TAB_DEFINITIONS = [
 
 
 /* =======================================================
+   EQUIPMENT SLOT DEFINITIONS
+   ======================================================= */
+
+const EQUIPMENT_SLOT_DEFINITIONS = [
+
+    {
+        slot: "head",
+        label: "HEAD"
+    },
+
+    {
+        slot: "body",
+        label: "BODY"
+    },
+
+    {
+        slot: "weapon",
+        label: "WEAPON"
+    },
+
+    {
+        slot: "offhand",
+        label: "OFFHAND"
+    },
+
+    {
+        slot: "legs",
+        label: "LEGS"
+    },
+
+    {
+        slot: "feet",
+        label: "FEET"
+    },
+
+    {
+        slot: "accessory",
+        label: "ACCESSORY"
+    }
+
+];
+
+
+/* =======================================================
    CHARACTER STATE
    ======================================================= */
 
@@ -106,7 +157,9 @@ const characterState = {
 
     gameAvailable: false,
 
-    selectedInventoryItem: null
+    selectedInventoryItem: null,
+
+    selectedEquipmentSlot: null
 
 };
 
@@ -144,6 +197,7 @@ export function closeCharacterInterface() {
     characterState.isOpen = false;
 
     removeInventoryItemPopup();
+    removeEquipmentItemPopup();
 
     updateCharacterInterface();
 
@@ -183,6 +237,11 @@ export function setCharacterTab(tab) {
 
     characterState.activeTab =
         tab;
+
+    characterState.selectedEquipmentSlot =
+        null;
+
+    removeEquipmentItemPopup();
 
     if (
         tab !== CHARACTER_TABS.INVENTORY
@@ -239,7 +298,11 @@ export function setCharacterInterfaceAvailability(
         characterState.selectedInventoryItem =
             null;
 
+        characterState.selectedEquipmentSlot =
+            null;
+
         removeInventoryItemPopup();
+        removeEquipmentItemPopup();
 
     }
 
@@ -1179,6 +1242,30 @@ function removeInventoryItemPopup() {
 
 
 /* =======================================================
+   REMOVE EQUIPMENT POPUP
+   ======================================================= */
+
+function removeEquipmentItemPopup() {
+
+    if (!characterInterface) {
+        return;
+    }
+
+    const existingPopup =
+        characterInterface.querySelector(
+            ".equipment-item-popup-overlay"
+        );
+
+    if (existingPopup) {
+
+        existingPopup.remove();
+
+    }
+
+}
+
+
+/* =======================================================
    CREATE INVENTORY SLOT
    ======================================================= */
 
@@ -1488,10 +1575,6 @@ function createInventoryItemPopup(
     );
 
 
-    /* ---------------------------------------------------
-       HEADER
-       --------------------------------------------------- */
-
     const header =
         document.createElement(
             "div"
@@ -1552,10 +1635,6 @@ function createInventoryItemPopup(
     );
 
 
-    /* ---------------------------------------------------
-       INFORMATION
-       --------------------------------------------------- */
-
     const info =
         document.createElement(
             "div"
@@ -1607,10 +1686,6 @@ function createInventoryItemPopup(
 
     }
 
-
-    /* ---------------------------------------------------
-       ACTIONS
-       --------------------------------------------------- */
 
     const actions =
         document.createElement(
@@ -1770,10 +1845,6 @@ function renderInventoryTab() {
     }
 
 
-    /* ---------------------------------------------------
-       HEADER
-       --------------------------------------------------- */
-
     const heading =
         document.createElement(
             "div"
@@ -1814,10 +1885,6 @@ function renderInventoryTab() {
     );
 
 
-    /* ---------------------------------------------------
-       INVENTORY GRID
-       --------------------------------------------------- */
-
     const grid =
         document.createElement(
             "div"
@@ -1852,10 +1919,6 @@ function renderInventoryTab() {
         grid
     );
 
-
-    /* ---------------------------------------------------
-       SELECTED ITEM POPUP
-       --------------------------------------------------- */
 
     const selectedItemId =
         characterState.selectedInventoryItem;
@@ -1903,6 +1966,1165 @@ function renderInventoryTab() {
     createInventoryItemPopup(
         selectedInventoryItem,
         selectedItem
+    );
+
+}
+
+
+/* =======================================================
+   EQUIPMENT SLOT SYMBOL
+   ======================================================= */
+
+function getEquipmentSlotSymbol(
+    slot
+) {
+
+    const symbols = {
+
+        head: "◈",
+        body: "▣",
+        weapon: "◆",
+        offhand: "◇",
+        legs: "▥",
+        feet: "⌄",
+        accessory: "✦"
+
+    };
+
+    return (
+        symbols[slot] ||
+        "•"
+    );
+
+}
+
+
+/* =======================================================
+   CREATE EQUIPMENT SLOT
+   ======================================================= */
+
+function createEquipmentSlot(
+    definition
+) {
+
+    const equippedItem =
+        getEquippedItem(
+            player.equipment,
+            definition.slot
+        );
+
+
+    const slot =
+        document.createElement(
+            "div"
+        );
+
+    slot.className =
+        "skill-card inventory-slot";
+
+
+    if (equippedItem) {
+
+        slot.classList.add(
+            "inventory-slot-filled"
+        );
+
+        slot.style.cursor =
+            "pointer";
+
+    } else {
+
+        slot.classList.add(
+            "inventory-slot-empty"
+        );
+
+        slot.style.cursor =
+            "default";
+
+    }
+
+
+    const top =
+        document.createElement(
+            "div"
+        );
+
+    top.className =
+        "skill-card-top";
+
+
+    const slotName =
+        document.createElement(
+            "div"
+        );
+
+    slotName.className =
+        "skill-name";
+
+    slotName.textContent =
+        definition.label;
+
+
+    top.appendChild(
+        slotName
+    );
+
+
+    slot.appendChild(
+        top
+    );
+
+
+    if (!equippedItem) {
+
+        const emptySymbol =
+            document.createElement(
+                "div"
+            );
+
+        emptySymbol.className =
+            "inventory-item-symbol";
+
+        emptySymbol.textContent =
+            getEquipmentSlotSymbol(
+                definition.slot
+            );
+
+        emptySymbol.style.opacity =
+            "0.25";
+
+
+        const emptyText =
+            document.createElement(
+                "div"
+            );
+
+        emptyText.className =
+            "skill-next";
+
+        emptyText.textContent =
+            "EMPTY";
+
+
+        slot.appendChild(
+            emptySymbol
+        );
+
+        slot.appendChild(
+            emptyText
+        );
+
+        return slot;
+
+    }
+
+
+    const item =
+        getItem(
+            equippedItem.id
+        );
+
+
+    if (!item) {
+        return slot;
+    }
+
+
+    const symbol =
+        document.createElement(
+            "div"
+        );
+
+    symbol.className =
+        "inventory-item-symbol";
+
+    symbol.textContent =
+        getInventoryItemSymbol(
+            item
+        );
+
+
+    const itemName =
+        document.createElement(
+            "div"
+        );
+
+    itemName.className =
+        "skill-next";
+
+    itemName.textContent =
+        item.name;
+
+
+    slot.appendChild(
+        symbol
+    );
+
+    slot.appendChild(
+        itemName
+    );
+
+
+    if (
+        characterState.selectedEquipmentSlot ===
+        definition.slot
+    ) {
+
+        slot.classList.add(
+            "inventory-slot-selected"
+        );
+
+    }
+
+
+    slot.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            characterState.selectedEquipmentSlot =
+                definition.slot;
+
+            updateCharacterInterface();
+
+        }
+    );
+
+
+    return slot;
+
+}
+
+
+/* =======================================================
+   CREATE EQUIPMENT ITEM POPUP
+   ======================================================= */
+
+function createEquipmentItemPopup(
+    slot,
+    item
+) {
+
+    removeEquipmentItemPopup();
+
+
+    const overlay =
+        document.createElement(
+            "div"
+        );
+
+    overlay.className =
+        "inventory-item-popup-overlay equipment-item-popup-overlay";
+
+
+    overlay.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                overlay
+            ) {
+
+                characterState.selectedEquipmentSlot =
+                    null;
+
+                removeEquipmentItemPopup();
+
+                updateCharacterInterface();
+
+            }
+
+        }
+    );
+
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+    popup.className =
+        "inventory-item-popup";
+
+
+    popup.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+        }
+    );
+
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+    header.className =
+        "inventory-item-popup-header";
+
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+    title.className =
+        "inventory-item-popup-title";
+
+    title.textContent =
+        item.name;
+
+
+    const closeButton =
+        document.createElement(
+            "button"
+        );
+
+    closeButton.className =
+        "inventory-item-popup-close";
+
+    closeButton.textContent =
+        "×";
+
+    closeButton.title =
+        "Close";
+
+
+    closeButton.addEventListener(
+        "click",
+        () => {
+
+            characterState.selectedEquipmentSlot =
+                null;
+
+            removeEquipmentItemPopup();
+
+            updateCharacterInterface();
+
+        }
+    );
+
+
+    header.appendChild(
+        title
+    );
+
+    header.appendChild(
+        closeButton
+    );
+
+
+    const info =
+        document.createElement(
+            "div"
+        );
+
+    info.className =
+        "inventory-item-popup-info";
+
+
+    const type =
+        document.createElement(
+            "div"
+        );
+
+    type.className =
+        "inventory-item-popup-type";
+
+    type.textContent =
+        `${String(
+            item.type
+        ).toUpperCase()} • EQUIPPED`;
+
+
+    info.appendChild(
+        type
+    );
+
+
+    const slotText =
+        document.createElement(
+            "div"
+        );
+
+    slotText.className =
+        "inventory-item-popup-effect";
+
+    slotText.textContent =
+        `Slot: ${String(slot).toUpperCase()}`;
+
+
+    info.appendChild(
+        slotText
+    );
+
+
+    const actions =
+        document.createElement(
+            "div"
+        );
+
+    actions.className =
+        "inventory-item-popup-actions";
+
+
+    const unequipButton =
+        createInventoryActionButton(
+            "UNEQUIP",
+            true,
+            () => {
+
+                /*
+                 * Add the item back to inventory FIRST.
+                 * If the inventory is full, the item remains
+                 * equipped and nothing is lost.
+                 */
+
+                const added =
+                    addItem(
+                        player.inventory,
+                        item.id,
+                        1
+                    );
+
+                if (!added) {
+
+                    return;
+
+                }
+
+
+                const result =
+                    unequipItem(
+                        player.equipment,
+                        slot
+                    );
+
+
+                if (!result.success) {
+
+                    /*
+                     * Roll back the inventory change if
+                     * unequip somehow fails.
+                     */
+
+                    removeItem(
+                        player.inventory,
+                        item.id,
+                        1
+                    );
+
+                    return;
+
+                }
+
+
+                characterState.selectedEquipmentSlot =
+                    null;
+
+                updateCharacterInterface();
+
+            },
+            true
+        );
+
+
+    actions.appendChild(
+        unequipButton
+    );
+
+
+    popup.appendChild(
+        header
+    );
+
+    popup.appendChild(
+        info
+    );
+
+    popup.appendChild(
+        actions
+    );
+
+
+    overlay.appendChild(
+        popup
+    );
+
+
+    characterInterface.appendChild(
+        overlay
+    );
+
+}
+
+
+/* =======================================================
+   EQUIP INVENTORY ITEM
+   ======================================================= */
+
+function equipInventoryItem(
+    itemId
+) {
+
+    const item =
+        getItem(
+            itemId
+        );
+
+
+    if (!item) {
+        return false;
+    }
+
+
+    if (
+        item.type !== "weapon" &&
+        item.type !== "equipment" &&
+        item.type !== "armor"
+    ) {
+
+        return false;
+
+    }
+
+
+    if (!item.slot) {
+        return false;
+    }
+
+
+    const inventoryItem =
+        player.inventory.items.find(
+            currentItem =>
+                currentItem.id ===
+                itemId
+        );
+
+
+    if (!inventoryItem) {
+        return false;
+    }
+
+
+    const currentEquippedItem =
+        getEquippedItem(
+            player.equipment,
+            item.slot
+        );
+
+
+    /*
+     * Remove the inventory item first.
+     * This frees an inventory slot if the
+     * equipment slot is already occupied.
+     */
+
+    const removed =
+        removeItem(
+            player.inventory,
+            itemId,
+            1
+        );
+
+
+    if (!removed) {
+        return false;
+    }
+
+
+    const result =
+        equipItem(
+            player.equipment,
+            item
+        );
+
+
+    if (!result.success) {
+
+        addItem(
+            player.inventory,
+            itemId,
+            1
+        );
+
+        return false;
+
+    }
+
+
+    /*
+     * If another item was already equipped,
+     * return it to the inventory.
+     */
+
+    if (
+        currentEquippedItem &&
+        currentEquippedItem.id
+    ) {
+
+        const returned =
+            addItem(
+                player.inventory,
+                currentEquippedItem.id,
+                1
+            );
+
+
+        if (!returned) {
+
+            /*
+             * This should normally be impossible because
+             * removing the newly equipped item created a
+             * free inventory slot.
+             *
+             * Keep the result safe rather than silently
+             * destroying the previous item.
+             */
+
+            unequipItem(
+                player.equipment,
+                item.slot
+            );
+
+            addItem(
+                player.inventory,
+                itemId,
+                1
+            );
+
+            return false;
+
+        }
+
+    }
+
+
+    characterState.selectedInventoryItem =
+        null;
+
+    removeInventoryItemPopup();
+
+    return true;
+
+}
+
+
+/* =======================================================
+   CREATE EQUIPMENT ACTION FROM INVENTORY
+   ======================================================= */
+
+function createEquipmentInventoryAction(
+    item
+) {
+
+    if (!item) {
+        return null;
+    }
+
+
+    const canEquip =
+        (
+            item.type === "weapon" ||
+            item.type === "equipment" ||
+            item.type === "armor"
+        ) &&
+        Boolean(item.slot);
+
+
+    if (!canEquip) {
+        return null;
+    }
+
+
+    return createInventoryActionButton(
+        "EQUIP",
+        true,
+        () => {
+
+            const equipped =
+                equipInventoryItem(
+                    item.id
+                );
+
+
+            if (!equipped) {
+                return;
+            }
+
+
+            updateCharacterInterface();
+
+        },
+        true
+    );
+
+}
+
+
+/* =======================================================
+   ADD EQUIP BUTTON TO INVENTORY POPUP
+   ======================================================= */
+
+function getInventoryPopupActions(
+    inventoryItem,
+    item
+) {
+
+    const actions =
+        document.createElement(
+            "div"
+        );
+
+    actions.className =
+        "inventory-item-popup-actions";
+
+
+    const canUse =
+        item.type ===
+        "consumable";
+
+
+    const useButton =
+        createInventoryActionButton(
+            "USE",
+            canUse,
+            () => {
+
+                const used =
+                    useItem(
+                        player,
+                        player.inventory,
+                        inventoryItem.id
+                    );
+
+                if (!used) {
+                    return;
+                }
+
+
+                const stillExists =
+                    player.inventory.items.some(
+                        currentItem =>
+                            currentItem.id ===
+                            inventoryItem.id
+                    );
+
+
+                if (!stillExists) {
+
+                    characterState.selectedInventoryItem =
+                        null;
+
+                }
+
+
+                updateCharacterInterface();
+
+            },
+            true
+        );
+
+
+    const equipButton =
+        createEquipmentInventoryAction(
+            item
+        );
+
+
+    const dropButton =
+        createInventoryActionButton(
+            "DROP 1",
+            true,
+            () => {
+
+                const removed =
+                    removeItem(
+                        player.inventory,
+                        inventoryItem.id,
+                        1
+                    );
+
+                if (!removed) {
+                    return;
+                }
+
+
+                const stillExists =
+                    player.inventory.items.some(
+                        currentItem =>
+                            currentItem.id ===
+                            inventoryItem.id
+                    );
+
+
+                if (!stillExists) {
+
+                    characterState.selectedInventoryItem =
+                        null;
+
+                }
+
+
+                updateCharacterInterface();
+
+            }
+        );
+
+
+    if (equipButton) {
+
+        actions.appendChild(
+            equipButton
+        );
+
+    }
+
+
+    actions.appendChild(
+        useButton
+    );
+
+    actions.appendChild(
+        dropButton
+    );
+
+
+    return actions;
+
+}
+
+
+/* =======================================================
+   RENDER EQUIPMENT TAB
+   ======================================================= */
+
+function renderEquipmentTab() {
+
+    characterContent.innerHTML =
+        "";
+
+
+    removeEquipmentItemPopup();
+
+
+    const heading =
+        document.createElement(
+            "div"
+        );
+
+    heading.className =
+        "character-skills-heading";
+
+    heading.textContent =
+        "EQUIPMENT";
+
+
+    const description =
+        document.createElement(
+            "div"
+        );
+
+    description.className =
+        "character-skills-description";
+
+    description.textContent =
+        "Manage the equipment currently worn by your character.";
+
+
+    characterContent.appendChild(
+        heading
+    );
+
+    characterContent.appendChild(
+        description
+    );
+
+
+    const grid =
+        document.createElement(
+            "div"
+        );
+
+    grid.className =
+        "skills-grid inventory-grid";
+
+
+    for (
+        const definition
+        of EQUIPMENT_SLOT_DEFINITIONS
+    ) {
+
+        grid.appendChild(
+            createEquipmentSlot(
+                definition
+            )
+        );
+
+    }
+
+
+    characterContent.appendChild(
+        grid
+    );
+
+
+    const selectedSlot =
+        characterState.selectedEquipmentSlot;
+
+
+    if (!selectedSlot) {
+        return;
+    }
+
+
+    const equippedItem =
+        getEquippedItem(
+            player.equipment,
+            selectedSlot
+        );
+
+
+    if (!equippedItem) {
+
+        characterState.selectedEquipmentSlot =
+            null;
+
+        return;
+
+    }
+
+
+    const item =
+        getItem(
+            equippedItem.id
+        );
+
+
+    if (!item) {
+
+        characterState.selectedEquipmentSlot =
+            null;
+
+        return;
+
+    }
+
+
+    createEquipmentItemPopup(
+        selectedSlot,
+        item
+    );
+
+}
+
+
+/* =======================================================
+   REBUILD INVENTORY POPUP WITH EQUIP ACTION
+   ======================================================= */
+
+function createInventoryItemPopup(
+    inventoryItem,
+    item
+) {
+
+    removeInventoryItemPopup();
+
+
+    const overlay =
+        document.createElement(
+            "div"
+        );
+
+    overlay.className =
+        "inventory-item-popup-overlay";
+
+
+    overlay.addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                overlay
+            ) {
+
+                characterState.selectedInventoryItem =
+                    null;
+
+                removeInventoryItemPopup();
+
+                updateCharacterInterface();
+
+            }
+
+        }
+    );
+
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+    popup.className =
+        "inventory-item-popup";
+
+
+    popup.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+        }
+    );
+
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+    header.className =
+        "inventory-item-popup-header";
+
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+    title.className =
+        "inventory-item-popup-title";
+
+    title.textContent =
+        item.name;
+
+
+    const closeButton =
+        document.createElement(
+            "button"
+        );
+
+    closeButton.className =
+        "inventory-item-popup-close";
+
+    closeButton.textContent =
+        "×";
+
+    closeButton.title =
+        "Close";
+
+
+    closeButton.addEventListener(
+        "click",
+        () => {
+
+            characterState.selectedInventoryItem =
+                null;
+
+            removeInventoryItemPopup();
+
+            updateCharacterInterface();
+
+        }
+    );
+
+
+    header.appendChild(
+        title
+    );
+
+    header.appendChild(
+        closeButton
+    );
+
+
+    const info =
+        document.createElement(
+            "div"
+        );
+
+    info.className =
+        "inventory-item-popup-info";
+
+
+    const type =
+        document.createElement(
+            "div"
+        );
+
+    type.className =
+        "inventory-item-popup-type";
+
+    type.textContent =
+        `${String(
+            item.type
+        ).toUpperCase()} • QUANTITY ${inventoryItem.quantity}`;
+
+
+    info.appendChild(
+        type
+    );
+
+
+    if (
+        item.effect &&
+        item.effect.type === "heal"
+    ) {
+
+        const effect =
+            document.createElement(
+                "div"
+            );
+
+        effect.className =
+            "inventory-item-popup-effect";
+
+        effect.textContent =
+            `Restores ${item.effect.amount} HP.`;
+
+
+        info.appendChild(
+            effect
+        );
+
+    }
+
+
+    const actions =
+        getInventoryPopupActions(
+            inventoryItem,
+            item
+        );
+
+
+    popup.appendChild(
+        header
+    );
+
+    popup.appendChild(
+        info
+    );
+
+    popup.appendChild(
+        actions
+    );
+
+
+    overlay.appendChild(
+        popup
+    );
+
+
+    characterInterface.appendChild(
+        overlay
     );
 
 }
@@ -2000,6 +3222,7 @@ function updateCharacterInterface() {
         );
 
         removeInventoryItemPopup();
+        removeEquipmentItemPopup();
 
         return;
 
@@ -2021,6 +3244,7 @@ function updateCharacterInterface() {
         );
 
         removeInventoryItemPopup();
+        removeEquipmentItemPopup();
 
     }
 
@@ -2087,9 +3311,7 @@ function updateCharacterInterface() {
 
         case CHARACTER_TABS.EQUIPMENT:
 
-            renderComingSoonTab(
-                "EQUIPMENT"
-            );
+            renderEquipmentTab();
 
             break;
 

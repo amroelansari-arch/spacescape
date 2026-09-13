@@ -24,6 +24,15 @@ import {
     getSkillXPToNextLevel
 } from "./skills.js";
 
+import {
+    getItem,
+    useItem
+} from "./items.js";
+
+import {
+    removeItem
+} from "./inventory.js";
+
 
 /* =======================================================
    CHARACTER TABS
@@ -46,7 +55,8 @@ export const CHARACTER_TABS = {
 const characterState = {
     isOpen: false,
     activeTab: CHARACTER_TABS.COMBAT,
-    gameAvailable: false
+    gameAvailable: false,
+    selectedInventoryItem: null
 };
 
 
@@ -118,6 +128,15 @@ export function setCharacterTab(tab) {
 
     characterState.activeTab =
         tab;
+
+    if (
+        tab !== CHARACTER_TABS.INVENTORY
+    ) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+    }
 
     updateCharacterInterface();
 
@@ -242,10 +261,6 @@ function createSkillCard(
         skillName;
 
 
-    /* ---------------------------------------------------
-       TOP
-       --------------------------------------------------- */
-
     const top =
         document.createElement(
             "div"
@@ -290,10 +305,6 @@ function createSkillCard(
     );
 
 
-    /* ---------------------------------------------------
-       XP
-       --------------------------------------------------- */
-
     const xp =
         document.createElement(
             "div"
@@ -322,10 +333,6 @@ function createSkillCard(
     }
 
 
-    /* ---------------------------------------------------
-       XP REMAINING
-       --------------------------------------------------- */
-
     const next =
         document.createElement(
             "div"
@@ -349,10 +356,6 @@ function createSkillCard(
 
     }
 
-
-    /* ---------------------------------------------------
-       PROGRESS
-       --------------------------------------------------- */
 
     const progress =
         document.createElement(
@@ -420,10 +423,6 @@ function createSkillCard(
     );
 
 
-    /* ---------------------------------------------------
-       BUILD CARD
-       --------------------------------------------------- */
-
     card.appendChild(
         top
     );
@@ -447,7 +446,7 @@ function createSkillCard(
 
 
 /* =======================================================
-   DISPLAY NAME
+   SKILL DISPLAY NAME
    ======================================================= */
 
 function getSkillDisplayName(
@@ -736,10 +735,6 @@ function renderCombatTab() {
         );
 
 
-    /* ---------------------------------------------------
-       COMBAT LEVEL
-       --------------------------------------------------- */
-
     const combatLevelPanel =
         document.createElement(
             "div"
@@ -786,10 +781,6 @@ function renderCombatTab() {
     );
 
 
-    /* ---------------------------------------------------
-       COMBAT SKILLS
-       --------------------------------------------------- */
-
     const skillsTitle =
         document.createElement(
             "div"
@@ -817,30 +808,35 @@ function renderCombatTab() {
 
 
     const combatSkills = [
+
         [
             "Attack",
             summary.attack,
             getPlayerAttackXP(player),
             getPlayerAttackXPToNextLevel(player)
         ],
+
         [
             "Strength",
             summary.strength,
             getPlayerStrengthXP(player),
             getPlayerStrengthXPToNextLevel(player)
         ],
+
         [
             "Defense",
             summary.defense,
             getPlayerDefenseXP(player),
             getPlayerDefenseXPToNextLevel(player)
         ],
+
         [
             "Vitality",
             summary.vitality,
             getPlayerVitalityXP(player),
             getPlayerVitalityXPToNextLevel(player)
         ]
+
     ];
 
 
@@ -871,10 +867,6 @@ function renderCombatTab() {
     );
 
 
-    /* ---------------------------------------------------
-       CURRENT STATUS
-       --------------------------------------------------- */
-
     const statusTitle =
         document.createElement(
             "div"
@@ -902,18 +894,22 @@ function renderCombatTab() {
 
 
     const statusRows = [
+
         [
             "Health",
             `${player.health.current} / ${player.health.maximum}`
         ],
+
         [
             "Energy",
             `${player.energy.current} / ${player.energy.maximum}`
         ],
+
         [
             "Combat Style",
             player.combatStyle
         ]
+
     ];
 
 
@@ -985,10 +981,6 @@ function renderSkillsTab() {
         "";
 
 
-    /* ---------------------------------------------------
-       HEADING
-       --------------------------------------------------- */
-
     const heading =
         document.createElement(
             "div"
@@ -1021,10 +1013,6 @@ function renderSkillsTab() {
         description
     );
 
-
-    /* ---------------------------------------------------
-       SECTIONS
-       --------------------------------------------------- */
 
     characterContent.appendChild(
         createSkillSection(
@@ -1072,6 +1060,616 @@ function renderSkillsTab() {
                 "navigation"
             ]
         )
+    );
+
+}
+
+
+/* =======================================================
+   INVENTORY ITEM ICON
+   ======================================================= */
+
+function getInventoryItemSymbol(
+    item
+) {
+
+    if (!item) {
+        return "•";
+    }
+
+    if (item.type === "consumable") {
+        return "+";
+    }
+
+    if (item.type === "weapon") {
+        return "◆";
+    }
+
+    return "•";
+
+}
+
+
+/* =======================================================
+   CREATE INVENTORY SLOT
+   ======================================================= */
+
+function createInventorySlot(
+    inventoryItem,
+    slotIndex
+) {
+
+    const slot =
+        document.createElement(
+            "div"
+        );
+
+    slot.className =
+        "skill-card";
+
+    slot.style.cursor =
+        inventoryItem
+            ? "pointer"
+            : "default";
+
+    slot.style.minHeight =
+        "100px";
+
+
+    if (!inventoryItem) {
+
+        const emptyLabel =
+            document.createElement(
+                "div"
+            );
+
+        emptyLabel.className =
+            "skill-name";
+
+        emptyLabel.textContent =
+            `SLOT ${slotIndex + 1}`;
+
+        emptyLabel.style.opacity =
+            "0.35";
+
+        slot.appendChild(
+            emptyLabel
+        );
+
+        return slot;
+
+    }
+
+
+    const item =
+        getItem(
+            inventoryItem.id
+        );
+
+
+    if (!item) {
+
+        return slot;
+
+    }
+
+
+    if (
+        characterState.selectedInventoryItem ===
+        inventoryItem.id
+    ) {
+
+        slot.style.border =
+            "1px solid #f0c75e";
+
+        slot.style.boxShadow =
+            "0 0 12px rgba(240,199,94,0.25)";
+
+    }
+
+
+    const top =
+        document.createElement(
+            "div"
+        );
+
+    top.className =
+        "skill-card-top";
+
+
+    const itemName =
+        document.createElement(
+            "div"
+        );
+
+    itemName.className =
+        "skill-name";
+
+    itemName.textContent =
+        item.name;
+
+
+    const quantity =
+        document.createElement(
+            "div"
+        );
+
+    quantity.className =
+        "skill-level";
+
+    quantity.textContent =
+        `×${inventoryItem.quantity}`;
+
+
+    top.appendChild(
+        itemName
+    );
+
+    top.appendChild(
+        quantity
+    );
+
+
+    const symbol =
+        document.createElement(
+            "div"
+        );
+
+    symbol.textContent =
+        getInventoryItemSymbol(
+            item
+        );
+
+    symbol.style.fontSize =
+        "30px";
+
+    symbol.style.margin =
+        "8px 0";
+
+    symbol.style.textAlign =
+        "center";
+
+
+    const type =
+        document.createElement(
+            "div"
+        );
+
+    type.className =
+        "skill-next";
+
+    type.textContent =
+        String(
+            item.type
+        ).toUpperCase();
+
+
+    slot.appendChild(
+        top
+    );
+
+    slot.appendChild(
+        symbol
+    );
+
+    slot.appendChild(
+        type
+    );
+
+
+    slot.addEventListener(
+        "click",
+        () => {
+
+            characterState.selectedInventoryItem =
+                inventoryItem.id;
+
+            updateCharacterInterface();
+
+        }
+    );
+
+
+    return slot;
+
+}
+
+
+/* =======================================================
+   CREATE INVENTORY ACTION BUTTON
+   ======================================================= */
+
+function createInventoryActionButton(
+    label,
+    enabled,
+    action
+) {
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+    button.textContent =
+        label;
+
+    button.disabled =
+        !enabled;
+
+    button.style.padding =
+        "9px 14px";
+
+    button.style.marginRight =
+        "8px";
+
+    button.style.cursor =
+        enabled
+            ? "pointer"
+            : "not-allowed";
+
+    button.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            if (!enabled) {
+                return;
+            }
+
+            action();
+
+        }
+    );
+
+
+    return button;
+
+}
+
+
+/* =======================================================
+   RENDER INVENTORY TAB
+   ======================================================= */
+
+function renderInventoryTab() {
+
+    characterContent.innerHTML =
+        "";
+
+
+    const inventory =
+        player.inventory;
+
+
+    if (
+        !inventory ||
+        !Array.isArray(
+            inventory.items
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    /* ---------------------------------------------------
+       HEADER
+       --------------------------------------------------- */
+
+    const heading =
+        document.createElement(
+            "div"
+        );
+
+    heading.className =
+        "character-skills-heading";
+
+    heading.textContent =
+        "INVENTORY";
+
+
+    const usedSlots =
+        inventory.items.length;
+
+    const capacity =
+        inventory.capacity;
+
+
+    const capacityText =
+        document.createElement(
+            "div"
+        );
+
+    capacityText.className =
+        "character-skills-description";
+
+    capacityText.textContent =
+        `${usedSlots} / ${capacity} SLOTS USED`;
+
+
+    characterContent.appendChild(
+        heading
+    );
+
+    characterContent.appendChild(
+        capacityText
+    );
+
+
+    /* ---------------------------------------------------
+       INVENTORY GRID
+       --------------------------------------------------- */
+
+    const grid =
+        document.createElement(
+            "div"
+        );
+
+    grid.className =
+        "skills-grid";
+
+
+    for (
+        let index = 0;
+        index < capacity;
+        index++
+    ) {
+
+        const inventoryItem =
+            inventory.items[index] ||
+            null;
+
+
+        grid.appendChild(
+            createInventorySlot(
+                inventoryItem,
+                index
+            )
+        );
+
+    }
+
+
+    characterContent.appendChild(
+        grid
+    );
+
+
+    /* ---------------------------------------------------
+       SELECTED ITEM
+       --------------------------------------------------- */
+
+    const selectedItemId =
+        characterState.selectedInventoryItem;
+
+
+    const selectedInventoryItem =
+        selectedItemId
+            ? inventory.items.find(
+                item =>
+                    item.id ===
+                    selectedItemId
+            )
+            : null;
+
+
+    if (
+        !selectedInventoryItem
+    ) {
+
+        return;
+
+    }
+
+
+    const selectedItem =
+        getItem(
+            selectedInventoryItem.id
+        );
+
+
+    if (!selectedItem) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+        return;
+
+    }
+
+
+    const selectedTitle =
+        document.createElement(
+            "div"
+        );
+
+    selectedTitle.className =
+        "character-section-title";
+
+    selectedTitle.textContent =
+        "SELECTED ITEM";
+
+
+    characterContent.appendChild(
+        selectedTitle
+    );
+
+
+    const selectedCard =
+        document.createElement(
+            "div"
+        );
+
+    selectedCard.className =
+        "skill-card";
+
+
+    const selectedName =
+        document.createElement(
+            "div"
+        );
+
+    selectedName.className =
+        "skill-name";
+
+    selectedName.textContent =
+        selectedItem.name;
+
+
+    const selectedType =
+        document.createElement(
+            "div"
+        );
+
+    selectedType.className =
+        "skill-xp";
+
+    selectedType.textContent =
+        `${String(
+            selectedItem.type
+        ).toUpperCase()} • QUANTITY ${selectedInventoryItem.quantity}`;
+
+
+    selectedCard.appendChild(
+        selectedName
+    );
+
+    selectedCard.appendChild(
+        selectedType
+    );
+
+
+    if (
+        selectedItem.effect &&
+        selectedItem.effect.type === "heal"
+    ) {
+
+        const effect =
+            document.createElement(
+                "div"
+            );
+
+        effect.className =
+            "skill-next";
+
+        effect.textContent =
+            `HEALS ${selectedItem.effect.amount} HP`;
+
+        selectedCard.appendChild(
+            effect
+        );
+
+    }
+
+
+    const actionArea =
+        document.createElement(
+            "div"
+        );
+
+    actionArea.style.marginTop =
+        "12px";
+
+
+    const canUse =
+        selectedItem.type ===
+        "consumable";
+
+
+    const useButton =
+        createInventoryActionButton(
+            "USE",
+            canUse,
+            () => {
+
+                const used =
+                    useItem(
+                        player,
+                        inventory,
+                        selectedInventoryItem.id
+                    );
+
+                if (
+                    used
+                ) {
+
+                    if (
+                        !inventory.items.some(
+                            item =>
+                                item.id ===
+                                selectedInventoryItem.id
+                        )
+                    ) {
+
+                        characterState.selectedInventoryItem =
+                            null;
+
+                    }
+
+                    updateCharacterInterface();
+
+                }
+
+            }
+        );
+
+
+    const dropButton =
+        createInventoryActionButton(
+            "DROP 1",
+            true,
+            () => {
+
+                const removed =
+                    removeItem(
+                        inventory,
+                        selectedInventoryItem.id,
+                        1
+                    );
+
+                if (
+                    removed
+                ) {
+
+                    if (
+                        !inventory.items.some(
+                            item =>
+                                item.id ===
+                                selectedInventoryItem.id
+                        )
+                    ) {
+
+                        characterState.selectedInventoryItem =
+                            null;
+
+                    }
+
+                    updateCharacterInterface();
+
+                }
+
+            }
+        );
+
+
+    actionArea.appendChild(
+        useButton
+    );
+
+    actionArea.appendChild(
+        dropButton
+    );
+
+
+    selectedCard.appendChild(
+        actionArea
+    );
+
+
+    characterContent.appendChild(
+        selectedCard
     );
 
 }
@@ -1152,10 +1750,6 @@ function updateCharacterInterface() {
     }
 
 
-    /* ---------------------------------------------------
-       GAME AVAILABILITY
-       --------------------------------------------------- */
-
     if (
         characterState.gameAvailable
     ) {
@@ -1177,10 +1771,6 @@ function updateCharacterInterface() {
     }
 
 
-    /* ---------------------------------------------------
-       OPEN / CLOSED
-       --------------------------------------------------- */
-
     if (
         characterState.isOpen
     ) {
@@ -1197,10 +1787,6 @@ function updateCharacterInterface() {
 
     }
 
-
-    /* ---------------------------------------------------
-       ACTIVE TAB
-       --------------------------------------------------- */
 
     const tabButtons =
         characterInterface.querySelectorAll(
@@ -1232,10 +1818,6 @@ function updateCharacterInterface() {
     );
 
 
-    /* ---------------------------------------------------
-       CONTENT
-       --------------------------------------------------- */
-
     switch (
         characterState.activeTab
     ) {
@@ -1256,9 +1838,7 @@ function updateCharacterInterface() {
 
         case CHARACTER_TABS.INVENTORY:
 
-            renderComingSoonTab(
-                "INVENTORY"
-            );
+            renderInventoryTab();
 
             break;
 
@@ -1321,6 +1901,7 @@ function createCharacterInterface() {
 
     characterButton.textContent =
         "CHARACTER";
+
 
     characterButton.addEventListener(
         "click",
@@ -1386,6 +1967,7 @@ function createCharacterInterface() {
     close.textContent =
         "×";
 
+
     close.addEventListener(
         "click",
         () => {
@@ -1419,30 +2001,37 @@ function createCharacterInterface() {
 
 
     const tabDefinitions = [
+
         [
             CHARACTER_TABS.COMBAT,
             "COMBAT"
         ],
+
         [
             CHARACTER_TABS.SKILLS,
             "SKILLS"
         ],
+
         [
             CHARACTER_TABS.INVENTORY,
             "INVENTORY"
         ],
+
         [
             CHARACTER_TABS.EQUIPMENT,
             "EQUIPMENT"
         ],
+
         [
             CHARACTER_TABS.QUESTS,
             "QUESTS"
         ],
+
         [
             CHARACTER_TABS.MAP,
             "MAP"
         ]
+
     ];
 
 

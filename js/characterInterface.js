@@ -90,6 +90,8 @@ export function closeCharacterInterface() {
 
     characterState.isOpen = false;
 
+    closeInventoryPopup();
+
     updateCharacterInterface();
 
 }
@@ -103,6 +105,10 @@ export function toggleCharacterInterface() {
 
     characterState.isOpen =
         !characterState.isOpen;
+
+    if (!characterState.isOpen) {
+        closeInventoryPopup();
+    }
 
     updateCharacterInterface();
 
@@ -135,6 +141,8 @@ export function setCharacterTab(tab) {
 
         characterState.selectedInventoryItem =
             null;
+
+        closeInventoryPopup();
 
     }
 
@@ -178,6 +186,8 @@ export function setCharacterInterfaceAvailability(
 
         characterState.isOpen =
             false;
+
+        closeInventoryPopup();
 
     }
 
@@ -1159,11 +1169,9 @@ function createInventorySlot(
         inventoryItem.id
     ) {
 
-        slot.style.border =
-            "1px solid #f0c75e";
-
-        slot.style.boxShadow =
-            "0 0 12px rgba(240,199,94,0.25)";
+        slot.classList.add(
+            "inventory-slot-selected"
+        );
 
     }
 
@@ -1215,19 +1223,13 @@ function createInventorySlot(
             "div"
         );
 
+    symbol.className =
+        "inventory-item-symbol";
+
     symbol.textContent =
         getInventoryItemSymbol(
             item
         );
-
-    symbol.style.fontSize =
-        "30px";
-
-    symbol.style.margin =
-        "8px 0";
-
-    symbol.style.textAlign =
-        "center";
 
 
     const type =
@@ -1290,22 +1292,14 @@ function createInventoryActionButton(
             "button"
         );
 
+    button.className =
+        "inventory-action-button";
+
     button.textContent =
         label;
 
     button.disabled =
         !enabled;
-
-    button.style.padding =
-        "9px 14px";
-
-    button.style.marginRight =
-        "8px";
-
-    button.style.cursor =
-        enabled
-            ? "pointer"
-            : "not-allowed";
 
     button.addEventListener(
         "click",
@@ -1329,10 +1323,516 @@ function createInventoryActionButton(
 
 
 /* =======================================================
+   CLOSE INVENTORY POPUP
+   ======================================================= */
+
+function closeInventoryPopup() {
+
+    if (!characterInterface) {
+        return;
+    }
+
+    const popup =
+        characterInterface.querySelector(
+            ".inventory-item-popup-overlay"
+        );
+
+    if (popup) {
+
+        popup.remove();
+
+    }
+
+}
+
+
+/* =======================================================
+   CREATE INVENTORY POPUP
+   ======================================================= */
+
+function createInventoryItemPopup(
+    selectedInventoryItem,
+    selectedItem
+) {
+
+    closeInventoryPopup();
+
+
+    const overlay =
+        document.createElement(
+            "div"
+        );
+
+    overlay.className =
+        "inventory-item-popup-overlay";
+
+
+    overlay.addEventListener(
+        "click",
+        () => {
+
+            characterState.selectedInventoryItem =
+                null;
+
+            closeInventoryPopup();
+
+            updateCharacterInterface();
+
+        }
+    );
+
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+    popup.className =
+        "inventory-item-popup";
+
+
+    popup.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+        }
+    );
+
+
+    /* ---------------------------------------------------
+       POPUP HEADER
+       --------------------------------------------------- */
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+    header.className =
+        "inventory-popup-header";
+
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+    title.className =
+        "inventory-popup-title";
+
+    title.textContent =
+        selectedItem.name;
+
+
+    const closeButton =
+        document.createElement(
+            "button"
+        );
+
+    closeButton.className =
+        "inventory-popup-close";
+
+    closeButton.textContent =
+        "×";
+
+    closeButton.title =
+        "Close";
+
+
+    closeButton.addEventListener(
+        "click",
+        () => {
+
+            characterState.selectedInventoryItem =
+                null;
+
+            closeInventoryPopup();
+
+            updateCharacterInterface();
+
+        }
+    );
+
+
+    header.appendChild(
+        title
+    );
+
+    header.appendChild(
+        closeButton
+    );
+
+
+    /* ---------------------------------------------------
+       ITEM DETAILS
+       --------------------------------------------------- */
+
+    const details =
+        document.createElement(
+            "div"
+        );
+
+    details.className =
+        "inventory-popup-details";
+
+
+    const icon =
+        document.createElement(
+            "div"
+        );
+
+    icon.className =
+        "inventory-popup-icon";
+
+    icon.textContent =
+        getInventoryItemSymbol(
+            selectedItem
+        );
+
+
+    const info =
+        document.createElement(
+            "div"
+        );
+
+    info.className =
+        "inventory-popup-info";
+
+
+    const type =
+        document.createElement(
+            "div"
+        );
+
+    type.className =
+        "inventory-popup-type";
+
+    type.textContent =
+        String(
+            selectedItem.type
+        ).toUpperCase();
+
+
+    const quantity =
+        document.createElement(
+            "div"
+        );
+
+    quantity.className =
+        "inventory-popup-quantity";
+
+    quantity.textContent =
+        `QUANTITY ×${selectedInventoryItem.quantity}`;
+
+
+    info.appendChild(
+        type
+    );
+
+    info.appendChild(
+        quantity
+    );
+
+
+    details.appendChild(
+        icon
+    );
+
+    details.appendChild(
+        info
+    );
+
+
+    popup.appendChild(
+        header
+    );
+
+    popup.appendChild(
+        details
+    );
+
+
+    /* ---------------------------------------------------
+       EFFECT
+       --------------------------------------------------- */
+
+    if (
+        selectedItem.effect &&
+        selectedItem.effect.type === "heal"
+    ) {
+
+        const effect =
+            document.createElement(
+                "div"
+            );
+
+        effect.className =
+            "inventory-popup-effect";
+
+        effect.textContent =
+            `HEALS ${selectedItem.effect.amount} HP`;
+
+        popup.appendChild(
+            effect
+        );
+
+    }
+
+
+    /* ---------------------------------------------------
+       ACTIONS
+       --------------------------------------------------- */
+
+    const actionArea =
+        document.createElement(
+            "div"
+        );
+
+    actionArea.className =
+        "inventory-popup-actions";
+
+
+    const canUse =
+        selectedItem.type ===
+        "consumable";
+
+
+    const useButton =
+        createInventoryActionButton(
+            "USE",
+            canUse,
+            () => {
+
+                const itemId =
+                    selectedInventoryItem.id;
+
+
+                const used =
+                    useItem(
+                        player,
+                        player.inventory,
+                        itemId
+                    );
+
+
+                if (!used) {
+                    return;
+                }
+
+
+                const remaining =
+                    player.inventory.items.find(
+                        item =>
+                            item.id ===
+                            itemId
+                    );
+
+
+                if (!remaining) {
+
+                    characterState.selectedInventoryItem =
+                        null;
+
+                }
+
+
+                updateCharacterInterface();
+
+            }
+        );
+
+
+    const dropButton =
+        createInventoryActionButton(
+            "DROP 1",
+            true,
+            () => {
+
+                const itemId =
+                    selectedInventoryItem.id;
+
+
+                const removed =
+                    removeItem(
+                        player.inventory,
+                        itemId,
+                        1
+                    );
+
+
+                if (!removed) {
+                    return;
+                }
+
+
+                const remaining =
+                    player.inventory.items.find(
+                        item =>
+                            item.id ===
+                            itemId
+                    );
+
+
+                if (!remaining) {
+
+                    characterState.selectedInventoryItem =
+                        null;
+
+                }
+
+
+                updateCharacterInterface();
+
+            }
+        );
+
+
+    actionArea.appendChild(
+        useButton
+    );
+
+    actionArea.appendChild(
+        dropButton
+    );
+
+
+    const cancelButton =
+        document.createElement(
+            "button"
+        );
+
+    cancelButton.className =
+        "inventory-popup-cancel";
+
+    cancelButton.textContent =
+        "CLOSE";
+
+
+    cancelButton.addEventListener(
+        "click",
+        () => {
+
+            characterState.selectedInventoryItem =
+                null;
+
+            closeInventoryPopup();
+
+            updateCharacterInterface();
+
+        }
+    );
+
+
+    actionArea.appendChild(
+        cancelButton
+    );
+
+
+    popup.appendChild(
+        actionArea
+    );
+
+
+    overlay.appendChild(
+        popup
+    );
+
+
+    characterInterface.appendChild(
+        overlay
+    );
+
+}
+
+
+/* =======================================================
+   RENDER INVENTORY POPUP
+   ======================================================= */
+
+function renderInventoryPopup() {
+
+    closeInventoryPopup();
+
+
+    if (
+        !characterState.selectedInventoryItem
+    ) {
+        return;
+    }
+
+
+    const inventory =
+        player.inventory;
+
+
+    if (
+        !inventory ||
+        !Array.isArray(
+            inventory.items
+        )
+    ) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+        return;
+
+    }
+
+
+    const selectedInventoryItem =
+        inventory.items.find(
+            item =>
+                item.id ===
+                characterState.selectedInventoryItem
+        );
+
+
+    if (
+        !selectedInventoryItem
+    ) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+        return;
+
+    }
+
+
+    const selectedItem =
+        getItem(
+            selectedInventoryItem.id
+        );
+
+
+    if (!selectedItem) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+        return;
+
+    }
+
+
+    createInventoryItemPopup(
+        selectedInventoryItem,
+        selectedItem
+    );
+
+}
+
+
+/* =======================================================
    RENDER INVENTORY TAB
    ======================================================= */
 
 function renderInventoryTab() {
+
+    closeInventoryPopup();
 
     characterContent.innerHTML =
         "";
@@ -1438,239 +1938,10 @@ function renderInventoryTab() {
 
 
     /* ---------------------------------------------------
-       SELECTED ITEM
+       POPUP
        --------------------------------------------------- */
 
-    const selectedItemId =
-        characterState.selectedInventoryItem;
-
-
-    const selectedInventoryItem =
-        selectedItemId
-            ? inventory.items.find(
-                item =>
-                    item.id ===
-                    selectedItemId
-            )
-            : null;
-
-
-    if (
-        !selectedInventoryItem
-    ) {
-
-        return;
-
-    }
-
-
-    const selectedItem =
-        getItem(
-            selectedInventoryItem.id
-        );
-
-
-    if (!selectedItem) {
-
-        characterState.selectedInventoryItem =
-            null;
-
-        return;
-
-    }
-
-
-    const selectedTitle =
-        document.createElement(
-            "div"
-        );
-
-    selectedTitle.className =
-        "character-section-title";
-
-    selectedTitle.textContent =
-        "SELECTED ITEM";
-
-
-    characterContent.appendChild(
-        selectedTitle
-    );
-
-
-    const selectedCard =
-        document.createElement(
-            "div"
-        );
-
-    selectedCard.className =
-        "skill-card";
-
-
-    const selectedName =
-        document.createElement(
-            "div"
-        );
-
-    selectedName.className =
-        "skill-name";
-
-    selectedName.textContent =
-        selectedItem.name;
-
-
-    const selectedType =
-        document.createElement(
-            "div"
-        );
-
-    selectedType.className =
-        "skill-xp";
-
-    selectedType.textContent =
-        `${String(
-            selectedItem.type
-        ).toUpperCase()} • QUANTITY ${selectedInventoryItem.quantity}`;
-
-
-    selectedCard.appendChild(
-        selectedName
-    );
-
-    selectedCard.appendChild(
-        selectedType
-    );
-
-
-    if (
-        selectedItem.effect &&
-        selectedItem.effect.type === "heal"
-    ) {
-
-        const effect =
-            document.createElement(
-                "div"
-            );
-
-        effect.className =
-            "skill-next";
-
-        effect.textContent =
-            `HEALS ${selectedItem.effect.amount} HP`;
-
-        selectedCard.appendChild(
-            effect
-        );
-
-    }
-
-
-    const actionArea =
-        document.createElement(
-            "div"
-        );
-
-    actionArea.style.marginTop =
-        "12px";
-
-
-    const canUse =
-        selectedItem.type ===
-        "consumable";
-
-
-    const useButton =
-        createInventoryActionButton(
-            "USE",
-            canUse,
-            () => {
-
-                const used =
-                    useItem(
-                        player,
-                        inventory,
-                        selectedInventoryItem.id
-                    );
-
-                if (
-                    used
-                ) {
-
-                    if (
-                        !inventory.items.some(
-                            item =>
-                                item.id ===
-                                selectedInventoryItem.id
-                        )
-                    ) {
-
-                        characterState.selectedInventoryItem =
-                            null;
-
-                    }
-
-                    updateCharacterInterface();
-
-                }
-
-            }
-        );
-
-
-    const dropButton =
-        createInventoryActionButton(
-            "DROP 1",
-            true,
-            () => {
-
-                const removed =
-                    removeItem(
-                        inventory,
-                        selectedInventoryItem.id,
-                        1
-                    );
-
-                if (
-                    removed
-                ) {
-
-                    if (
-                        !inventory.items.some(
-                            item =>
-                                item.id ===
-                                selectedInventoryItem.id
-                        )
-                    ) {
-
-                        characterState.selectedInventoryItem =
-                            null;
-
-                    }
-
-                    updateCharacterInterface();
-
-                }
-
-            }
-        );
-
-
-    actionArea.appendChild(
-        useButton
-    );
-
-    actionArea.appendChild(
-        dropButton
-    );
-
-
-    selectedCard.appendChild(
-        actionArea
-    );
-
-
-    characterContent.appendChild(
-        selectedCard
-    );
+    renderInventoryPopup();
 
 }
 
@@ -1766,6 +2037,8 @@ function updateCharacterInterface() {
             "character-interface-open"
         );
 
+        closeInventoryPopup();
+
         return;
 
     }
@@ -1784,6 +2057,8 @@ function updateCharacterInterface() {
         characterInterface.classList.remove(
             "character-interface-open"
         );
+
+        closeInventoryPopup();
 
     }
 

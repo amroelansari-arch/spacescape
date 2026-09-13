@@ -1158,6 +1158,346 @@ body {
 
 
 /* =========================================================
+   INVENTORY
+   ========================================================= */
+
+.inventory-item-symbol {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 38px;
+
+    margin: 8px 0;
+
+    color: #e8d27b;
+
+    font-size: 30px;
+    font-weight: bold;
+
+    text-align: center;
+}
+
+.inventory-slot-selected {
+    border-color: #e8d27b !important;
+
+    box-shadow:
+        0 0 14px rgba(232, 210, 123, 0.28);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(58, 55, 40, 0.9),
+            rgba(17, 18, 20, 0.9)
+        ) !important;
+}
+
+
+/* =========================================================
+   INVENTORY ITEM POPUP
+   ========================================================= */
+
+.inventory-item-popup-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+
+    background:
+        rgba(0, 0, 0, 0.58);
+
+    z-index: 1000;
+
+    animation:
+        inventoryPopupFadeIn 0.12s ease-out;
+}
+
+.inventory-item-popup {
+    width: min(390px, calc(100% - 20px));
+
+    padding: 0;
+
+    background:
+        linear-gradient(
+            155deg,
+            rgba(31, 39, 48, 0.99),
+            rgba(8, 11, 18, 0.99)
+        );
+
+    border: 1px solid #68737c;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.75),
+        0 0 25px rgba(0, 0, 0, 0.35);
+
+    overflow: hidden;
+
+    animation:
+        inventoryPopupOpen 0.14s ease-out;
+}
+
+
+/* ---------------------------------------------------------
+   POPUP HEADER
+   --------------------------------------------------------- */
+
+.inventory-popup-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 15px 17px;
+
+    background:
+        rgba(0, 0, 0, 0.38);
+
+    border-bottom: 1px solid #39414a;
+}
+
+.inventory-popup-title {
+    color: #e8d27b;
+
+    font-size: 18px;
+    font-weight: bold;
+
+    letter-spacing: 0.5px;
+}
+
+.inventory-popup-close {
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+
+    border: none;
+    border-radius: 5px;
+
+    background: #39414a;
+
+    color: #ffffff;
+
+    font-size: 21px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.inventory-popup-close:hover {
+    background: #4a535d;
+}
+
+
+/* ---------------------------------------------------------
+   POPUP ITEM DETAILS
+   --------------------------------------------------------- */
+
+.inventory-popup-details {
+    display: flex;
+
+    align-items: center;
+
+    gap: 15px;
+
+    padding: 18px;
+}
+
+.inventory-popup-icon {
+    width: 62px;
+    height: 62px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(58, 69, 80, 0.85),
+            rgba(15, 20, 27, 0.9)
+        );
+
+    border: 1px solid #68737c;
+
+    border-radius: 8px;
+
+    color: #e8d27b;
+
+    font-size: 32px;
+    font-weight: bold;
+}
+
+.inventory-popup-info {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.inventory-popup-type {
+    color: #9aa4b2;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    letter-spacing: 1.5px;
+}
+
+.inventory-popup-quantity {
+    color: #d8dde3;
+
+    font-size: 14px;
+    font-weight: bold;
+}
+
+
+/* ---------------------------------------------------------
+   POPUP EFFECT
+   --------------------------------------------------------- */
+
+.inventory-popup-effect {
+    margin:
+        0 18px 16px 18px;
+
+    padding: 10px 12px;
+
+    background:
+        rgba(232, 210, 123, 0.08);
+
+    border: 1px solid rgba(232, 210, 123, 0.25);
+
+    border-radius: 6px;
+
+    color: #e8d27b;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    letter-spacing: 0.5px;
+}
+
+
+/* ---------------------------------------------------------
+   POPUP ACTIONS
+   --------------------------------------------------------- */
+
+.inventory-popup-actions {
+    display: flex;
+
+    gap: 8px;
+
+    padding: 14px 18px 18px 18px;
+
+    border-top: 1px solid #303740;
+}
+
+.inventory-action-button,
+.inventory-popup-cancel {
+    flex: 1;
+
+    min-height: 38px;
+
+    padding: 9px 13px;
+
+    border: 1px solid #68737c;
+
+    border-radius: 6px;
+
+    background: #303740;
+
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    letter-spacing: 0.5px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.inventory-action-button:hover:not(:disabled) {
+    background: #4a535d;
+
+    border-color: #9aa4b2;
+}
+
+.inventory-action-button:disabled {
+    opacity: 0.35;
+
+    cursor: not-allowed;
+}
+
+.inventory-popup-cancel {
+    background: transparent;
+
+    border-color: #39414a;
+
+    color: #9aa4b2;
+}
+
+.inventory-popup-cancel:hover {
+    background: #303740;
+
+    border-color: #68737c;
+
+    color: #ffffff;
+}
+
+
+/* ---------------------------------------------------------
+   POPUP ANIMATIONS
+   --------------------------------------------------------- */
+
+@keyframes inventoryPopupFadeIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+@keyframes inventoryPopupOpen {
+
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+
+}
+
+
+/* =========================================================
    CURRENT STATUS
    ========================================================= */
 
@@ -1268,12 +1608,17 @@ body {
             1fr;
     }
 
+
+    .inventory-item-popup-overlay {
+        padding: 20px;
+    }
+
 }
 
 
-/* =========================================================
-   SMALL SCREENS
-   ========================================================= */
+ /* =========================================================
+    SMALL SCREENS
+    ========================================================= */
 
 @media (max-width: 450px) {
 
@@ -1291,6 +1636,16 @@ body {
 
     .combat-level-value {
         font-size: 32px;
+    }
+
+
+    .inventory-popup-actions {
+        flex-direction: column;
+    }
+
+    .inventory-action-button,
+    .inventory-popup-cancel {
+        width: 100%;
     }
 
 }

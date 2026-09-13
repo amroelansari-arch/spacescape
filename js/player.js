@@ -1,800 +1,880 @@
-import { createSkills } from "./skills.js";
+import {
+    setCharacterInterfaceAvailability
+} from "./characterInterface.js";
 
 import {
-    createInventory
-} from "./inventory.js";
+    player,
+    updatePlayerMovement,
+    drawPlayer,
+    updatePlayerHUD,
+    respawnPlayer,
+    setMovementTarget,
+    getMovementTarget,
+    clearMovementTarget
+} from "./player.js";
 
 import {
-    createEquipment
-} from "./equipment.js";
-
-import {
-    WORLD_WIDTH,
-    WORLD_HEIGHT,
-    isColliding
+    updateCamera
 } from "./world.js";
 
 import {
-    getSkillLevel,
-    getCurrentSkillXP,
-    getSkillXPToNextLevel
-} from "./skills.js";
+    getNearbyInteractable,
+    updateInteractionPrompt,
+    createDialogueController
+} from "./npc.js";
 
 import {
-    COMBAT_STYLES,
-    isValidCombatStyle
-} from "./combat.js";
+    spawnWorldEnemy,
+    getEnemyCollection,
+    updateEnemyRespawns
+} from "./enemyWorld.js";
+
+import {
+    renderEnemies
+} from "./enemyRenderer.js";
+
+import {
+    startCombat,
+    updateCombat,
+    getCombatState
+} from "./combatSystem.js";
+
+import {
+    createWorldItem,
+    findWorldItemById,
+    removeWorldItem
+} from "./itemWorld.js";
+
+import {
+    renderWorldItems,
+    isWithinItemPickupRange
+} from "./itemRenderer.js";
+
+import {
+    getItem
+} from "./items.js";
+
+import {
+    addItem
+} from "./inventory.js";
 
 
 /* =======================================================
-   PLAYER
+   DOM ELEMENTS
    ======================================================= */
 
-export const player = {
+const titleScreen =
+    document.getElementById(
+        "title-screen"
+    );
 
-    position: {
-        x: 1200,
-        y: 900
-    },
+const gameScreen =
+    document.getElementById(
+        "game-screen"
+    );
 
-    respawnPosition: {
-        x: 1200,
-        y: 900
-    },
+const playButton =
+    document.getElementById(
+        "play-button"
+    );
 
-    health: {
-        current: 100,
-        maximum: 100
-    },
+const world =
+    document.getElementById(
+        "world"
+    );
 
-    energy: {
-        current: 100,
-        maximum: 100
-    },
+const playerElement =
+    document.getElementById(
+        "player"
+    );
 
-    /*
-     * Current passive combat style.
-     *
-     * Accurate is the default.
-     */
+const interactionPrompt =
+    document.getElementById(
+        "interaction-prompt"
+    );
 
-    combatStyle:
-        COMBAT_STYLES.ACCURATE,
+const dialogueWindow =
+    document.getElementById(
+        "dialogue"
+    );
 
-    isDead: false,
+const dialogueText =
+    document.getElementById(
+        "dialogue-text"
+    );
 
-    /*
-     * Individual SpaceScape skills.
-     *
-     * These are the authoritative progression
-     * system for player skills.
-     */
+const continueButton =
+    document.getElementById(
+        "dialogue-next"
+    );
 
-    skills:
-        createSkills(),
-
-    inventory:
-        createInventory(),
-
-    equipment:
-        createEquipment(),
-
-    movement: {
-
-        speed: 5,
-
-        moving: false,
-
-        /*
-         * Automatic world-interaction target.
-         *
-         * Example:
-         *
-         * {
-         *     type: "item",
-         *     id: "...",
-         *     x: 1300,
-         *     y: 900
-         * }
-         *
-         * This is intentionally generic so it can
-         * later support enemies, NPCs, resources,
-         * doors, containers, etc.
-         */
-
-        target: null
-
-    }
-
-};
+const closeButton =
+    document.getElementById(
+        "dialogue-close"
+    );
 
 
 /* =======================================================
-   MOVEMENT TARGET
-   ======================================================= */
-
-export function setMovementTarget(
-    type,
-    id,
-    x,
-    y
-) {
-
-    if (
-        typeof type !== "string" ||
-        !type ||
-        !Number.isFinite(x) ||
-        !Number.isFinite(y)
-    ) {
-
-        return false;
-
-    }
-
-
-    player.movement.target = {
-
-        type,
-
-        id:
-            id || null,
-
-        x,
-
-        y
-
-    };
-
-
-    return true;
-
-}
-
-
-export function getMovementTarget() {
-
-    return player.movement.target;
-
-}
-
-
-export function clearMovementTarget() {
-
-    player.movement.target =
-        null;
-
-    player.movement.moving =
-        false;
-
-}
-
-
-/* =======================================================
-   COMBAT STYLE
-   ======================================================= */
-
-export function setCombatStyle(
-    combatStyle
-) {
-
-    if (
-        !isValidCombatStyle(
-            combatStyle
-        )
-    ) {
-
-        return false;
-
-    }
-
-
-    player.combatStyle =
-        combatStyle;
-
-
-    console.log(
-        `Combat style changed to: ${combatStyle}`
-    );
-
-
-    return true;
-
-}
-
-
-export function getCombatStyle() {
-
-    return player.combatStyle;
-
-}
-
-
-/* =======================================================
-   COMBAT SKILL HELPERS
-   ======================================================= */
-
-export function getPlayerAttackLevel() {
-
-    return getSkillLevel(
-        player.skills,
-        "attack"
-    );
-
-}
-
-
-export function getPlayerStrengthLevel() {
-
-    return getSkillLevel(
-        player.skills,
-        "strength"
-    );
-
-}
-
-
-export function getPlayerDefenseLevel() {
-
-    return getSkillLevel(
-        player.skills,
-        "defense"
-    );
-
-}
-
-
-export function getPlayerVitalityLevel() {
-
-    return getSkillLevel(
-        player.skills,
-        "vitality"
-    );
-
-}
-
-
-/* =======================================================
-   COMBAT SKILL XP HELPERS
-   ======================================================= */
-
-export function getPlayerAttackXP() {
-
-    return getCurrentSkillXP(
-        player.skills,
-        "attack"
-    );
-
-}
-
-
-export function getPlayerStrengthXP() {
-
-    return getCurrentSkillXP(
-        player.skills,
-        "strength"
-    );
-
-}
-
-
-export function getPlayerDefenseXP() {
-
-    return getCurrentSkillXP(
-        player.skills,
-        "defense"
-    );
-
-}
-
-
-export function getPlayerVitalityXP() {
-
-    return getCurrentSkillXP(
-        player.skills,
-        "vitality"
-    );
-
-}
-
-
-export function getPlayerAttackXPToNextLevel() {
-
-    return getSkillXPToNextLevel(
-        player.skills,
-        "attack"
-    );
-
-}
-
-
-export function getPlayerStrengthXPToNextLevel() {
-
-    return getSkillXPToNextLevel(
-        player.skills,
-        "strength"
-    );
-
-}
-
-
-export function getPlayerDefenseXPToNextLevel() {
-
-    return getSkillXPToNextLevel(
-        player.skills,
-        "defense"
-    );
-
-}
-
-
-export function getPlayerVitalityXPToNextLevel() {
-
-    return getSkillXPToNextLevel(
-        player.skills,
-        "vitality"
-    );
-
-}
-
-
-/* =======================================================
-   PLAYER DEATH
-   ======================================================= */
-
-export function handlePlayerDeath() {
-
-    if (player.isDead) {
-
-        return false;
-
-    }
-
-
-    player.health.current =
-        0;
-
-    player.isDead =
-        true;
-
-    clearMovementTarget();
-
-
-    console.log(
-        "Player died."
-    );
-
-
-    return true;
-
-}
-
-
-/* =======================================================
-   PLAYER RESPAWN
-   ======================================================= */
-
-export function respawnPlayer() {
-
-    player.position.x =
-        player.respawnPosition.x;
-
-    player.position.y =
-        player.respawnPosition.y;
-
-
-    player.health.current =
-        player.health.maximum;
-
-    player.energy.current =
-        player.energy.maximum;
-
-
-    player.isDead =
-        false;
-
-    clearMovementTarget();
-
-
-    console.log(
-        `Player respawned at ` +
-        `${player.position.x}, ${player.position.y}.`
-    );
-
-}
-
-
-/* =======================================================
-   MOVEMENT
-   ======================================================= */
-
-export function updatePlayerMovement() {
-
-    if (player.isDead) {
-
-        player.movement.moving =
-            false;
-
-        return;
-
-    }
-
-
-    if (
-        document
-            .getElementById("dialogue")
-            ?.classList
-            .contains("active")
-    ) {
-
-        player.movement.moving =
-            false;
-
-        return;
-
-    }
-
-
-    let dx = 0;
-
-    let dy = 0;
-
-
-    /* ===================================================
-       MANUAL KEYBOARD MOVEMENT
-       =================================================== */
-
-    if (
-        keys["w"] ||
-        keys["ArrowUp"]
-    ) {
-
-        dy -= 1;
-
-    }
-
-
-    if (
-        keys["s"] ||
-        keys["ArrowDown"]
-    ) {
-
-        dy += 1;
-
-    }
-
-
-    if (
-        keys["a"] ||
-        keys["ArrowLeft"]
-    ) {
-
-        dx -= 1;
-
-    }
-
-
-    if (
-        keys["d"] ||
-        keys["ArrowRight"]
-    ) {
-
-        dx += 1;
-
-    }
-
-
-    /*
-     * Manual movement takes priority over
-     * automatic world-object movement.
-     */
-
-    if (
-        dx !== 0 ||
-        dy !== 0
-    ) {
-
-        clearMovementTarget();
-
-    }
-
-
-    /* ===================================================
-       AUTOMATIC TARGET MOVEMENT
-       =================================================== */
-
-    if (
-        dx === 0 &&
-        dy === 0 &&
-        player.movement.target
-    ) {
-
-        const target =
-            player.movement.target;
-
-
-        const targetDX =
-            target.x -
-            player.position.x;
-
-        const targetDY =
-            target.y -
-            player.position.y;
-
-
-        const distance =
-            Math.sqrt(
-                targetDX * targetDX +
-                targetDY * targetDY
-            );
-
-
-        /*
-         * Stop automatically when we are
-         * reasonably close to the target.
-         *
-         * The actual interaction system
-         * decides what happens next.
-         */
-
-        if (distance <= 70) {
-
-            player.movement.moving =
-                false;
-
-            return;
-
-        }
-
-
-        dx =
-            targetDX /
-            distance;
-
-        dy =
-            targetDY /
-            distance;
-
-    }
-
-
-    /* ===================================================
-       NO MOVEMENT
-       =================================================== */
-
-    if (
-        dx === 0 &&
-        dy === 0
-    ) {
-
-        player.movement.moving =
-            false;
-
-        return;
-
-    }
-
-
-    player.movement.moving =
-        true;
-
-
-    const magnitude =
-        Math.sqrt(
-            dx * dx +
-            dy * dy
-        );
-
-
-    dx =
-        dx /
-        magnitude *
-        player.movement.speed;
-
-    dy =
-        dy /
-        magnitude *
-        player.movement.speed;
-
-
-    const newX =
-        player.position.x +
-        dx;
-
-    const newY =
-        player.position.y +
-        dy;
-
-
-    /* ===================================================
-       X MOVEMENT + COLLISION
-       =================================================== */
-
-    if (
-        newX >= 0 &&
-        newX <= WORLD_WIDTH &&
-        !isColliding(
-            newX,
-            player.position.y
-        )
-    ) {
-
-        player.position.x =
-            newX;
-
-    }
-
-
-    /* ===================================================
-       Y MOVEMENT + COLLISION
-       =================================================== */
-
-    if (
-        newY >= 0 &&
-        newY <= WORLD_HEIGHT &&
-        !isColliding(
-            player.position.x,
-            newY
-        )
-    ) {
-
-        player.position.y =
-            newY;
-
-    }
-
-}
-
-
-/* =======================================================
-   DRAW PLAYER
-   ======================================================= */
-
-export function drawPlayer() {
-
-    const playerElement =
-        document.getElementById(
-            "player"
-        );
-
-
-    if (!playerElement) {
-
-        return;
-
-    }
-
-
-    playerElement.style.left =
-        `${player.position.x}px`;
-
-    playerElement.style.top =
-        `${player.position.y}px`;
-
-    playerElement.style.opacity =
-        player.isDead
-            ? "0.45"
-            : "1";
-
-}
-
-
-/* =======================================================
-   PLAYER HUD
-   ======================================================= */
-
-export function updatePlayerHUD() {
-
-    const levelElement =
-        document.getElementById(
-            "level"
-        );
-
-    const xpElement =
-        document.getElementById(
-            "xp"
-        );
-
-    const healthElement =
-        document.getElementById(
-            "health"
-        );
-
-    const healthBar =
-        document.getElementById(
-            "health-bar"
-        );
-
-    const energyElement =
-        document.getElementById(
-            "energy"
-        );
-
-    const energyBar =
-        document.getElementById(
-            "energy-bar"
-        );
-
-
-    /*
-     * The old generic player level and XP system
-     * has been retired.
-     *
-     * Until the permanent Character Interface is
-     * built, the existing HUD uses Attack as the
-     * temporary primary combat progression display.
-     */
-
-    const attackLevel =
-        getPlayerAttackLevel();
-
-    const attackXP =
-        getPlayerAttackXP();
-
-
-    if (levelElement) {
-
-        levelElement.textContent =
-            attackLevel;
-
-    }
-
-
-    if (xpElement) {
-
-        xpElement.textContent =
-            attackXP;
-
-        xpElement.title =
-            `${getPlayerAttackXPToNextLevel()} XP to Attack level ${attackLevel + 1}`;
-
-    }
-
-
-    if (healthElement) {
-
-        healthElement.textContent =
-            `${player.health.current}/${player.health.maximum}`;
-
-    }
-
-
-    if (healthBar) {
-
-        healthBar.style.width =
-            `${(
-                player.health.current /
-                player.health.maximum
-            ) * 100}%`;
-
-    }
-
-
-    if (energyElement) {
-
-        energyElement.textContent =
-            `${player.energy.current}/${player.energy.maximum}`;
-
-    }
-
-
-    if (energyBar) {
-
-        energyBar.style.width =
-            `${(
-                player.energy.current /
-                player.energy.maximum
-            ) * 100}%`;
-
-    }
-
-}
-
-
-/* =======================================================
-   KEYBOARD INPUT
+   KEYBOARD
    ======================================================= */
 
 const keys = {};
+
+
+/* =======================================================
+   DIALOGUE
+   ======================================================= */
+
+const dialogueController =
+    createDialogueController({
+        dialogueWindow,
+        dialogueText,
+        continueButton
+    });
+
+
+/* =======================================================
+   DEATH UI
+   ======================================================= */
+
+let deathOverlay = null;
+
+let respawnButton = null;
+
+
+function createDeathOverlay() {
+
+    if (deathOverlay) {
+        return;
+    }
+
+    deathOverlay =
+        document.createElement("div");
+
+    deathOverlay.id =
+        "spacescape-death-overlay";
+
+    deathOverlay.style.position =
+        "fixed";
+
+    deathOverlay.style.inset =
+        "0";
+
+    deathOverlay.style.display =
+        "none";
+
+    deathOverlay.style.alignItems =
+        "center";
+
+    deathOverlay.style.justifyContent =
+        "center";
+
+    deathOverlay.style.flexDirection =
+        "column";
+
+    deathOverlay.style.background =
+        "rgba(0, 0, 0, 0.78)";
+
+    deathOverlay.style.zIndex =
+        "10000";
+
+    deathOverlay.style.fontFamily =
+        "Arial, sans-serif";
+
+
+    const title =
+        document.createElement("div");
+
+    title.textContent =
+        "YOU DIED";
+
+    title.style.color =
+        "#ffffff";
+
+    title.style.fontSize =
+        "48px";
+
+    title.style.fontWeight =
+        "900";
+
+    title.style.marginBottom =
+        "20px";
+
+    title.style.textShadow =
+        "0 3px 8px #000000";
+
+
+    respawnButton =
+        document.createElement("button");
+
+    respawnButton.textContent =
+        "RESPAWN";
+
+    respawnButton.style.padding =
+        "12px 28px";
+
+    respawnButton.style.fontSize =
+        "16px";
+
+    respawnButton.style.fontWeight =
+        "bold";
+
+    respawnButton.style.cursor =
+        "pointer";
+
+
+    respawnButton.addEventListener(
+        "click",
+        handleRespawn
+    );
+
+
+    deathOverlay.appendChild(
+        title
+    );
+
+    deathOverlay.appendChild(
+        respawnButton
+    );
+
+    document.body.appendChild(
+        deathOverlay
+    );
+
+}
+
+
+function showDeathScreen() {
+
+    createDeathOverlay();
+
+    deathOverlay.style.display =
+        "flex";
+
+}
+
+
+function hideDeathScreen() {
+
+    if (!deathOverlay) {
+        return;
+    }
+
+    deathOverlay.style.display =
+        "none";
+
+}
+
+
+/* =======================================================
+   RESPAWN
+   ======================================================= */
+
+function handleRespawn() {
+
+    if (!player.isDead) {
+        return;
+    }
+
+    respawnPlayer();
+
+    hideDeathScreen();
+
+    drawPlayer();
+
+    updatePlayerHUD();
+
+    updateGame();
+
+}
+
+
+/* =======================================================
+   INITIALIZE ENEMIES
+   ======================================================= */
+
+function initializeEnemies() {
+
+    spawnWorldEnemy(
+        "Test Enemy",
+        1,
+        50,
+        12,
+        2,
+        1500,
+        900
+    );
+
+
+    spawnWorldEnemy(
+        "Test Enemy",
+        1,
+        50,
+        12,
+        2,
+        1800,
+        1100
+    );
+
+
+    spawnWorldEnemy(
+        "Test Enemy",
+        2,
+        75,
+        16,
+        3,
+        2200,
+        1400
+    );
+
+}
+
+
+/* =======================================================
+   INITIALIZE WORLD ITEMS
+   ======================================================= */
+
+function initializeWorldItems() {
+
+    createWorldItem(
+        "laser_rifle",
+        1450,
+        900,
+        1
+    );
+
+}
+
+
+/* =======================================================
+   ITEM CLICK
+   ======================================================= */
+
+function handleWorldItemClick(
+    event
+) {
+
+    if (player.isDead) {
+        return;
+    }
+
+    const itemElement =
+        event.target.closest(
+            ".world-item"
+        );
+
+    if (!itemElement) {
+        return;
+    }
+
+    const worldItemId =
+        itemElement.dataset.worldItemId;
+
+    if (!worldItemId) {
+        return;
+    }
+
+    const worldItem =
+        findWorldItemById(
+            worldItemId
+        );
+
+    if (!worldItem) {
+        return;
+    }
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+
+    /*
+     * If the player is already close enough,
+     * pick the item up immediately.
+     */
+
+    if (
+        isWithinItemPickupRange(
+            player,
+            worldItem
+        )
+    ) {
+
+        attemptWorldItemPickup(
+            worldItem
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Otherwise establish an automatic
+     * movement target.
+     */
+
+    setMovementTarget(
+        "item",
+        worldItem.id,
+        worldItem.position.x,
+        worldItem.position.y
+    );
+
+
+    console.log(
+        `Moving toward ${getItemName(worldItem)}.`
+    );
+
+}
+
+
+/* =======================================================
+   ITEM NAME
+   ======================================================= */
+
+function getItemName(
+    worldItem
+) {
+
+    const definition =
+        getItem(
+            worldItem.itemId
+        );
+
+    if (definition) {
+        return definition.name;
+    }
+
+    return worldItem.itemId;
+
+}
+
+
+/* =======================================================
+   ITEM PICKUP
+   ======================================================= */
+
+function attemptWorldItemPickup(
+    worldItem
+) {
+
+    if (!worldItem) {
+        return false;
+    }
+
+
+    if (
+        player.isDead
+    ) {
+        return false;
+    }
+
+
+    if (
+        !isWithinItemPickupRange(
+            player,
+            worldItem
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    const itemDefinition =
+        getItem(
+            worldItem.itemId
+        );
+
+    if (!itemDefinition) {
+
+        console.warn(
+            "Unknown world item:",
+            worldItem.itemId
+        );
+
+        clearMovementTarget();
+
+        return false;
+
+    }
+
+
+    const added =
+        addItem(
+            player.inventory,
+            worldItem.itemId,
+            worldItem.quantity
+        );
+
+
+    if (!added) {
+
+        console.log(
+            "Inventory is full. Item remains in the world."
+        );
+
+        clearMovementTarget();
+
+        return false;
+
+    }
+
+
+    removeWorldItem(
+        worldItem
+    );
+
+
+    clearMovementTarget();
+
+
+    console.log(
+        `${itemDefinition.name} picked up.`
+    );
+
+    console.log(
+        "Inventory:",
+        player.inventory
+    );
+
+
+    return true;
+
+}
+
+
+/* =======================================================
+   UPDATE ITEM TARGET
+   ======================================================= */
+
+function updateWorldItemTarget() {
+
+    const target =
+        getMovementTarget();
+
+    if (!target) {
+        return;
+    }
+
+
+    if (
+        target.type !== "item"
+    ) {
+        return;
+    }
+
+
+    const worldItem =
+        findWorldItemById(
+            target.id
+        );
+
+
+    /*
+     * The item may have disappeared because
+     * another interaction picked it up.
+     */
+
+    if (!worldItem) {
+
+        clearMovementTarget();
+
+        return;
+
+    }
+
+
+    /*
+     * Once the player reaches pickup range,
+     * automatically acquire the item.
+     */
+
+    if (
+        isWithinItemPickupRange(
+            player,
+            worldItem
+        )
+    ) {
+
+        attemptWorldItemPickup(
+            worldItem
+        );
+
+    }
+
+}
+
+
+/* =======================================================
+   ENEMY CLICK
+   ======================================================= */
+
+function handleEnemyClick(
+    event
+) {
+
+    if (player.isDead) {
+        return;
+    }
+
+    const enemyElement =
+        event.target.closest(
+            ".enemy"
+        );
+
+    if (!enemyElement) {
+        return;
+    }
+
+    const enemyId =
+        enemyElement.dataset.enemyId;
+
+    if (!enemyId) {
+        return;
+    }
+
+    const enemies =
+        getEnemyCollection();
+
+    const enemy =
+        enemies.find(
+            currentEnemy =>
+                currentEnemy.id ===
+                enemyId
+        );
+
+    if (!enemy) {
+        return;
+    }
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+
+    /*
+     * Enemy combat currently manages its
+     * own approach system.
+     *
+     * Do not create a second movement target
+     * here yet.
+     */
+
+    startCombat(
+        player,
+        enemy
+    );
+
+}
+
+
+/* =======================================================
+   INTERACTION
+   ======================================================= */
+
+function updateInteraction() {
+
+    if (player.isDead) {
+
+        if (interactionPrompt) {
+
+            interactionPrompt.style.display =
+                "none";
+
+        }
+
+        return;
+
+    }
+
+    return updateInteractionPrompt(
+        player,
+        dialogueController.isOpen(),
+        interactionPrompt
+    );
+
+}
+
+
+function handleInteraction() {
+
+    if (player.isDead) {
+        return;
+    }
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+    const interactable =
+        getNearbyInteractable(
+            player
+        );
+
+    if (!interactable) {
+        return;
+    }
+
+    dialogueController.openDialogue(
+        interactable
+    );
+
+}
+
+
+/* =======================================================
+   COMBAT
+   ======================================================= */
+
+function updateCombatSystem() {
+
+    updateCombat(
+        player
+    );
+
+    const combatState =
+        getCombatState();
+
+    if (!combatState.active) {
+
+        if (player.isDead) {
+            showDeathScreen();
+        }
+
+        return;
+
+    }
+
+}
+
+
+/* =======================================================
+   GAME UPDATE
+   ======================================================= */
+
+function updateGame() {
+
+    if (!player.isDead) {
+
+        updatePlayerMovement(
+            keys,
+            dialogueController.isOpen()
+        );
+
+    } else {
+
+        player.movement.moving =
+            false;
+
+    }
+
+
+    updateWorldItemTarget();
+
+    updateCombatSystem();
+
+
+    /*
+     * Dead enemies are removed and their
+     * spawn points begin their respawn timers.
+     */
+
+    updateEnemyRespawns();
+
+
+    drawPlayer();
+
+    renderEnemies();
+
+    renderWorldItems();
+
+    updatePlayerHUD();
+
+    updateInteraction();
+
+    updateCamera(
+        player,
+        world
+    );
+
+
+    if (player.isDead) {
+
+        showDeathScreen();
+
+    }
+
+}
+
+
+/* =======================================================
+   GAME LOOP
+   ======================================================= */
+
+function gameLoop() {
+
+    updateGame();
+
+    requestAnimationFrame(
+        gameLoop
+    );
+
+}
+
+
+/* =======================================================
+   START GAME
+   ======================================================= */
+
+function startGame() {
+
+    titleScreen.style.display =
+        "none";
+
+    gameScreen.style.display =
+        "block";
+
+
+    setCharacterInterfaceAvailability(
+        true
+    );
+
+
+    drawPlayer();
+
+    updateGame();
+
+}
+
+
+/* =======================================================
+   EVENT LISTENERS
+   ======================================================= */
+
+playButton.addEventListener(
+    "click",
+    startGame
+);
+
+
+world.addEventListener(
+    "click",
+    handleWorldItemClick
+);
+
+world.addEventListener(
+    "click",
+    handleEnemyClick
+);
 
 
 window.addEventListener(
@@ -803,6 +883,17 @@ window.addEventListener(
 
         keys[event.key] =
             true;
+
+        if (
+            event.key === "e" ||
+            event.key === "E"
+        ) {
+
+            event.preventDefault();
+
+            handleInteraction();
+
+        }
 
     }
 );
@@ -817,3 +908,58 @@ window.addEventListener(
 
     }
 );
+
+
+continueButton.addEventListener(
+    "click",
+    () => {
+
+        dialogueController.nextDialogue();
+
+    }
+);
+
+
+closeButton.addEventListener(
+    "click",
+    () => {
+
+        dialogueController.closeDialogue();
+
+    }
+);
+
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        updateGame();
+
+    }
+);
+
+
+/* =======================================================
+   INITIAL STATE
+   ======================================================= */
+
+dialogueWindow.style.display =
+    "none";
+
+gameScreen.style.display =
+    "none";
+
+
+setCharacterInterfaceAvailability(
+    false
+);
+
+
+createDeathOverlay();
+
+initializeEnemies();
+
+initializeWorldItems();
+
+gameLoop();

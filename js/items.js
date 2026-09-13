@@ -1,19 +1,32 @@
 const ITEM_DEFINITIONS = {
+
+    /* ===================================================
+       MEDKIT
+       =================================================== */
+
     medkit: {
         id: "medkit",
         name: "Medkit",
         type: "consumable",
+
         effect: {
             type: "heal",
             amount: 25
         }
     },
 
+
+    /* ===================================================
+       LASER RIFLE
+       =================================================== */
+
     laser_rifle: {
         id: "laser_rifle",
         name: "Laser Rifle",
-        type: "weapon"
+        type: "weapon",
+        slot: "weapon"
     }
+
 };
 
 
@@ -26,12 +39,15 @@ export function getItem(itemId) {
         return null;
     }
 
-    return ITEM_DEFINITIONS[itemId] || null;
+    return (
+        ITEM_DEFINITIONS[itemId] ||
+        null
+    );
 }
 
 
 /* =======================================================
-   CHECK ITEM
+   ITEM EXISTS
    ======================================================= */
 
 export function itemExists(itemId) {
@@ -44,7 +60,9 @@ export function itemExists(itemId) {
    ======================================================= */
 
 export function getAllItems() {
-    return Object.values(ITEM_DEFINITIONS);
+    return Object.values(
+        ITEM_DEFINITIONS
+    );
 }
 
 
@@ -65,31 +83,41 @@ export function useItem(
         return false;
     }
 
-    const item = getItem(itemId);
+    const item =
+        getItem(itemId);
 
     if (!item) {
         return false;
     }
 
-    if (item.type !== "consumable") {
+    if (
+        item.type !== "consumable"
+    ) {
         return false;
     }
 
-    if (!Array.isArray(inventory.items)) {
+    if (
+        !Array.isArray(
+            inventory.items
+        )
+    ) {
         return false;
     }
 
     const inventoryItem =
         inventory.items.find(
             currentItem =>
-                currentItem.id === itemId
+                currentItem.id ===
+                itemId
         );
 
     if (!inventoryItem) {
         return false;
     }
 
-    if (inventoryItem.quantity <= 0) {
+    if (
+        inventoryItem.quantity <= 0
+    ) {
         return false;
     }
 
@@ -97,20 +125,24 @@ export function useItem(
         item.effect &&
         item.effect.type === "heal"
     ) {
-        player.health.current = Math.min(
-            player.health.maximum,
-            player.health.current +
-            item.effect.amount
-        );
+        player.health.current =
+            Math.min(
+                player.health.maximum,
+                player.health.current +
+                item.effect.amount
+            );
     }
 
     inventoryItem.quantity--;
 
-    if (inventoryItem.quantity === 0) {
+    if (
+        inventoryItem.quantity === 0
+    ) {
         inventory.items =
             inventory.items.filter(
                 currentItem =>
-                    currentItem.id !== itemId
+                    currentItem.id !==
+                    itemId
             );
     }
 

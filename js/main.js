@@ -48,8 +48,7 @@ import {
 } from "./itemWorld.js";
 
 import {
-    renderWorldItems,
-    isWithinItemPickupRange
+    renderWorldItems
 } from "./itemRenderer.js";
 
 import {
@@ -59,6 +58,10 @@ import {
 import {
     addItem
 } from "./inventory.js";
+
+import {
+    findPath
+} from "./pathfinding.js";
 
 
 /* =======================================================
@@ -136,7 +139,6 @@ const dialogueController =
 
 let clickMarker = null;
 
-
 let clickMarkerTimer = null;
 
 
@@ -158,44 +160,30 @@ function createClickMarker() {
     clickMarker.style.position =
         "absolute";
 
-
     clickMarker.style.width =
         "18px";
-
 
     clickMarker.style.height =
         "18px";
 
-
     clickMarker.style.pointerEvents =
         "none";
-
 
     clickMarker.style.zIndex =
         "5000";
 
-
     clickMarker.style.transform =
         "translate(-50%, -50%)";
 
-
     clickMarker.style.opacity =
         "0";
-
 
     clickMarker.style.transition =
         "opacity 0.15s ease";
 
 
-    /*
-     * Create the X using two diagonal
-     * elements rather than relying on a
-     * special font or image.
-     */
-
     const lineOne =
         document.createElement("div");
-
 
     const lineTwo =
         document.createElement("div");
@@ -236,7 +224,6 @@ function createClickMarker() {
     lineOne.style.transform =
         "rotate(45deg)";
 
-
     lineTwo.style.transform =
         "rotate(-45deg)";
 
@@ -244,7 +231,6 @@ function createClickMarker() {
     clickMarker.appendChild(
         lineOne
     );
-
 
     clickMarker.appendChild(
         lineTwo
@@ -258,10 +244,6 @@ function createClickMarker() {
 }
 
 
-/* =======================================================
-   SHOW CLICK MARKER
-   ======================================================= */
-
 function showClickMarker(
     x,
     y
@@ -273,19 +255,12 @@ function showClickMarker(
     clickMarker.style.left =
         `${x}px`;
 
-
     clickMarker.style.top =
         `${y}px`;
-
 
     clickMarker.style.opacity =
         "1";
 
-
-    /*
-     * Restart the fade timer each time
-     * the player clicks somewhere.
-     */
 
     if (clickMarkerTimer) {
 
@@ -341,37 +316,26 @@ function createDeathOverlay() {
     deathOverlay.style.position =
         "fixed";
 
-
     deathOverlay.style.inset =
         "0";
-
 
     deathOverlay.style.display =
         "none";
 
-
     deathOverlay.style.alignItems =
         "center";
-
 
     deathOverlay.style.justifyContent =
         "center";
 
-
     deathOverlay.style.flexDirection =
         "column";
-
 
     deathOverlay.style.background =
         "rgba(0, 0, 0, 0.78)";
 
-
     deathOverlay.style.zIndex =
         "10000";
-
-
-    deathOverlay.style.fontFamily =
-        "Arial, sans-serif";
 
 
     const title =
@@ -385,21 +349,14 @@ function createDeathOverlay() {
     title.style.color =
         "#ffffff";
 
-
     title.style.fontSize =
         "48px";
-
 
     title.style.fontWeight =
         "900";
 
-
     title.style.marginBottom =
         "20px";
-
-
-    title.style.textShadow =
-        "0 3px 8px #000000";
 
 
     respawnButton =
@@ -413,14 +370,11 @@ function createDeathOverlay() {
     respawnButton.style.padding =
         "12px 28px";
 
-
     respawnButton.style.fontSize =
         "16px";
 
-
     respawnButton.style.fontWeight =
         "bold";
-
 
     respawnButton.style.cursor =
         "pointer";
@@ -435,7 +389,6 @@ function createDeathOverlay() {
     deathOverlay.appendChild(
         title
     );
-
 
     deathOverlay.appendChild(
         respawnButton
@@ -559,7 +512,7 @@ function initializeWorldItems() {
 
 
 /* =======================================================
-   PICK UP WORLD ITEM
+   ITEM PICKUP
    ======================================================= */
 
 function attemptWorldItemPickup(
@@ -575,11 +528,6 @@ function attemptWorldItemPickup(
         return false;
     }
 
-
-    /*
-     * Items are intentionally picked up
-     * when the player reaches the item itself.
-     */
 
     const distance =
         Math.sqrt(
@@ -673,7 +621,7 @@ function attemptWorldItemPickup(
 
 
 /* =======================================================
-   ITEM AUTOMATIC APPROACH
+   ITEM TARGET
    ======================================================= */
 
 function updateWorldItemTarget() {
@@ -712,24 +660,12 @@ function updateWorldItemTarget() {
     }
 
 
-    /*
-     * Keep target synchronized with
-     * the item's actual location.
-     */
-
     target.x =
         worldItem.position.x;
-
 
     target.y =
         worldItem.position.y;
 
-
-    /*
-     * Item target uses a zero-distance
-     * arrival rule. The player walks directly
-     * onto the item's location.
-     */
 
     const distance =
         Math.sqrt(
@@ -748,14 +684,8 @@ function updateWorldItemTarget() {
 
     if (distance <= 10) {
 
-        /*
-         * Snap to the item's exact location
-         * before pickup.
-         */
-
         player.position.x =
             worldItem.position.x;
-
 
         player.position.y =
             worldItem.position.y;
@@ -821,21 +751,32 @@ function handleWorldItemClick(
     }
 
 
-    /*
-     * Show the marker directly on
-     * the clicked item.
-     */
-
     showClickMarker(
         worldItem.position.x,
         worldItem.position.y
     );
 
 
-    /*
-     * If already essentially on the item,
-     * pick it up immediately.
-     */
+    const path =
+        findPath(
+            player.position.x,
+            player.position.y,
+            worldItem.position.x,
+            worldItem.position.y
+        );
+
+
+    if (!path) {
+
+        console.warn(
+            "Unable to find a route to item."
+        );
+
+
+        return;
+
+    }
+
 
     const distance =
         Math.sqrt(
@@ -864,21 +805,13 @@ function handleWorldItemClick(
     }
 
 
-    /*
-     * Walk directly onto the item.
-     */
-
     setMovementTarget(
         "item",
         worldItem.id,
         worldItem.position.x,
         worldItem.position.y,
-        0
-    );
-
-
-    console.log(
-        `Moving toward ${getItem(worldItem.itemId)?.name || worldItem.itemId}.`
+        0,
+        path
     );
 
 }
@@ -941,10 +874,6 @@ function handleEnemyClick(
     }
 
 
-    /*
-     * Show click marker at the enemy.
-     */
-
     if (enemy.position) {
 
         showClickMarker(
@@ -983,11 +912,6 @@ function handleGroundClick(
     }
 
 
-    /*
-     * Don't interpret item or enemy clicks
-     * as ground movement.
-     */
-
     const itemElement =
         event.target.closest(
             ".world-item"
@@ -1009,11 +933,6 @@ function handleGroundClick(
         return;
     }
 
-
-    /*
-     * Convert screen coordinates into
-     * world coordinates.
-     */
 
     const worldRect =
         world.getBoundingClientRect();
@@ -1049,11 +968,6 @@ function handleGroundClick(
         );
 
 
-    /*
-     * Show the destination marker exactly
-     * where the player clicked.
-     */
-
     showClickMarker(
         targetX,
         targetY
@@ -1061,9 +975,34 @@ function handleGroundClick(
 
 
     /*
-     * Ground movement uses zero arrival
-     * distance, meaning the player goes
-     * exactly to the clicked coordinate.
+     * Ask the pathfinder for the shortest
+     * collision-safe route.
+     */
+
+    const path =
+        findPath(
+            player.position.x,
+            player.position.y,
+            targetX,
+            targetY
+        );
+
+
+    if (!path) {
+
+        console.warn(
+            "No valid route to clicked location."
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+     * Ground movement now follows the
+     * calculated waypoint path.
      */
 
     setMovementTarget(
@@ -1071,7 +1010,13 @@ function handleGroundClick(
         null,
         targetX,
         targetY,
-        0
+        0,
+        path
+    );
+
+
+    console.log(
+        `Path found: ${path.length} waypoint(s).`
     );
 
 
@@ -1181,10 +1126,7 @@ function updateGame() {
 
     if (!player.isDead) {
 
-        updatePlayerMovement(
-            keys,
-            dialogueController.isOpen()
-        );
+        updatePlayerMovement();
 
     } else {
 

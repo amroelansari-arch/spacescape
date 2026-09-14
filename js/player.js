@@ -52,33 +52,19 @@ export const player = {
         maximum: 100
     },
 
-
-    /*
-     * Current passive combat style.
-     */
-
     combatStyle:
         COMBAT_STYLES.ACCURATE,
 
-
     isDead: false,
-
-
-    /*
-     * Individual SpaceScape skills.
-     */
 
     skills:
         createSkills(),
 
-
     inventory:
         createInventory(),
 
-
     equipment:
         createEquipment(),
-
 
     movement: {
 
@@ -86,15 +72,15 @@ export const player = {
 
         moving: false,
 
+        target: null,
+
         /*
-         * Automatic world-interaction target.
-         *
-         * arrivalDistance determines how close
-         * the player must get before the target
-         * is considered reached.
+         * Pathfinding waypoints.
          */
 
-        target: null
+        path: [],
+
+        pathIndex: 0
 
     }
 
@@ -110,7 +96,8 @@ export function setMovementTarget(
     id,
     x,
     y,
-    arrivalDistance = 0
+    arrivalDistance = 0,
+    path = null
 ) {
 
     if (
@@ -126,7 +113,9 @@ export function setMovementTarget(
 
 
     if (
-        !Number.isFinite(arrivalDistance) ||
+        !Number.isFinite(
+            arrivalDistance
+        ) ||
         arrivalDistance < 0
     ) {
 
@@ -151,6 +140,49 @@ export function setMovementTarget(
     };
 
 
+    player.movement.path =
+        Array.isArray(path)
+            ? path
+            : [];
+
+
+    player.movement.pathIndex =
+        0;
+
+
+    return true;
+
+}
+
+
+export function setMovementPath(
+    path
+) {
+
+    if (
+        !Array.isArray(path) ||
+        path.length === 0
+    ) {
+
+        player.movement.path =
+            [];
+
+        player.movement.pathIndex =
+            0;
+
+        return false;
+
+    }
+
+
+    player.movement.path =
+        path;
+
+
+    player.movement.pathIndex =
+        0;
+
+
     return true;
 
 }
@@ -167,6 +199,12 @@ export function clearMovementTarget() {
 
     player.movement.target =
         null;
+
+    player.movement.path =
+        [];
+
+    player.movement.pathIndex =
+        0;
 
     player.movement.moving =
         false;
@@ -215,7 +253,7 @@ export function getCombatStyle() {
 
 
 /* =======================================================
-   COMBAT SKILL HELPERS
+   COMBAT SKILLS
    ======================================================= */
 
 export function getPlayerAttackLevel() {
@@ -259,7 +297,7 @@ export function getPlayerVitalityLevel() {
 
 
 /* =======================================================
-   COMBAT SKILL XP HELPERS
+   COMBAT XP
    ======================================================= */
 
 export function getPlayerAttackXP() {
@@ -409,6 +447,88 @@ export function respawnPlayer() {
 
 
 /* =======================================================
+   GET CURRENT MOVEMENT POINT
+   ======================================================= */
+
+function getCurrentMovementPoint() {
+
+    const path =
+        player.movement.path;
+
+
+    const index =
+        player.movement.pathIndex;
+
+
+    if (
+        Array.isArray(path) &&
+        index < path.length
+    ) {
+
+        return path[index];
+
+    }
+
+
+    if (
+        player.movement.target
+    ) {
+
+        return {
+
+            x:
+                player.movement.target.x,
+
+            y:
+                player.movement.target.y
+
+        };
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =======================================================
+   ADVANCE PATH
+   ======================================================= */
+
+function advanceMovementPath() {
+
+    if (
+        !Array.isArray(
+            player.movement.path
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    player.movement.pathIndex++;
+
+
+    if (
+        player.movement.pathIndex >=
+        player.movement.path.length
+    ) {
+
+        player.movement.path =
+            [];
+
+        player.movement.pathIndex =
+            0;
+
+    }
+
+}
+
+
+/* =======================================================
    MOVEMENT
    ======================================================= */
 
@@ -445,7 +565,7 @@ export function updatePlayerMovement() {
 
 
     /* ===================================================
-       MANUAL KEYBOARD MOVEMENT
+       KEYBOARD MOVEMENT
        =================================================== */
 
     if (
@@ -489,7 +609,8 @@ export function updatePlayerMovement() {
 
 
     /*
-     * Manual movement takes priority.
+     * Manual movement cancels automatic
+     * pathfinding.
      */
 
     if (
@@ -503,7 +624,7 @@ export function updatePlayerMovement() {
 
 
     /* ===================================================
-       AUTOMATIC TARGET MOVEMENT
+       AUTOMATIC PATH MOVEMENT
        =================================================== */
 
     if (
@@ -516,12 +637,27 @@ export function updatePlayerMovement() {
             player.movement.target;
 
 
+        const movementPoint =
+            getCurrentMovementPoint();
+
+
+        if (!movementPoint) {
+
+            player.movement.moving =
+                false;
+
+            return;
+
+        }
+
+
         const targetDX =
-            target.x -
+            movementPoint.x -
             player.position.x;
 
+
         const targetDY =
-            target.y -
+            movementPoint.y -
             player.position.y;
 
 
@@ -533,37 +669,40 @@ export function updatePlayerMovement() {
 
 
         /*
-         * Ground targets normally use zero
-         * arrival distance.
-         *
-         * Other systems can provide their
-         * own interaction distance.
+         * Waypoints can be reached with a
+         * small tolerance.
          */
 
+        const isFinalPoint =
+            !Array.isArray(
+                player.movement.path
+            ) ||
+            player.movement.pathIndex >=
+                player.movement.path.length - 1;
+
+
         const arrivalDistance =
-            Number.isFinite(
-                target.arrivalDistance
-            )
+            isFinalPoint
                 ? target.arrivalDistance
-                : 0;
+                : 2;
 
 
         /*
-         * If the destination has been reached,
-         * stop movement.
+         * Waypoint reached.
          */
 
         if (
-            distance <= arrivalDistance
+            distance <=
+            arrivalDistance
         ) {
 
             /*
-             * For an exact ground destination,
-             * place the player exactly at the
-             * requested coordinate.
+             * If this was the final point,
+             * snap exactly to the destination.
              */
 
             if (
+                isFinalPoint &&
                 target.type === "ground"
             ) {
 
@@ -576,8 +715,18 @@ export function updatePlayerMovement() {
             }
 
 
-            player.movement.moving =
-                false;
+            if (
+                !isFinalPoint
+            ) {
+
+                advanceMovementPath();
+
+            } else {
+
+                clearMovementTarget();
+
+            }
+
 
             return;
 
@@ -585,7 +734,7 @@ export function updatePlayerMovement() {
 
 
         /*
-         * Calculate direction toward target.
+         * Move toward current waypoint.
          */
 
         dx =
@@ -639,27 +788,22 @@ export function updatePlayerMovement() {
         player.movement.speed;
 
 
-    const currentTarget =
-        player.movement.target;
+    const movementPoint =
+        getCurrentMovementPoint();
 
 
     /*
-     * For an exact ground destination, don't
-     * allow a five-pixel movement step to
-     * overshoot the clicked point.
+     * Prevent overshooting a waypoint.
      */
 
-    if (
-        currentTarget &&
-        currentTarget.type === "ground"
-    ) {
+    if (movementPoint) {
 
         const remainingX =
-            currentTarget.x -
+            movementPoint.x -
             player.position.x;
 
         const remainingY =
-            currentTarget.y -
+            movementPoint.y -
             player.position.y;
 
         const remainingDistance =
@@ -675,13 +819,58 @@ export function updatePlayerMovement() {
         ) {
 
             player.position.x =
-                currentTarget.x;
+                movementPoint.x;
 
             player.position.y =
-                currentTarget.y;
+                movementPoint.y;
 
-            player.movement.moving =
-                false;
+
+            const path =
+                player.movement.path;
+
+
+            const index =
+                player.movement.pathIndex;
+
+
+            if (
+                Array.isArray(path) &&
+                index <
+                    path.length - 1
+            ) {
+
+                advanceMovementPath();
+
+                return;
+
+            }
+
+
+            if (
+                player.movement.target
+            ) {
+
+                const target =
+                    player.movement.target;
+
+
+                if (
+                    target.type ===
+                    "ground"
+                ) {
+
+                    player.position.x =
+                        target.x;
+
+                    player.position.y =
+                        target.y;
+
+                }
+
+            }
+
+
+            clearMovementTarget();
 
             return;
 
@@ -701,7 +890,7 @@ export function updatePlayerMovement() {
 
 
     /* ===================================================
-       X MOVEMENT + COLLISION
+       X COLLISION
        =================================================== */
 
     if (
@@ -720,7 +909,7 @@ export function updatePlayerMovement() {
 
 
     /* ===================================================
-       Y MOVEMENT + COLLISION
+       Y COLLISION
        =================================================== */
 
     if (
@@ -786,30 +975,25 @@ export function updatePlayerHUD() {
             "level"
         );
 
-
     const xpElement =
         document.getElementById(
             "xp"
         );
-
 
     const healthElement =
         document.getElementById(
             "health"
         );
 
-
     const healthBar =
         document.getElementById(
             "health-bar"
         );
 
-
     const energyElement =
         document.getElementById(
             "energy"
         );
-
 
     const energyBar =
         document.getElementById(

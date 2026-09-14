@@ -22,7 +22,8 @@ import {
 import {
     getNearbyInteractable,
     updateInteractionPrompt,
-    createDialogueController
+    createDialogueController,
+    getInteractables
 } from "./npc.js";
 
 import {
@@ -799,6 +800,252 @@ function handleWorldItemClick(
 
 
 /* =======================================================
+   NPC CLICK
+   ======================================================= */
+
+function handleNPCClick(
+    event
+) {
+
+    if (player.isDead) {
+        return;
+    }
+
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+
+    /*
+     * NPCs are currently represented by their
+     * data objects rather than dedicated DOM
+     * elements, so determine whether the click
+     * occurred close enough to an NPC's world
+     * position.
+     */
+
+    const worldRect =
+        world.getBoundingClientRect();
+
+
+    const clickX =
+        event.clientX -
+        worldRect.left;
+
+
+    const clickY =
+        event.clientY -
+        worldRect.top;
+
+
+    const interactables =
+        getInteractables();
+
+
+    let clickedInteractable = null;
+
+
+    for (
+        const interactable
+        of interactables
+    ) {
+
+        const distance =
+            Math.sqrt(
+                Math.pow(
+                    clickX -
+                    interactable.position.x,
+                    2
+                ) +
+                Math.pow(
+                    clickY -
+                    interactable.position.y,
+                    2
+                )
+            );
+
+
+        /*
+         * Use a generous click radius around
+         * the NPC so the player does not have
+         * to click one exact pixel.
+         */
+
+        if (
+            distance <= 60
+        ) {
+
+            clickedInteractable =
+                interactable;
+
+            break;
+
+        }
+
+    }
+
+
+    if (!clickedInteractable) {
+        return;
+    }
+
+
+    const npc =
+        clickedInteractable;
+
+
+    showClickMarker(
+        npc.position.x,
+        npc.position.y
+    );
+
+
+    const path =
+        findPath(
+            player.position.x,
+            player.position.y,
+            npc.position.x,
+            npc.position.y
+        );
+
+
+    if (!path) {
+
+        console.warn(
+            `Unable to find a route to ${npc.name}.`
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Clicking an NPC is a new command.
+     * Cancel combat and any previous movement.
+     */
+
+    stopCombat();
+
+    clearMovementTarget();
+
+
+    /*
+     * Stop slightly before the NPC rather
+     * than walking directly through them.
+     */
+
+    setMovementTarget(
+        "npc",
+        npc.id,
+        npc.position.x,
+        npc.position.y,
+        Math.max(
+            10,
+            npc.interactionDistance
+        ),
+        path
+    );
+
+
+    console.log(
+        `Walking to ${npc.name}.`
+    );
+
+}
+
+
+/* =======================================================
+   NPC TARGET
+   ======================================================= */
+
+function updateNPCTarget() {
+
+    if (player.isDead) {
+        return;
+    }
+
+
+    const target =
+        getMovementTarget();
+
+
+    if (
+        !target ||
+        target.type !== "npc"
+    ) {
+        return;
+    }
+
+
+    const interactables =
+        getInteractables();
+
+
+    const npc =
+        interactables.find(
+            interactable =>
+                interactable.id ===
+                target.id
+        );
+
+
+    if (!npc) {
+
+        clearMovementTarget();
+
+        return;
+
+    }
+
+
+    target.x =
+        npc.position.x;
+
+    target.y =
+        npc.position.y;
+
+
+    const distance =
+        Math.sqrt(
+            Math.pow(
+                player.position.x -
+                npc.position.x,
+                2
+            ) +
+            Math.pow(
+                player.position.y -
+                npc.position.y,
+                2
+            )
+        );
+
+
+    /*
+     * Once the player reaches the NPC's
+     * interaction range, automatically
+     * start the same interaction that E uses.
+     */
+
+    if (
+        distance <=
+        npc.interactionDistance
+    ) {
+
+        clearMovementTarget();
+
+
+        handleInteraction();
+
+    }
+
+}
+
+
+/* =======================================================
    ENEMY CLICK
    ======================================================= */
 
@@ -838,7 +1085,8 @@ function handleEnemyClick(
     const enemy =
         enemies.find(
             currentEnemy =>
-                currentEnemy.id === enemyId
+                currentEnemy.id ===
+                enemyId
         );
 
 
@@ -1127,6 +1375,9 @@ function updateGame() {
     updateWorldItemTarget();
 
 
+    updateNPCTarget();
+
+
     updateCombatSystem();
 
 
@@ -1213,6 +1464,17 @@ function startGame() {
 playButton.addEventListener(
     "click",
     startGame
+);
+
+
+/*
+ * NPC click must be registered before
+ * the general ground-click handler.
+ */
+
+world.addEventListener(
+    "click",
+    handleNPCClick
 );
 
 

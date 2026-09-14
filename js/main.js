@@ -337,13 +337,6 @@ function initializeEnemies() {
 
 function initializeWorldItems() {
 
-    /*
-     * First real world item.
-     *
-     * Placed far enough away from the starting
-     * player position to test automatic approach.
-     */
-
     createWorldItem(
         "laser_rifle",
         1500,
@@ -371,11 +364,6 @@ function attemptWorldItemPickup(
         return false;
     }
 
-
-    /*
-     * The player must be within the actual
-     * pickup range.
-     */
 
     if (
         !isWithinItemPickupRange(
@@ -409,13 +397,6 @@ function attemptWorldItemPickup(
     }
 
 
-    /*
-     * Attempt to add the item to inventory.
-     *
-     * If the inventory is full, the item
-     * remains in the world.
-     */
-
     const added =
         addItem(
             player.inventory,
@@ -436,10 +417,6 @@ function attemptWorldItemPickup(
 
     }
 
-
-    /*
-     * Inventory acquisition succeeded.
-     */
 
     removeWorldItem(
         worldItem
@@ -480,10 +457,6 @@ function updateWorldItemTarget() {
         getMovementTarget();
 
 
-    /*
-     * No automatic target.
-     */
-
     if (
         !target ||
         target.type !== "item"
@@ -494,20 +467,11 @@ function updateWorldItemTarget() {
     }
 
 
-    /*
-     * Find the actual world item.
-     */
-
     const worldItem =
         findWorldItemById(
             target.id
         );
 
-
-    /*
-     * Item disappeared or was already
-     * collected.
-     */
 
     if (!worldItem) {
 
@@ -518,22 +482,12 @@ function updateWorldItemTarget() {
     }
 
 
-    /*
-     * Keep the movement target synchronized
-     * with the actual world item's position.
-     */
-
     target.x =
         worldItem.position.x;
 
     target.y =
         worldItem.position.y;
 
-
-    /*
-     * Once the player gets close enough,
-     * automatically pick the item up.
-     */
 
     if (
         isWithinItemPickupRange(
@@ -602,11 +556,6 @@ function handleWorldItemClick(
     }
 
 
-    /*
-     * If the player is already within
-     * pickup range, pick it up immediately.
-     */
-
     if (
         isWithinItemPickupRange(
             player,
@@ -622,15 +571,6 @@ function handleWorldItemClick(
 
     }
 
-
-    /*
-     * Otherwise establish an automatic
-     * movement target.
-     *
-     * The player.js movement system will
-     * automatically walk the player toward
-     * this position.
-     */
 
     setMovementTarget(
         "item",
@@ -704,17 +644,142 @@ function handleEnemyClick(
     }
 
 
-    /*
-     * Enemy targeting remains handled by
-     * the combat system.
-     *
-     * Combat automatically approaches the
-     * enemy when necessary.
-     */
-
     startCombat(
         player,
         enemy
+    );
+
+}
+
+
+/* =======================================================
+   GROUND CLICK-TO-MOVE
+   ======================================================= */
+
+function handleGroundClick(
+    event
+) {
+
+    if (player.isDead) {
+        return;
+    }
+
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+
+    /*
+     * Do not treat clicks on items or enemies
+     * as ordinary ground clicks.
+     */
+
+    const itemElement =
+        event.target.closest(
+            ".world-item"
+        );
+
+
+    const enemyElement =
+        event.target.closest(
+            ".enemy"
+        );
+
+
+    if (
+        itemElement ||
+        enemyElement
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Only the actual world background
+     * should generate a ground movement target.
+     */
+
+    if (
+        event.target !== world
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Convert the screen click into
+     * world coordinates.
+     *
+     * Because the camera moves the world
+     * element itself, getBoundingClientRect()
+     * gives us the correct visible world offset.
+     */
+
+    const worldRect =
+        world.getBoundingClientRect();
+
+
+    let targetX =
+        event.clientX -
+        worldRect.left;
+
+
+    let targetY =
+        event.clientY -
+        worldRect.top;
+
+
+    /*
+     * Keep the destination inside the
+     * playable world.
+     */
+
+    targetX =
+        Math.max(
+            0,
+            Math.min(
+                2400,
+                targetX
+            )
+        );
+
+
+    targetY =
+        Math.max(
+            0,
+            Math.min(
+                1800,
+                targetY
+            )
+        );
+
+
+    /*
+     * Replace any previous automatic target.
+     *
+     * This is what gives us retargeting:
+     *
+     * click A → walk toward A
+     * click B → immediately walk toward B
+     */
+
+    setMovementTarget(
+        "ground",
+        null,
+        targetX,
+        targetY
+    );
+
+
+    console.log(
+        `Moving to ${Math.round(targetX)}, ${Math.round(targetY)}`
     );
 
 }
@@ -831,28 +896,14 @@ function updateGame() {
 
 
     /*
-     * Check whether the player has an
-     * active item movement target.
-     *
-     * This runs AFTER movement so the player
-     * gets a chance to physically walk toward
-     * the item before pickup is attempted.
+     * Item targets are checked after movement.
      */
 
     updateWorldItemTarget();
 
 
-    /*
-     * Existing combat system.
-     */
-
     updateCombatSystem();
 
-
-    /*
-     * Dead enemies are removed and their
-     * spawn points begin their respawn timers.
-     */
 
     updateEnemyRespawns();
 
@@ -911,11 +962,6 @@ function startGame() {
         "block";
 
 
-    /*
-     * Character becomes available only
-     * after the player enters the game.
-     */
-
     setCharacterInterfaceAvailability(
         true
     );
@@ -939,11 +985,7 @@ playButton.addEventListener(
 
 
 /*
- * World clicks are deliberately checked
- * for items first.
- *
- * If the click is not an item,
- * enemy targeting continues to work.
+ * Item clicks.
  */
 
 world.addEventListener(
@@ -952,9 +994,23 @@ world.addEventListener(
 );
 
 
+/*
+ * Enemy clicks.
+ */
+
 world.addEventListener(
     "click",
     handleEnemyClick
+);
+
+
+/*
+ * Empty-world clicks.
+ */
+
+world.addEventListener(
+    "click",
+    handleGroundClick
 );
 
 

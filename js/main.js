@@ -77,6 +77,12 @@ import {
     renderWorldObjects
 } from "./worldObjectRenderer.js";
 
+import {
+    openWorldObjectUI,
+    closeWorldObjectUI,
+    isWorldObjectUIOpen
+} from "./worldObjectUI.js";
+
 
 /* =======================================================
    DOM ELEMENTS
@@ -536,22 +542,13 @@ function interactWithWorldObject(
     }
 
 
-    if (
-        worldObject.interactionType ===
-        "terminal"
-    ) {
-
-        console.log(
-            `${worldObject.name}: Access terminal.`
-        );
-
-        return;
-
-    }
+    openWorldObjectUI(
+        worldObject
+    );
 
 
     console.log(
-        `Interacted with ${worldObject.name}.`
+        `${worldObject.name}: Interaction opened.`
     );
 
 }
@@ -566,6 +563,16 @@ function handleWorldObjectClick(
 ) {
 
     if (player.isDead) {
+        return;
+    }
+
+
+    /*
+     * Do not allow world interaction while
+     * an object UI is already open.
+     */
+
+    if (isWorldObjectUIOpen()) {
         return;
     }
 
@@ -696,6 +703,11 @@ function handleWorldObjectClick(
         );
 
 
+    /*
+     * Already close enough:
+     * interact immediately.
+     */
+
     if (
         distanceToObject <=
         clickedObject.interactionDistance
@@ -739,12 +751,18 @@ function handleWorldObjectClick(
     clearMovementTarget();
 
 
+    /*
+     * Arrival distance is deliberately 0.
+     * updateWorldObjectTarget() handles the
+     * interaction radius itself.
+     */
+
     setMovementTarget(
         "world_object",
         clickedObject.id,
         clickedObject.position.x,
         clickedObject.position.y,
-        clickedObject.interactionDistance,
+        0,
         path
     );
 
@@ -846,6 +864,16 @@ function updateInteractionCursor(
     if (
         dialogueController.isOpen()
     ) {
+
+        world.style.cursor =
+            "default";
+
+        return;
+
+    }
+
+
+    if (isWorldObjectUIOpen()) {
 
         world.style.cursor =
             "default";
@@ -1158,6 +1186,11 @@ function handleWorldItemClick(
     }
 
 
+    if (isWorldObjectUIOpen()) {
+        return;
+    }
+
+
     const itemElement =
         event.target.closest(
             ".world-item"
@@ -1274,6 +1307,11 @@ function handleNPCClick(
 ) {
 
     if (player.isDead) {
+        return;
+    }
+
+
+    if (isWorldObjectUIOpen()) {
         return;
     }
 
@@ -1522,6 +1560,11 @@ function handleEnemyClick(
     }
 
 
+    if (isWorldObjectUIOpen()) {
+        return;
+    }
+
+
     const enemyElement =
         event.target.closest(
             ".enemy"
@@ -1596,6 +1639,11 @@ function handleGroundClick(
 ) {
 
     if (player.isDead) {
+        return;
+    }
+
+
+    if (isWorldObjectUIOpen()) {
         return;
     }
 
@@ -1733,6 +1781,25 @@ function handleGroundClick(
 
 function updateInteraction() {
 
+    /*
+     * Hide the normal interaction prompt
+     * while a world-object window is open.
+     */
+
+    if (isWorldObjectUIOpen()) {
+
+        if (interactionPrompt) {
+
+            interactionPrompt.style.display =
+                "none";
+
+        }
+
+        return;
+
+    }
+
+
     if (player.isDead) {
 
         if (interactionPrompt) {
@@ -1763,12 +1830,27 @@ function handleInteraction() {
     }
 
 
+    /*
+     * If the world-object UI is already
+     * open, E should not trigger another
+     * interaction.
+     */
+
+    if (isWorldObjectUIOpen()) {
+        return;
+    }
+
+
     if (
         dialogueController.isOpen()
     ) {
         return;
     }
 
+
+    /*
+     * NPC interaction has priority.
+     */
 
     const interactable =
         getNearbyInteractable(
@@ -1786,6 +1868,10 @@ function handleInteraction() {
 
     }
 
+
+    /*
+     * Then check world objects.
+     */
 
     const worldObject =
         getNearbyWorldObject(
@@ -2008,12 +2094,48 @@ window.addEventListener(
         keys[event.key] = true;
 
 
+        /*
+         * Escape closes the world-object
+         * interaction window.
+         */
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            if (
+                isWorldObjectUIOpen()
+            ) {
+
+                closeWorldObjectUI();
+
+                return;
+
+            }
+
+        }
+
+
+        /*
+         * E interacts with the nearest
+         * available object or NPC.
+         */
+
         if (
             event.key === "e" ||
             event.key === "E"
         ) {
 
             event.preventDefault();
+
+
+            if (
+                isWorldObjectUIOpen()
+            ) {
+
+                return;
+
+            }
 
 
             handleInteraction();

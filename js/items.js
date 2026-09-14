@@ -25,6 +25,18 @@ const ITEM_DEFINITIONS = {
         name: "Laser Rifle",
         type: "weapon",
         slot: "weapon"
+    },
+
+
+    /* ===================================================
+       XENIUM ORE
+       =================================================== */
+
+    xenium_ore: {
+        id: "xenium_ore",
+        name: "Xenium Ore",
+        type: "resource",
+        resourceType: "ore"
     }
 
 };
@@ -35,6 +47,7 @@ const ITEM_DEFINITIONS = {
    ======================================================= */
 
 export function getItem(itemId) {
+
     if (!itemId) {
         return null;
     }
@@ -43,6 +56,7 @@ export function getItem(itemId) {
         ITEM_DEFINITIONS[itemId] ||
         null
     );
+
 }
 
 
@@ -51,7 +65,9 @@ export function getItem(itemId) {
    ======================================================= */
 
 export function itemExists(itemId) {
+
     return getItem(itemId) !== null;
+
 }
 
 
@@ -60,9 +76,11 @@ export function itemExists(itemId) {
    ======================================================= */
 
 export function getAllItems() {
+
     return Object.values(
         ITEM_DEFINITIONS
     );
+
 }
 
 
@@ -75,6 +93,7 @@ export function useItem(
     inventory,
     itemId
 ) {
+
     if (
         !player ||
         !inventory ||
@@ -83,18 +102,22 @@ export function useItem(
         return false;
     }
 
+
     const item =
         getItem(itemId);
+
 
     if (!item) {
         return false;
     }
+
 
     if (
         item.type !== "consumable"
     ) {
         return false;
     }
+
 
     if (
         !Array.isArray(
@@ -104,6 +127,7 @@ export function useItem(
         return false;
     }
 
+
     const inventoryItem =
         inventory.items.find(
             currentItem =>
@@ -111,9 +135,11 @@ export function useItem(
                 itemId
         );
 
+
     if (!inventoryItem) {
         return false;
     }
+
 
     if (
         inventoryItem.quantity <= 0
@@ -121,30 +147,39 @@ export function useItem(
         return false;
     }
 
+
     if (
         item.effect &&
         item.effect.type === "heal"
     ) {
+
         player.health.current =
             Math.min(
                 player.health.maximum,
                 player.health.current +
                 item.effect.amount
             );
+
     }
 
+
     inventoryItem.quantity--;
+
 
     if (
         inventoryItem.quantity === 0
     ) {
+
         inventory.items =
             inventory.items.filter(
                 currentItem =>
                     currentItem.id !==
                     itemId
             );
+
     }
 
+
     return true;
+
 }

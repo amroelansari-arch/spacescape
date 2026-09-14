@@ -62,6 +62,10 @@ import {
 } from "./inventory.js";
 
 import {
+    awardSkillXP
+} from "./skills.js";
+
+import {
     findPath
 } from "./pathfinding.js";
 
@@ -87,7 +91,9 @@ import {
     createResourceNode,
     getResourceNodes,
     getResourceNodeById,
-    getDistanceToResourceNode
+    getDistanceToResourceNode,
+    depleteResourceNode,
+    updateResourceNodeRespawns
 } from "./resourceNodes.js";
 
 import {
@@ -839,6 +845,211 @@ function updateWorldObjectTarget() {
 
 
 /* =======================================================
+   RESOURCE GATHERING
+   ======================================================= */
+
+function gatherResourceNode(
+    resourceNode
+) {
+
+    if (!resourceNode) {
+        return false;
+    }
+
+
+    if (player.isDead) {
+        return false;
+    }
+
+
+    if (resourceNode.depleted) {
+        return false;
+    }
+
+
+    const distance =
+        getDistanceToResourceNode(
+            player,
+            resourceNode
+        );
+
+
+    if (
+        distance >
+        resourceNode.gatheringDistance
+    ) {
+
+        return false;
+
+    }
+
+
+    const miningSkill =
+        player.skills &&
+        player.skills.mining;
+
+
+    const miningLevel =
+        miningSkill &&
+        Number.isFinite(
+            miningSkill.level
+        )
+            ? miningSkill.level
+            : 1;
+
+
+    const requiredLevel =
+        Number.isFinite(
+            resourceNode.requiredLevel
+        )
+            ? resourceNode.requiredLevel
+            : 1;
+
+
+    if (
+        miningLevel <
+        requiredLevel
+    ) {
+
+        console.log(
+            `${resourceNode.name}: Mining level ${requiredLevel} required. Current Mining level: ${miningLevel}.`
+        );
+
+
+        clearMovementTarget();
+
+
+        return false;
+
+    }
+
+
+    const itemDefinition =
+        getItem(
+            resourceNode.resourceId
+        );
+
+
+    if (!itemDefinition) {
+
+        console.warn(
+            `Unknown resource item: ${resourceNode.resourceId}`
+        );
+
+
+        clearMovementTarget();
+
+
+        return false;
+
+    }
+
+
+    const quantity =
+        Number.isFinite(
+            resourceNode.quantity
+        ) &&
+        resourceNode.quantity > 0
+            ? resourceNode.quantity
+            : 1;
+
+
+    const added =
+        addItem(
+            player.inventory,
+            resourceNode.resourceId,
+            quantity
+        );
+
+
+    if (!added) {
+
+        console.log(
+            "Inventory is full. Resource remains available."
+        );
+
+
+        clearMovementTarget();
+
+
+        return false;
+
+    }
+
+
+    const xpReward =
+        Number.isFinite(
+            resourceNode.xpReward
+        ) &&
+        resourceNode.xpReward > 0
+            ? resourceNode.xpReward
+            : 0;
+
+
+    if (
+        xpReward > 0 &&
+        resourceNode.gatheringSkill
+    ) {
+
+        const xpResult =
+            awardSkillXP(
+                player.skills,
+                resourceNode.gatheringSkill,
+                xpReward
+            );
+
+
+        console.log(
+            `Mining XP: +${xpReward} ${resourceNode.gatheringSkill} XP.`,
+            xpResult
+        );
+
+    }
+
+
+    const depleted =
+        depleteResourceNode(
+            resourceNode
+        );
+
+
+    if (!depleted) {
+
+        console.warn(
+            `Unable to deplete ${resourceNode.name}.`
+        );
+
+
+        return false;
+
+    }
+
+
+    clearMovementTarget();
+
+
+    console.log(
+        `${resourceNode.name} gathered.`
+    );
+
+
+    console.log(
+        `Received: ${itemDefinition.name} x${quantity}.`
+    );
+
+
+    console.log(
+        "Inventory:",
+        player.inventory
+    );
+
+
+    return true;
+
+}
+
+
+/* =======================================================
    RESOURCE NODE TARGET
    ======================================================= */
 
@@ -901,23 +1112,13 @@ function updateResourceNodeTarget() {
         );
 
 
-    /*
-     * Batch 2 stops here.
-     *
-     * We have NOT added the actual gathering
-     * action yet.
-     */
-
     if (
         distance <=
         resourceNode.gatheringDistance
     ) {
 
-        clearMovementTarget();
-
-
-        console.log(
-            `${resourceNode.name}: Gathering range reached.`
+        gatherResourceNode(
+            resourceNode
         );
 
     }
@@ -1070,8 +1271,8 @@ function handleResourceNodeClick(
 
 
     /*
-     * If already in gathering range,
-     * simply stop here for Batch 2.
+     * If already within gathering range,
+     * gather immediately.
      */
 
     if (
@@ -1082,8 +1283,8 @@ function handleResourceNodeClick(
         clearMovementTarget();
 
 
-        console.log(
-            `${clickedResourceNode.name}: Already within gathering range.`
+        gatherResourceNode(
+            clickedResourceNode
         );
 
 
@@ -2284,6 +2485,9 @@ function updateGame() {
 
 
     updateEnemyRespawns();
+
+
+    updateResourceNodeRespawns();
 
 
     drawPlayer();

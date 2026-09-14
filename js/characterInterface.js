@@ -268,6 +268,13 @@ export function getCharacterTab() {
 }
 
 
+export function refreshCharacterInterface() {
+
+    updateCharacterInterface();
+
+}
+
+
 export function getCharacterTabs() {
 
     return Object.values(

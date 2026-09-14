@@ -7,7 +7,10 @@ import {
     updatePlayerMovement,
     drawPlayer,
     updatePlayerHUD,
-    respawnPlayer
+    respawnPlayer,
+    setMovementTarget,
+    getMovementTarget,
+    clearMovementTarget
 } from "./player.js";
 
 import {
@@ -40,8 +43,7 @@ import {
     createWorldItem,
     getWorldItems,
     findWorldItemById,
-    removeWorldItem,
-    getDistanceToWorldItem
+    removeWorldItem
 } from "./itemWorld.js";
 
 import {
@@ -338,14 +340,13 @@ function initializeWorldItems() {
     /*
      * First real world item.
      *
-     * This is intentionally placed close enough
-     * to the starting player position to make
-     * the acquisition system easy to test.
+     * Placed far enough away from the starting
+     * player position to test automatic approach.
      */
 
     createWorldItem(
         "laser_rifle",
-        1300,
+        1500,
         900,
         1
     );
@@ -354,52 +355,26 @@ function initializeWorldItems() {
 
 
 /* =======================================================
-   ITEM CLICK
+   PICK UP WORLD ITEM
    ======================================================= */
 
-function handleWorldItemClick(
-    event
+function attemptWorldItemPickup(
+    worldItem
 ) {
 
-    if (player.isDead) {
-        return;
-    }
-
-    const itemElement =
-        event.target.closest(
-            ".world-item"
-        );
-
-    if (!itemElement) {
-        return;
-    }
-
-    const worldItemId =
-        itemElement.dataset.worldItemId;
-
-    if (!worldItemId) {
-        return;
-    }
-
-    const worldItem =
-        findWorldItemById(
-            worldItemId
-        );
-
     if (!worldItem) {
-        return;
+        return false;
     }
 
-    if (
-        dialogueController.isOpen()
-    ) {
-        return;
+
+    if (player.isDead) {
+        return false;
     }
 
 
     /*
-     * The player must actually be near
-     * the item to pick it up.
+     * The player must be within the actual
+     * pickup range.
      */
 
     if (
@@ -409,11 +384,7 @@ function handleWorldItemClick(
         )
     ) {
 
-        console.log(
-            "Move closer to pick up this item."
-        );
-
-        return;
+        return false;
 
     }
 
@@ -423,6 +394,7 @@ function handleWorldItemClick(
             worldItem.itemId
         );
 
+
     if (!itemDefinition) {
 
         console.warn(
@@ -430,7 +402,9 @@ function handleWorldItemClick(
             worldItem.itemId
         );
 
-        return;
+        clearMovementTarget();
+
+        return false;
 
     }
 
@@ -438,9 +412,8 @@ function handleWorldItemClick(
     /*
      * Attempt to add the item to inventory.
      *
-     * If the inventory is full,
-     * addItem() returns false and
-     * the world item remains.
+     * If the inventory is full, the item
+     * remains in the world.
      */
 
     const added =
@@ -457,14 +430,15 @@ function handleWorldItemClick(
             "Inventory is full. Item remains in the world."
         );
 
-        return;
+        clearMovementTarget();
+
+        return false;
 
     }
 
 
     /*
      * Inventory acquisition succeeded.
-     * Remove the item from the world.
      */
 
     removeWorldItem(
@@ -472,13 +446,202 @@ function handleWorldItemClick(
     );
 
 
+    clearMovementTarget();
+
+
     console.log(
         `${itemDefinition.name} picked up.`
     );
 
+
     console.log(
         "Inventory:",
         player.inventory
+    );
+
+
+    return true;
+
+}
+
+
+/* =======================================================
+   ITEM AUTOMATIC APPROACH
+   ======================================================= */
+
+function updateWorldItemTarget() {
+
+    if (player.isDead) {
+        return;
+    }
+
+
+    const target =
+        getMovementTarget();
+
+
+    /*
+     * No automatic target.
+     */
+
+    if (
+        !target ||
+        target.type !== "item"
+    ) {
+
+        return;
+
+    }
+
+
+    /*
+     * Find the actual world item.
+     */
+
+    const worldItem =
+        findWorldItemById(
+            target.id
+        );
+
+
+    /*
+     * Item disappeared or was already
+     * collected.
+     */
+
+    if (!worldItem) {
+
+        clearMovementTarget();
+
+        return;
+
+    }
+
+
+    /*
+     * Keep the movement target synchronized
+     * with the actual world item's position.
+     */
+
+    target.x =
+        worldItem.position.x;
+
+    target.y =
+        worldItem.position.y;
+
+
+    /*
+     * Once the player gets close enough,
+     * automatically pick the item up.
+     */
+
+    if (
+        isWithinItemPickupRange(
+            player,
+            worldItem
+        )
+    ) {
+
+        attemptWorldItemPickup(
+            worldItem
+        );
+
+    }
+
+}
+
+
+/* =======================================================
+   ITEM CLICK
+   ======================================================= */
+
+function handleWorldItemClick(
+    event
+) {
+
+    if (player.isDead) {
+        return;
+    }
+
+
+    const itemElement =
+        event.target.closest(
+            ".world-item"
+        );
+
+
+    if (!itemElement) {
+        return;
+    }
+
+
+    const worldItemId =
+        itemElement.dataset.worldItemId;
+
+
+    if (!worldItemId) {
+        return;
+    }
+
+
+    const worldItem =
+        findWorldItemById(
+            worldItemId
+        );
+
+
+    if (!worldItem) {
+        return;
+    }
+
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+
+    /*
+     * If the player is already within
+     * pickup range, pick it up immediately.
+     */
+
+    if (
+        isWithinItemPickupRange(
+            player,
+            worldItem
+        )
+    ) {
+
+        attemptWorldItemPickup(
+            worldItem
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Otherwise establish an automatic
+     * movement target.
+     *
+     * The player.js movement system will
+     * automatically walk the player toward
+     * this position.
+     */
+
+    setMovementTarget(
+        "item",
+        worldItem.id,
+        worldItem.position.x,
+        worldItem.position.y
+    );
+
+
+    console.log(
+        `Moving toward ${getItem(worldItem.itemId)?.name || worldItem.itemId}.`
     );
 
 }
@@ -496,24 +659,30 @@ function handleEnemyClick(
         return;
     }
 
+
     const enemyElement =
         event.target.closest(
             ".enemy"
         );
 
+
     if (!enemyElement) {
         return;
     }
 
+
     const enemyId =
         enemyElement.dataset.enemyId;
+
 
     if (!enemyId) {
         return;
     }
 
+
     const enemies =
         getEnemyCollection();
+
 
     const enemy =
         enemies.find(
@@ -522,15 +691,26 @@ function handleEnemyClick(
                 enemyId
         );
 
+
     if (!enemy) {
         return;
     }
+
 
     if (
         dialogueController.isOpen()
     ) {
         return;
     }
+
+
+    /*
+     * Enemy targeting remains handled by
+     * the combat system.
+     *
+     * Combat automatically approaches the
+     * enemy when necessary.
+     */
 
     startCombat(
         player,
@@ -559,6 +739,7 @@ function updateInteraction() {
 
     }
 
+
     return updateInteractionPrompt(
         player,
         dialogueController.isOpen(),
@@ -574,20 +755,24 @@ function handleInteraction() {
         return;
     }
 
+
     if (
         dialogueController.isOpen()
     ) {
         return;
     }
 
+
     const interactable =
         getNearbyInteractable(
             player
         );
 
+
     if (!interactable) {
         return;
     }
+
 
     dialogueController.openDialogue(
         interactable
@@ -606,8 +791,10 @@ function updateCombatSystem() {
         player
     );
 
+
     const combatState =
         getCombatState();
+
 
     if (!combatState.active) {
 
@@ -642,6 +829,22 @@ function updateGame() {
 
     }
 
+
+    /*
+     * Check whether the player has an
+     * active item movement target.
+     *
+     * This runs AFTER movement so the player
+     * gets a chance to physically walk toward
+     * the item before pickup is attempted.
+     */
+
+    updateWorldItemTarget();
+
+
+    /*
+     * Existing combat system.
+     */
 
     updateCombatSystem();
 
@@ -703,6 +906,7 @@ function startGame() {
     titleScreen.style.display =
         "none";
 
+
     gameScreen.style.display =
         "block";
 
@@ -747,6 +951,7 @@ world.addEventListener(
     handleWorldItemClick
 );
 
+
 world.addEventListener(
     "click",
     handleEnemyClick
@@ -758,6 +963,7 @@ window.addEventListener(
     event => {
 
         keys[event.key] = true;
+
 
         if (
             event.key === "e" ||
@@ -820,6 +1026,7 @@ window.addEventListener(
 
 dialogueWindow.style.display =
     "none";
+
 
 gameScreen.style.display =
     "none";

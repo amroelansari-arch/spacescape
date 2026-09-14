@@ -37,6 +37,7 @@ import {
 
 import {
     startCombat,
+    stopCombat,
     updateCombat,
     getCombatState
 } from "./combatSystem.js";
@@ -69,49 +70,31 @@ import {
    ======================================================= */
 
 const titleScreen =
-    document.getElementById(
-        "title-screen"
-    );
+    document.getElementById("title-screen");
 
 const gameScreen =
-    document.getElementById(
-        "game-screen"
-    );
+    document.getElementById("game-screen");
 
 const playButton =
-    document.getElementById(
-        "play-button"
-    );
+    document.getElementById("play-button");
 
 const world =
-    document.getElementById(
-        "world"
-    );
+    document.getElementById("world");
 
 const interactionPrompt =
-    document.getElementById(
-        "interaction-prompt"
-    );
+    document.getElementById("interaction-prompt");
 
 const dialogueWindow =
-    document.getElementById(
-        "dialogue"
-    );
+    document.getElementById("dialogue");
 
 const dialogueText =
-    document.getElementById(
-        "dialogue-text"
-    );
+    document.getElementById("dialogue-text");
 
 const continueButton =
-    document.getElementById(
-        "dialogue-next"
-    );
+    document.getElementById("dialogue-next");
 
 const closeButton =
-    document.getElementById(
-        "dialogue-close"
-    );
+    document.getElementById("dialogue-close");
 
 
 /* =======================================================
@@ -148,14 +131,11 @@ function createClickMarker() {
         return;
     }
 
-
     clickMarker =
         document.createElement("div");
 
-
     clickMarker.id =
         "spacescape-click-marker";
-
 
     clickMarker.style.position =
         "absolute";
@@ -545,9 +525,7 @@ function attemptWorldItemPickup(
 
 
     if (distance > 10) {
-
         return false;
-
     }
 
 
@@ -564,9 +542,7 @@ function attemptWorldItemPickup(
             worldItem.itemId
         );
 
-
         clearMovementTarget();
-
 
         return false;
 
@@ -587,9 +563,7 @@ function attemptWorldItemPickup(
             "Inventory is full. Item remains in the world."
         );
 
-
         clearMovementTarget();
-
 
         return false;
 
@@ -639,9 +613,7 @@ function updateWorldItemTarget() {
         !target ||
         target.type !== "item"
     ) {
-
         return;
-
     }
 
 
@@ -772,7 +744,6 @@ function handleWorldItemClick(
             "Unable to find a route to item."
         );
 
-
         return;
 
     }
@@ -799,10 +770,20 @@ function handleWorldItemClick(
             worldItem
         );
 
-
         return;
 
     }
+
+
+    /*
+     * Selecting an item is an explicit
+     * new movement command.
+     * Combat must release control first.
+     */
+
+    stopCombat();
+
+    clearMovementTarget();
 
 
     setMovementTarget(
@@ -857,8 +838,7 @@ function handleEnemyClick(
     const enemy =
         enemies.find(
             currentEnemy =>
-                currentEnemy.id ===
-                enemyId
+                currentEnemy.id === enemyId
         );
 
 
@@ -882,6 +862,14 @@ function handleEnemyClick(
         );
 
     }
+
+
+    /*
+     * Selecting an enemy replaces
+     * any previous movement command.
+     */
+
+    clearMovementTarget();
 
 
     startCombat(
@@ -974,11 +962,6 @@ function handleGroundClick(
     );
 
 
-    /*
-     * Ask the pathfinder for the shortest
-     * collision-safe route.
-     */
-
     const path =
         findPath(
             player.position.x,
@@ -994,16 +977,23 @@ function handleGroundClick(
             "No valid route to clicked location."
         );
 
-
         return;
 
     }
 
 
     /*
-     * Ground movement now follows the
-     * calculated waypoint path.
+     * A direct ground click is an explicit
+     * movement command.
+     *
+     * Cancel combat BEFORE installing
+     * the new movement target.
      */
+
+    stopCombat();
+
+    clearMovementTarget();
+
 
     setMovementTarget(
         "ground",
@@ -1041,7 +1031,6 @@ function updateInteraction() {
                 "none";
 
         }
-
 
         return;
 
@@ -1109,7 +1098,6 @@ function updateCombatSystem() {
         if (player.isDead) {
             showDeathScreen();
         }
-
 
         return;
 

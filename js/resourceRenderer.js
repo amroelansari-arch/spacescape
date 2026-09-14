@@ -47,12 +47,17 @@ function createResourceElement(
         "translate(-50%, -50%)";
 
 
+    /*
+     * Make the resource node deliberately
+     * large and unmistakable during development.
+     */
+
     element.style.width =
-        "52px";
+        "56px";
 
 
     element.style.height =
-        "52px";
+        "56px";
 
 
     element.style.borderRadius =
@@ -60,15 +65,15 @@ function createResourceElement(
 
 
     element.style.background =
-        "radial-gradient(circle, #67e8f9 0%, #0891b2 45%, #164e63 100%)";
+        "radial-gradient(circle, #ecfeff 0%, #67e8f9 25%, #06b6d4 55%, #164e63 100%)";
 
 
     element.style.border =
-        "2px solid #a5f3fc";
+        "3px solid #cffafe";
 
 
     element.style.boxShadow =
-        "0 0 18px rgba(34, 211, 238, 0.65)";
+        "0 0 12px #22d3ee, 0 0 30px rgba(34, 211, 238, 0.85)";
 
 
     element.style.display =
@@ -88,19 +93,24 @@ function createResourceElement(
 
 
     element.style.fontSize =
-        "24px";
+        "30px";
 
 
     element.style.fontWeight =
-        "bold";
+        "900";
 
 
     element.style.cursor =
         "pointer";
 
 
+    /*
+     * Keep the node above other world
+     * decorations and objects.
+     */
+
     element.style.zIndex =
-        "50";
+        "500";
 
 
     element.style.userSelect =
@@ -111,9 +121,17 @@ function createResourceElement(
         "auto";
 
 
+    element.style.textShadow =
+        "0 0 5px #000000";
+
+
     element.textContent =
         "◆";
 
+
+    /*
+     * Resource name.
+     */
 
     const label =
         document.createElement("div");
@@ -124,7 +142,7 @@ function createResourceElement(
 
 
     label.style.top =
-        "56px";
+        "62px";
 
 
     label.style.left =
@@ -140,7 +158,7 @@ function createResourceElement(
 
 
     label.style.fontSize =
-        "11px";
+        "12px";
 
 
     label.style.fontWeight =
@@ -148,11 +166,11 @@ function createResourceElement(
 
 
     label.style.color =
-        "#a5f3fc";
+        "#cffafe";
 
 
     label.style.textShadow =
-        "0 1px 3px #000000";
+        "0 1px 4px #000000";
 
 
     label.style.pointerEvents =

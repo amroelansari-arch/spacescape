@@ -819,14 +819,6 @@ function handleNPCClick(
     }
 
 
-    /*
-     * NPCs are currently represented by their
-     * data objects rather than dedicated DOM
-     * elements, so determine whether the click
-     * occurred close enough to an NPC's world
-     * position.
-     */
-
     const worldRect =
         world.getBoundingClientRect();
 
@@ -869,9 +861,7 @@ function handleNPCClick(
 
 
         /*
-         * Use a generous click radius around
-         * the NPC so the player does not have
-         * to click one exact pixel.
+         * NPC click radius.
          */
 
         if (
@@ -893,6 +883,18 @@ function handleNPCClick(
     }
 
 
+    /*
+     * THIS IS IMPORTANT.
+     *
+     * The click belongs to the NPC.
+     * Prevent the other click listeners
+     * from treating the same click as
+     * a ground movement command.
+     */
+
+    event.stopImmediatePropagation();
+
+
     const npc =
         clickedInteractable;
 
@@ -901,6 +903,40 @@ function handleNPCClick(
         npc.position.x,
         npc.position.y
     );
+
+
+    const distanceToNPC =
+        Math.sqrt(
+            Math.pow(
+                player.position.x -
+                npc.position.x,
+                2
+            ) +
+            Math.pow(
+                player.position.y -
+                npc.position.y,
+                2
+            )
+        );
+
+
+    /*
+     * Already close enough:
+     * interact immediately.
+     */
+
+    if (
+        distanceToNPC <=
+        npc.interactionDistance
+    ) {
+
+        clearMovementTarget();
+
+        handleInteraction();
+
+        return;
+
+    }
 
 
     const path =
@@ -924,8 +960,8 @@ function handleNPCClick(
 
 
     /*
-     * Clicking an NPC is a new command.
-     * Cancel combat and any previous movement.
+     * NPC selection overrides combat
+     * and any previous movement command.
      */
 
     stopCombat();
@@ -933,20 +969,12 @@ function handleNPCClick(
     clearMovementTarget();
 
 
-    /*
-     * Stop slightly before the NPC rather
-     * than walking directly through them.
-     */
-
     setMovementTarget(
         "npc",
         npc.id,
         npc.position.x,
         npc.position.y,
-        Math.max(
-            10,
-            npc.interactionDistance
-        ),
+        npc.interactionDistance,
         path
     );
 
@@ -1025,9 +1053,9 @@ function updateNPCTarget() {
 
 
     /*
-     * Once the player reaches the NPC's
-     * interaction range, automatically
-     * start the same interaction that E uses.
+     * Automatically interact when the
+     * player enters the NPC's interaction
+     * radius.
      */
 
     if (
@@ -1468,8 +1496,12 @@ playButton.addEventListener(
 
 
 /*
- * NPC click must be registered before
- * the general ground-click handler.
+ * NPC MUST be first.
+ *
+ * If the click is determined to be
+ * an NPC click, stopImmediatePropagation()
+ * prevents the ground/item/enemy handlers
+ * from processing the same click.
  */
 
 world.addEventListener(

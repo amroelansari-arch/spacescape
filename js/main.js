@@ -776,12 +776,6 @@ function handleWorldItemClick(
     }
 
 
-    /*
-     * Selecting an item is an explicit
-     * new movement command.
-     * Combat must release control first.
-     */
-
     stopCombat();
 
     clearMovementTarget();
@@ -795,6 +789,105 @@ function handleWorldItemClick(
         0,
         path
     );
+
+}
+
+
+/* =======================================================
+   NPC HOVER CURSOR
+   ======================================================= */
+
+function updateNPCHoverCursor(
+    event
+) {
+
+    if (player.isDead) {
+
+        world.style.cursor =
+            "default";
+
+        return;
+
+    }
+
+
+    if (
+        dialogueController.isOpen()
+    ) {
+
+        world.style.cursor =
+            "default";
+
+        return;
+
+    }
+
+
+    const worldRect =
+        world.getBoundingClientRect();
+
+
+    const mouseX =
+        event.clientX -
+        worldRect.left;
+
+
+    const mouseY =
+        event.clientY -
+        worldRect.top;
+
+
+    const interactables =
+        getInteractables();
+
+
+    let hoveringNPC = false;
+
+
+    for (
+        const interactable
+        of interactables
+    ) {
+
+        const distance =
+            Math.sqrt(
+                Math.pow(
+                    mouseX -
+                    interactable.position.x,
+                    2
+                ) +
+                Math.pow(
+                    mouseY -
+                    interactable.position.y,
+                    2
+                )
+            );
+
+
+        if (
+            distance <= 60
+        ) {
+
+            hoveringNPC = true;
+
+            break;
+
+        }
+
+    }
+
+
+    if (hoveringNPC) {
+
+        world.style.cursor =
+            "pointer";
+
+    } else {
+
+        world.style.cursor =
+            "default";
+
+    }
 
 }
 
@@ -860,10 +953,6 @@ function handleNPCClick(
             );
 
 
-        /*
-         * NPC click radius.
-         */
-
         if (
             distance <= 60
         ) {
@@ -884,12 +973,9 @@ function handleNPCClick(
 
 
     /*
-     * THIS IS IMPORTANT.
-     *
      * The click belongs to the NPC.
-     * Prevent the other click listeners
-     * from treating the same click as
-     * a ground movement command.
+     * Prevent the same click from being
+     * interpreted as ground movement.
      */
 
     event.stopImmediatePropagation();
@@ -919,11 +1005,6 @@ function handleNPCClick(
             )
         );
 
-
-    /*
-     * Already close enough:
-     * interact immediately.
-     */
 
     if (
         distanceToNPC <=
@@ -958,11 +1039,6 @@ function handleNPCClick(
 
     }
 
-
-    /*
-     * NPC selection overrides combat
-     * and any previous movement command.
-     */
 
     stopCombat();
 
@@ -1052,19 +1128,12 @@ function updateNPCTarget() {
         );
 
 
-    /*
-     * Automatically interact when the
-     * player enters the NPC's interaction
-     * radius.
-     */
-
     if (
         distance <=
         npc.interactionDistance
     ) {
 
         clearMovementTarget();
-
 
         handleInteraction();
 
@@ -1139,11 +1208,6 @@ function handleEnemyClick(
 
     }
 
-
-    /*
-     * Selecting an enemy replaces
-     * any previous movement command.
-     */
 
     clearMovementTarget();
 
@@ -1257,14 +1321,6 @@ function handleGroundClick(
 
     }
 
-
-    /*
-     * A direct ground click is an explicit
-     * movement command.
-     *
-     * Cancel combat BEFORE installing
-     * the new movement target.
-     */
 
     stopCombat();
 
@@ -1496,17 +1552,32 @@ playButton.addEventListener(
 
 
 /*
- * NPC MUST be first.
+ * NPC MUST remain the first click listener.
  *
  * If the click is determined to be
  * an NPC click, stopImmediatePropagation()
- * prevents the ground/item/enemy handlers
+ * prevents the other world click handlers
  * from processing the same click.
  */
 
 world.addEventListener(
     "click",
     handleNPCClick
+);
+
+
+/*
+ * NPC hover detection.
+ *
+ * The NPC is not a DOM element like an
+ * enemy or world item, so we manually change
+ * the cursor when the mouse enters the NPC's
+ * clickable world-space radius.
+ */
+
+world.addEventListener(
+    "mousemove",
+    updateNPCHoverCursor
 );
 
 

@@ -1,3 +1,68 @@
+/* =======================================================
+   INVENTORY LISTENERS
+   ======================================================= */
+
+const inventoryListeners = new Set();
+
+
+export function subscribeToInventoryChanges(
+    listener
+) {
+
+    if (
+        typeof listener !== "function"
+    ) {
+        return () => {};
+    }
+
+    inventoryListeners.add(
+        listener
+    );
+
+    return () => {
+
+        inventoryListeners.delete(
+            listener
+        );
+
+    };
+
+}
+
+
+function notifyInventoryChanged(
+    inventory
+) {
+
+    for (
+        const listener
+        of inventoryListeners
+    ) {
+
+        try {
+
+            listener(
+                inventory
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Inventory listener error:",
+                error
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =======================================================
+   CREATE INVENTORY
+   ======================================================= */
+
 export function createInventory() {
 
     return {
@@ -123,6 +188,10 @@ export function addItem(
 
         existingItem.quantity += quantity;
 
+        notifyInventoryChanged(
+            inventory
+        );
+
         return true;
     }
 
@@ -137,6 +206,10 @@ export function addItem(
         quantity: quantity
 
     });
+
+    notifyInventoryChanged(
+        inventory
+    );
 
     return true;
 }
@@ -185,6 +258,10 @@ export function removeItem(
             );
     }
 
+    notifyInventoryChanged(
+        inventory
+    );
+
     return true;
 }
 
@@ -200,4 +277,9 @@ export function clearInventory(inventory) {
     }
 
     inventory.items = [];
+
+    notifyInventoryChanged(
+        inventory
+    );
+
 }

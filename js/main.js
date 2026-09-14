@@ -1,5 +1,6 @@
 import {
-    setCharacterInterfaceAvailability
+    setCharacterInterfaceAvailability,
+    refreshCharacterInterface
 } from "./characterInterface.js";
 
 import {
@@ -977,6 +978,17 @@ function gatherResourceNode(
     }
 
 
+    /*
+     * Refresh the open Character interface immediately
+     * after the inventory changes.
+     *
+     * This is what makes Xenium Ore update from
+     * x1 -> x2 without changing Character tabs.
+     */
+
+    refreshCharacterInterface();
+
+
     const xpReward =
         Number.isFinite(
             resourceNode.xpReward
@@ -1610,6 +1622,14 @@ function attemptWorldItemPickup(
         return false;
 
     }
+
+
+    /*
+     * Refresh the open Character interface immediately
+     * after the world item enters the inventory.
+     */
+
+    refreshCharacterInterface();
 
 
     removeWorldItem(

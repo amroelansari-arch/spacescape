@@ -83,6 +83,17 @@ import {
     isWorldObjectUIOpen
 } from "./worldObjectUI.js";
 
+import {
+    createResourceNode,
+    getResourceNodes,
+    getResourceNodeById,
+    getDistanceToResourceNode
+} from "./resourceNodes.js";
+
+import {
+    renderResourceNodes
+} from "./resourceRenderer.js";
+
 
 /* =======================================================
    DOM ELEMENTS
@@ -530,6 +541,21 @@ function initializeWorldObjects() {
 
 
 /* =======================================================
+   INITIALIZE RESOURCE NODES
+   ======================================================= */
+
+function initializeResourceNodes() {
+
+    createResourceNode(
+        "xenium_ore",
+        1250,
+        800
+    );
+
+}
+
+
+/* =======================================================
    WORLD OBJECT INTERACTION
    ======================================================= */
 
@@ -567,11 +593,6 @@ function handleWorldObjectClick(
     }
 
 
-    /*
-     * Do not allow world interaction while
-     * an object UI is already open.
-     */
-
     if (isWorldObjectUIOpen()) {
         return;
     }
@@ -593,11 +614,6 @@ function handleWorldObjectClick(
     let clickedObject = null;
 
 
-    /*
-     * First try the actual rendered
-     * world-object element.
-     */
-
     if (objectElement) {
 
         const worldObjectId =
@@ -615,11 +631,6 @@ function handleWorldObjectClick(
 
     }
 
-
-    /*
-     * Fallback to world-coordinate
-     * detection.
-     */
 
     if (!clickedObject) {
 
@@ -682,11 +693,6 @@ function handleWorldObjectClick(
     }
 
 
-    /*
-     * This click belongs to the
-     * world object.
-     */
-
     event.stopImmediatePropagation();
 
 
@@ -702,11 +708,6 @@ function handleWorldObjectClick(
             clickedObject
         );
 
-
-    /*
-     * Already close enough:
-     * interact immediately.
-     */
 
     if (
         distanceToObject <=
@@ -750,12 +751,6 @@ function handleWorldObjectClick(
 
     clearMovementTarget();
 
-
-    /*
-     * Arrival distance is deliberately 0.
-     * updateWorldObjectTarget() handles the
-     * interaction radius itself.
-     */
 
     setMovementTarget(
         "world_object",
@@ -839,6 +834,302 @@ function updateWorldObjectTarget() {
         );
 
     }
+
+}
+
+
+/* =======================================================
+   RESOURCE NODE TARGET
+   ======================================================= */
+
+function updateResourceNodeTarget() {
+
+    if (player.isDead) {
+        return;
+    }
+
+
+    const target =
+        getMovementTarget();
+
+
+    if (
+        !target ||
+        target.type !== "resource"
+    ) {
+        return;
+    }
+
+
+    const resourceNode =
+        getResourceNodeById(
+            target.id
+        );
+
+
+    if (!resourceNode) {
+
+        clearMovementTarget();
+
+        return;
+
+    }
+
+
+    target.x =
+        resourceNode.position.x;
+
+    target.y =
+        resourceNode.position.y;
+
+
+    if (
+        resourceNode.depleted
+    ) {
+
+        clearMovementTarget();
+
+        return;
+
+    }
+
+
+    const distance =
+        getDistanceToResourceNode(
+            player,
+            resourceNode
+        );
+
+
+    /*
+     * Batch 2 stops here.
+     *
+     * We have NOT added the actual gathering
+     * action yet.
+     */
+
+    if (
+        distance <=
+        resourceNode.gatheringDistance
+    ) {
+
+        clearMovementTarget();
+
+
+        console.log(
+            `${resourceNode.name}: Gathering range reached.`
+        );
+
+    }
+
+}
+
+
+/* =======================================================
+   RESOURCE NODE CLICK
+   ======================================================= */
+
+function handleResourceNodeClick(
+    event
+) {
+
+    if (player.isDead) {
+        return;
+    }
+
+
+    if (isWorldObjectUIOpen()) {
+        return;
+    }
+
+
+    if (
+        dialogueController.isOpen()
+    ) {
+        return;
+    }
+
+
+    const resourceElement =
+        event.target.closest(
+            ".resource-node"
+        );
+
+
+    let clickedResourceNode = null;
+
+
+    /*
+     * First use the rendered element.
+     */
+
+    if (resourceElement) {
+
+        const resourceNodeId =
+            resourceElement.dataset.resourceNodeId;
+
+
+        if (resourceNodeId) {
+
+            clickedResourceNode =
+                getResourceNodeById(
+                    resourceNodeId
+                );
+
+        }
+
+    }
+
+
+    /*
+     * Fallback to coordinate detection.
+     */
+
+    if (!clickedResourceNode) {
+
+        const worldRect =
+            world.getBoundingClientRect();
+
+
+        const clickX =
+            event.clientX -
+            worldRect.left;
+
+
+        const clickY =
+            event.clientY -
+            worldRect.top;
+
+
+        const resourceNodes =
+            getResourceNodes();
+
+
+        for (
+            const resourceNode
+            of resourceNodes
+        ) {
+
+            if (
+                resourceNode.depleted
+            ) {
+                continue;
+            }
+
+
+            const distance =
+                Math.sqrt(
+                    Math.pow(
+                        clickX -
+                        resourceNode.position.x,
+                        2
+                    ) +
+                    Math.pow(
+                        clickY -
+                        resourceNode.position.y,
+                        2
+                    )
+                );
+
+
+            if (
+                distance <= 60
+            ) {
+
+                clickedResourceNode =
+                    resourceNode;
+
+                break;
+
+            }
+
+        }
+
+    }
+
+
+    if (!clickedResourceNode) {
+        return;
+    }
+
+
+    event.stopImmediatePropagation();
+
+
+    showClickMarker(
+        clickedResourceNode.position.x,
+        clickedResourceNode.position.y
+    );
+
+
+    const distance =
+        getDistanceToResourceNode(
+            player,
+            clickedResourceNode
+        );
+
+
+    /*
+     * If already in gathering range,
+     * simply stop here for Batch 2.
+     */
+
+    if (
+        distance <=
+        clickedResourceNode.gatheringDistance
+    ) {
+
+        clearMovementTarget();
+
+
+        console.log(
+            `${clickedResourceNode.name}: Already within gathering range.`
+        );
+
+
+        return;
+
+    }
+
+
+    const path =
+        findPath(
+            player.position.x,
+            player.position.y,
+            clickedResourceNode.position.x,
+            clickedResourceNode.position.y
+        );
+
+
+    if (!path) {
+
+        console.warn(
+            `Unable to find a route to ${clickedResourceNode.name}.`
+        );
+
+        return;
+
+    }
+
+
+    stopCombat();
+
+    clearMovementTarget();
+
+
+    setMovementTarget(
+        "resource",
+        clickedResourceNode.id,
+        clickedResourceNode.position.x,
+        clickedResourceNode.position.y,
+        0,
+        path
+    );
+
+
+    console.log(
+        `Walking to ${clickedResourceNode.name}.`
+    );
 
 }
 
@@ -962,6 +1253,55 @@ function updateInteractionCursor(
                 Math.pow(
                     mouseY -
                     worldObject.position.y,
+                    2
+                )
+            );
+
+
+        if (
+            distance <= 60
+        ) {
+
+            world.style.cursor =
+                "pointer";
+
+            return;
+
+        }
+
+    }
+
+
+    /*
+     * Check resource nodes.
+     */
+
+    const resourceNodes =
+        getResourceNodes();
+
+
+    for (
+        const resourceNode
+        of resourceNodes
+    ) {
+
+        if (
+            resourceNode.depleted
+        ) {
+            continue;
+        }
+
+
+        const distance =
+            Math.sqrt(
+                Math.pow(
+                    mouseX -
+                    resourceNode.position.x,
+                    2
+                ) +
+                Math.pow(
+                    mouseY -
+                    resourceNode.position.y,
                     2
                 )
             );
@@ -1356,11 +1696,11 @@ function handleNPCClick(
                     interactable.position.x,
                     2
                 ) +
-                Math.pow(
-                    clickY -
-                    interactable.position.y,
-                    2
-                )
+                    Math.pow(
+                        clickY -
+                        interactable.position.y,
+                        2
+                    )
             );
 
 
@@ -1403,11 +1743,11 @@ function handleNPCClick(
                 npc.position.x,
                 2
             ) +
-            Math.pow(
-                player.position.y -
-                npc.position.y,
-                2
-            )
+                Math.pow(
+                    player.position.y -
+                    npc.position.y,
+                    2
+                )
         );
 
 
@@ -1525,11 +1865,11 @@ function updateNPCTarget() {
                 npc.position.x,
                 2
             ) +
-            Math.pow(
-                player.position.y -
-                npc.position.y,
-                2
-            )
+                Math.pow(
+                    player.position.y -
+                    npc.position.y,
+                    2
+                )
         );
 
 
@@ -1688,6 +2028,17 @@ function handleGroundClick(
     }
 
 
+    const resourceElement =
+        event.target.closest(
+            ".resource-node"
+        );
+
+
+    if (resourceElement) {
+        return;
+    }
+
+
     const worldRect =
         world.getBoundingClientRect();
 
@@ -1781,11 +2132,6 @@ function handleGroundClick(
 
 function updateInteraction() {
 
-    /*
-     * Hide the normal interaction prompt
-     * while a world-object window is open.
-     */
-
     if (isWorldObjectUIOpen()) {
 
         if (interactionPrompt) {
@@ -1830,12 +2176,6 @@ function handleInteraction() {
     }
 
 
-    /*
-     * If the world-object UI is already
-     * open, E should not trigger another
-     * interaction.
-     */
-
     if (isWorldObjectUIOpen()) {
         return;
     }
@@ -1847,10 +2187,6 @@ function handleInteraction() {
         return;
     }
 
-
-    /*
-     * NPC interaction has priority.
-     */
 
     const interactable =
         getNearbyInteractable(
@@ -1868,10 +2204,6 @@ function handleInteraction() {
 
     }
 
-
-    /*
-     * Then check world objects.
-     */
 
     const worldObject =
         getNearbyWorldObject(
@@ -1942,6 +2274,9 @@ function updateGame() {
     updateWorldObjectTarget();
 
 
+    updateResourceNodeTarget();
+
+
     updateNPCTarget();
 
 
@@ -1961,6 +2296,11 @@ function updateGame() {
 
 
     renderWorldObjects(
+        world
+    );
+
+
+    renderResourceNodes(
         world
     );
 
@@ -2050,6 +2390,17 @@ world.addEventListener(
 
 
 /*
+ * Resource nodes are checked before
+ * normal ground movement.
+ */
+
+world.addEventListener(
+    "click",
+    handleResourceNodeClick
+);
+
+
+/*
  * NPCs are checked next.
  */
 
@@ -2094,11 +2445,6 @@ window.addEventListener(
         keys[event.key] = true;
 
 
-        /*
-         * Escape closes the world-object
-         * interaction window.
-         */
-
         if (
             event.key === "Escape"
         ) {
@@ -2115,11 +2461,6 @@ window.addEventListener(
 
         }
 
-
-        /*
-         * E interacts with the nearest
-         * available object or NPC.
-         */
 
         if (
             event.key === "e" ||
@@ -2213,6 +2554,9 @@ initializeWorldItems();
 
 
 initializeWorldObjects();
+
+
+initializeResourceNodes();
 
 
 gameLoop();

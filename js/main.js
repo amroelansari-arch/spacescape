@@ -14,7 +14,9 @@ import {
 } from "./player.js";
 
 import {
-    updateCamera
+    updateCamera,
+    WORLD_WIDTH,
+    WORLD_HEIGHT
 } from "./world.js";
 
 import {
@@ -41,7 +43,6 @@ import {
 
 import {
     createWorldItem,
-    getWorldItems,
     findWorldItemById,
     removeWorldItem
 } from "./itemWorld.js";
@@ -82,11 +83,6 @@ const playButton =
 const world =
     document.getElementById(
         "world"
-    );
-
-const playerElement =
-    document.getElementById(
-        "player"
     );
 
 const interactionPrompt =
@@ -149,35 +145,46 @@ function createDeathOverlay() {
         return;
     }
 
+
     deathOverlay =
         document.createElement("div");
+
 
     deathOverlay.id =
         "spacescape-death-overlay";
 
+
     deathOverlay.style.position =
         "fixed";
+
 
     deathOverlay.style.inset =
         "0";
 
+
     deathOverlay.style.display =
         "none";
+
 
     deathOverlay.style.alignItems =
         "center";
 
+
     deathOverlay.style.justifyContent =
         "center";
+
 
     deathOverlay.style.flexDirection =
         "column";
 
+
     deathOverlay.style.background =
         "rgba(0, 0, 0, 0.78)";
 
+
     deathOverlay.style.zIndex =
         "10000";
+
 
     deathOverlay.style.fontFamily =
         "Arial, sans-serif";
@@ -186,20 +193,26 @@ function createDeathOverlay() {
     const title =
         document.createElement("div");
 
+
     title.textContent =
         "YOU DIED";
+
 
     title.style.color =
         "#ffffff";
 
+
     title.style.fontSize =
         "48px";
+
 
     title.style.fontWeight =
         "900";
 
+
     title.style.marginBottom =
         "20px";
+
 
     title.style.textShadow =
         "0 3px 8px #000000";
@@ -208,17 +221,22 @@ function createDeathOverlay() {
     respawnButton =
         document.createElement("button");
 
+
     respawnButton.textContent =
         "RESPAWN";
+
 
     respawnButton.style.padding =
         "12px 28px";
 
+
     respawnButton.style.fontSize =
         "16px";
 
+
     respawnButton.style.fontWeight =
         "bold";
+
 
     respawnButton.style.cursor =
         "pointer";
@@ -234,9 +252,11 @@ function createDeathOverlay() {
         title
     );
 
+
     deathOverlay.appendChild(
         respawnButton
     );
+
 
     document.body.appendChild(
         deathOverlay
@@ -261,6 +281,7 @@ function hideDeathScreen() {
         return;
     }
 
+
     deathOverlay.style.display =
         "none";
 
@@ -276,6 +297,7 @@ function handleRespawn() {
     if (!player.isDead) {
         return;
     }
+
 
     respawnPlayer();
 
@@ -390,6 +412,7 @@ function attemptWorldItemPickup(
             worldItem.itemId
         );
 
+
         clearMovementTarget();
 
         return false;
@@ -410,6 +433,7 @@ function attemptWorldItemPickup(
         console.log(
             "Inventory is full. Item remains in the world."
         );
+
 
         clearMovementTarget();
 
@@ -484,6 +508,7 @@ function updateWorldItemTarget() {
 
     target.x =
         worldItem.position.x;
+
 
     target.y =
         worldItem.position.y;
@@ -566,6 +591,7 @@ function handleWorldItemClick(
         attemptWorldItemPickup(
             worldItem
         );
+
 
         return;
 
@@ -673,8 +699,11 @@ function handleGroundClick(
 
 
     /*
-     * Do not treat clicks on items or enemies
-     * as ordinary ground clicks.
+     * Items and enemies have their own
+     * click behavior.
+     *
+     * Do not convert those clicks into
+     * ordinary movement commands.
      */
 
     const itemElement =
@@ -683,43 +712,25 @@ function handleGroundClick(
         );
 
 
+    if (itemElement) {
+        return;
+    }
+
+
     const enemyElement =
         event.target.closest(
             ".enemy"
         );
 
 
-    if (
-        itemElement ||
-        enemyElement
-    ) {
-
+    if (enemyElement) {
         return;
-
     }
 
 
     /*
-     * Only the actual world background
-     * should generate a ground movement target.
-     */
-
-    if (
-        event.target !== world
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Convert the screen click into
-     * world coordinates.
-     *
-     * Because the camera moves the world
-     * element itself, getBoundingClientRect()
-     * gives us the correct visible world offset.
+     * Determine the clicked location relative
+     * to the visible world.
      */
 
     const worldRect =
@@ -737,15 +748,15 @@ function handleGroundClick(
 
 
     /*
-     * Keep the destination inside the
-     * playable world.
+     * Keep the destination inside
+     * the playable world.
      */
 
     targetX =
         Math.max(
             0,
             Math.min(
-                2400,
+                WORLD_WIDTH,
                 targetX
             )
         );
@@ -755,19 +766,15 @@ function handleGroundClick(
         Math.max(
             0,
             Math.min(
-                1800,
+                WORLD_HEIGHT,
                 targetY
             )
         );
 
 
     /*
-     * Replace any previous automatic target.
-     *
-     * This is what gives us retargeting:
-     *
-     * click A → walk toward A
-     * click B → immediately walk toward B
+     * Replace any existing automatic
+     * movement target.
      */
 
     setMovementTarget(
@@ -799,6 +806,7 @@ function updateInteraction() {
                 "none";
 
         }
+
 
         return;
 
@@ -867,6 +875,7 @@ function updateCombatSystem() {
             showDeathScreen();
         }
 
+
         return;
 
     }
@@ -895,10 +904,6 @@ function updateGame() {
     }
 
 
-    /*
-     * Item targets are checked after movement.
-     */
-
     updateWorldItemTarget();
 
 
@@ -910,13 +915,18 @@ function updateGame() {
 
     drawPlayer();
 
+
     renderEnemies();
+
 
     renderWorldItems();
 
+
     updatePlayerHUD();
 
+
     updateInteraction();
+
 
     updateCamera(
         player,
@@ -940,6 +950,7 @@ function updateGame() {
 function gameLoop() {
 
     updateGame();
+
 
     requestAnimationFrame(
         gameLoop
@@ -969,6 +980,7 @@ function startGame() {
 
     drawPlayer();
 
+
     updateGame();
 
 }
@@ -984,29 +996,17 @@ playButton.addEventListener(
 );
 
 
-/*
- * Item clicks.
- */
-
 world.addEventListener(
     "click",
     handleWorldItemClick
 );
 
 
-/*
- * Enemy clicks.
- */
-
 world.addEventListener(
     "click",
     handleEnemyClick
 );
 
-
-/*
- * Empty-world clicks.
- */
 
 world.addEventListener(
     "click",
@@ -1027,6 +1027,7 @@ window.addEventListener(
         ) {
 
             event.preventDefault();
+
 
             handleInteraction();
 
@@ -1095,8 +1096,11 @@ setCharacterInterfaceAvailability(
 
 createDeathOverlay();
 
+
 initializeEnemies();
 
+
 initializeWorldItems();
+
 
 gameLoop();

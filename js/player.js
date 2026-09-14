@@ -55,8 +55,6 @@ export const player = {
 
     /*
      * Current passive combat style.
-     *
-     * Accurate is the default.
      */
 
     combatStyle:
@@ -68,9 +66,6 @@ export const player = {
 
     /*
      * Individual SpaceScape skills.
-     *
-     * These are the authoritative progression
-     * system for player skills.
      */
 
     skills:
@@ -94,16 +89,9 @@ export const player = {
         /*
          * Automatic world-interaction target.
          *
-         * This is intentionally generic so the
-         * same system can later be used for:
-         *
-         * items
-         * enemies
-         * NPCs
-         * resource nodes
-         * doors
-         * containers
-         * other world objects
+         * arrivalDistance determines how close
+         * the player must get before the target
+         * is considered reached.
          */
 
         target: null
@@ -121,7 +109,8 @@ export function setMovementTarget(
     type,
     id,
     x,
-    y
+    y,
+    arrivalDistance = 0
 ) {
 
     if (
@@ -136,6 +125,16 @@ export function setMovementTarget(
     }
 
 
+    if (
+        !Number.isFinite(arrivalDistance) ||
+        arrivalDistance < 0
+    ) {
+
+        arrivalDistance = 0;
+
+    }
+
+
     player.movement.target = {
 
         type,
@@ -145,7 +144,9 @@ export function setMovementTarget(
 
         x,
 
-        y
+        y,
+
+        arrivalDistance
 
     };
 
@@ -488,8 +489,7 @@ export function updatePlayerMovement() {
 
 
     /*
-     * Manual movement takes priority over
-     * automatic world-object movement.
+     * Manual movement takes priority.
      */
 
     if (
@@ -533,13 +533,48 @@ export function updatePlayerMovement() {
 
 
         /*
-         * Stop automatically when close enough.
+         * Ground targets normally use zero
+         * arrival distance.
          *
-         * The interaction system determines
-         * what happens at the target.
+         * Other systems can provide their
+         * own interaction distance.
          */
 
-        if (distance <= 70) {
+        const arrivalDistance =
+            Number.isFinite(
+                target.arrivalDistance
+            )
+                ? target.arrivalDistance
+                : 0;
+
+
+        /*
+         * If the destination has been reached,
+         * stop movement.
+         */
+
+        if (
+            distance <= arrivalDistance
+        ) {
+
+            /*
+             * For an exact ground destination,
+             * place the player exactly at the
+             * requested coordinate.
+             */
+
+            if (
+                target.type === "ground"
+            ) {
+
+                player.position.x =
+                    target.x;
+
+                player.position.y =
+                    target.y;
+
+            }
+
 
             player.movement.moving =
                 false;
@@ -548,6 +583,10 @@ export function updatePlayerMovement() {
 
         }
 
+
+        /*
+         * Calculate direction toward target.
+         */
 
         dx =
             targetDX /
@@ -600,9 +639,61 @@ export function updatePlayerMovement() {
         player.movement.speed;
 
 
+    const currentTarget =
+        player.movement.target;
+
+
+    /*
+     * For an exact ground destination, don't
+     * allow a five-pixel movement step to
+     * overshoot the clicked point.
+     */
+
+    if (
+        currentTarget &&
+        currentTarget.type === "ground"
+    ) {
+
+        const remainingX =
+            currentTarget.x -
+            player.position.x;
+
+        const remainingY =
+            currentTarget.y -
+            player.position.y;
+
+        const remainingDistance =
+            Math.sqrt(
+                remainingX * remainingX +
+                remainingY * remainingY
+            );
+
+
+        if (
+            remainingDistance <=
+            player.movement.speed
+        ) {
+
+            player.position.x =
+                currentTarget.x;
+
+            player.position.y =
+                currentTarget.y;
+
+            player.movement.moving =
+                false;
+
+            return;
+
+        }
+
+    }
+
+
     const newX =
         player.position.x +
         dx;
+
 
     const newY =
         player.position.y +
@@ -725,15 +816,6 @@ export function updatePlayerHUD() {
             "energy-bar"
         );
 
-
-    /*
-     * The old generic player level and XP system
-     * has been retired.
-     *
-     * Until the permanent Character Interface is
-     * built, the existing HUD uses Attack as the
-     * temporary primary combat progression display.
-     */
 
     const attackLevel =
         getPlayerAttackLevel();

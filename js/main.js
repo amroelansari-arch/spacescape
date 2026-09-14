@@ -131,6 +131,190 @@ const dialogueController =
 
 
 /* =======================================================
+   CLICK MARKER
+   ======================================================= */
+
+let clickMarker = null;
+
+
+let clickMarkerTimer = null;
+
+
+function createClickMarker() {
+
+    if (clickMarker) {
+        return;
+    }
+
+
+    clickMarker =
+        document.createElement("div");
+
+
+    clickMarker.id =
+        "spacescape-click-marker";
+
+
+    clickMarker.style.position =
+        "absolute";
+
+
+    clickMarker.style.width =
+        "18px";
+
+
+    clickMarker.style.height =
+        "18px";
+
+
+    clickMarker.style.pointerEvents =
+        "none";
+
+
+    clickMarker.style.zIndex =
+        "5000";
+
+
+    clickMarker.style.transform =
+        "translate(-50%, -50%)";
+
+
+    clickMarker.style.opacity =
+        "0";
+
+
+    clickMarker.style.transition =
+        "opacity 0.15s ease";
+
+
+    /*
+     * Create the X using two diagonal
+     * elements rather than relying on a
+     * special font or image.
+     */
+
+    const lineOne =
+        document.createElement("div");
+
+
+    const lineTwo =
+        document.createElement("div");
+
+
+    for (
+        const line
+        of [lineOne, lineTwo]
+    ) {
+
+        line.style.position =
+            "absolute";
+
+        line.style.left =
+            "8px";
+
+        line.style.top =
+            "1px";
+
+        line.style.width =
+            "2px";
+
+        line.style.height =
+            "16px";
+
+        line.style.background =
+            "#ffffff";
+
+        line.style.boxShadow =
+            "0 0 3px #000000";
+
+        line.style.borderRadius =
+            "2px";
+
+    }
+
+
+    lineOne.style.transform =
+        "rotate(45deg)";
+
+
+    lineTwo.style.transform =
+        "rotate(-45deg)";
+
+
+    clickMarker.appendChild(
+        lineOne
+    );
+
+
+    clickMarker.appendChild(
+        lineTwo
+    );
+
+
+    world.appendChild(
+        clickMarker
+    );
+
+}
+
+
+/* =======================================================
+   SHOW CLICK MARKER
+   ======================================================= */
+
+function showClickMarker(
+    x,
+    y
+) {
+
+    createClickMarker();
+
+
+    clickMarker.style.left =
+        `${x}px`;
+
+
+    clickMarker.style.top =
+        `${y}px`;
+
+
+    clickMarker.style.opacity =
+        "1";
+
+
+    /*
+     * Restart the fade timer each time
+     * the player clicks somewhere.
+     */
+
+    if (clickMarkerTimer) {
+
+        clearTimeout(
+            clickMarkerTimer
+        );
+
+    }
+
+
+    clickMarkerTimer =
+        setTimeout(
+            () => {
+
+                if (clickMarker) {
+
+                    clickMarker.style.opacity =
+                        "0";
+
+                }
+
+            },
+            900
+        );
+
+}
+
+
+/* =======================================================
    DEATH UI
    ======================================================= */
 
@@ -269,6 +453,7 @@ function showDeathScreen() {
 
     createDeathOverlay();
 
+
     deathOverlay.style.display =
         "flex";
 
@@ -301,11 +486,15 @@ function handleRespawn() {
 
     respawnPlayer();
 
+
     hideDeathScreen();
+
 
     drawPlayer();
 
+
     updatePlayerHUD();
+
 
     updateGame();
 
@@ -387,12 +576,27 @@ function attemptWorldItemPickup(
     }
 
 
-    if (
-        !isWithinItemPickupRange(
-            player,
-            worldItem
-        )
-    ) {
+    /*
+     * Items are intentionally picked up
+     * when the player reaches the item itself.
+     */
+
+    const distance =
+        Math.sqrt(
+            Math.pow(
+                player.position.x -
+                worldItem.position.x,
+                2
+            ) +
+            Math.pow(
+                player.position.y -
+                worldItem.position.y,
+                2
+            )
+        );
+
+
+    if (distance > 10) {
 
         return false;
 
@@ -415,6 +619,7 @@ function attemptWorldItemPickup(
 
         clearMovementTarget();
 
+
         return false;
 
     }
@@ -436,6 +641,7 @@ function attemptWorldItemPickup(
 
 
         clearMovementTarget();
+
 
         return false;
 
@@ -506,6 +712,11 @@ function updateWorldItemTarget() {
     }
 
 
+    /*
+     * Keep target synchronized with
+     * the item's actual location.
+     */
+
     target.x =
         worldItem.position.x;
 
@@ -514,12 +725,41 @@ function updateWorldItemTarget() {
         worldItem.position.y;
 
 
-    if (
-        isWithinItemPickupRange(
-            player,
-            worldItem
-        )
-    ) {
+    /*
+     * Item target uses a zero-distance
+     * arrival rule. The player walks directly
+     * onto the item's location.
+     */
+
+    const distance =
+        Math.sqrt(
+            Math.pow(
+                player.position.x -
+                worldItem.position.x,
+                2
+            ) +
+            Math.pow(
+                player.position.y -
+                worldItem.position.y,
+                2
+            )
+        );
+
+
+    if (distance <= 10) {
+
+        /*
+         * Snap to the item's exact location
+         * before pickup.
+         */
+
+        player.position.x =
+            worldItem.position.x;
+
+
+        player.position.y =
+            worldItem.position.y;
+
 
         attemptWorldItemPickup(
             worldItem
@@ -581,12 +821,38 @@ function handleWorldItemClick(
     }
 
 
-    if (
-        isWithinItemPickupRange(
-            player,
-            worldItem
-        )
-    ) {
+    /*
+     * Show the marker directly on
+     * the clicked item.
+     */
+
+    showClickMarker(
+        worldItem.position.x,
+        worldItem.position.y
+    );
+
+
+    /*
+     * If already essentially on the item,
+     * pick it up immediately.
+     */
+
+    const distance =
+        Math.sqrt(
+            Math.pow(
+                player.position.x -
+                worldItem.position.x,
+                2
+            ) +
+            Math.pow(
+                player.position.y -
+                worldItem.position.y,
+                2
+            )
+        );
+
+
+    if (distance <= 10) {
 
         attemptWorldItemPickup(
             worldItem
@@ -598,11 +864,16 @@ function handleWorldItemClick(
     }
 
 
+    /*
+     * Walk directly onto the item.
+     */
+
     setMovementTarget(
         "item",
         worldItem.id,
         worldItem.position.x,
-        worldItem.position.y
+        worldItem.position.y,
+        0
     );
 
 
@@ -670,6 +941,20 @@ function handleEnemyClick(
     }
 
 
+    /*
+     * Show click marker at the enemy.
+     */
+
+    if (enemy.position) {
+
+        showClickMarker(
+            enemy.position.x,
+            enemy.position.y
+        );
+
+    }
+
+
     startCombat(
         player,
         enemy
@@ -699,11 +984,8 @@ function handleGroundClick(
 
 
     /*
-     * Items and enemies have their own
-     * click behavior.
-     *
-     * Do not convert those clicks into
-     * ordinary movement commands.
+     * Don't interpret item or enemy clicks
+     * as ground movement.
      */
 
     const itemElement =
@@ -729,8 +1011,8 @@ function handleGroundClick(
 
 
     /*
-     * Determine the clicked location relative
-     * to the visible world.
+     * Convert screen coordinates into
+     * world coordinates.
      */
 
     const worldRect =
@@ -746,11 +1028,6 @@ function handleGroundClick(
         event.clientY -
         worldRect.top;
 
-
-    /*
-     * Keep the destination inside
-     * the playable world.
-     */
 
     targetX =
         Math.max(
@@ -773,15 +1050,28 @@ function handleGroundClick(
 
 
     /*
-     * Replace any existing automatic
-     * movement target.
+     * Show the destination marker exactly
+     * where the player clicked.
+     */
+
+    showClickMarker(
+        targetX,
+        targetY
+    );
+
+
+    /*
+     * Ground movement uses zero arrival
+     * distance, meaning the player goes
+     * exactly to the clicked coordinate.
      */
 
     setMovementTarget(
         "ground",
         null,
         targetX,
-        targetY
+        targetY,
+        0
     );
 
 

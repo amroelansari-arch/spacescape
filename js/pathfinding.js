@@ -9,31 +9,34 @@ import {
    PATHFINDING SETTINGS
    ======================================================= */
 
-/*
- * Smaller cells = more precise paths.
- * Larger cells = faster calculations.
- *
- * 25px gives us a good balance for the current world.
- */
-
 const GRID_SIZE = 25;
-
-
-/*
- * Player collision half-width from world.js.
- *
- * The player is approximately 34px wide, so we
- * inflate obstacles by half that width plus a
- * small safety margin.
- */
 
 const PLAYER_HALF_SIZE = 17;
 
 const SAFETY_MARGIN = 3;
 
 
+/*
+ * How far around a requested destination we
+ * are willing to search for a usable grid cell.
+ *
+ * This is especially important near building
+ * corners where the clicked pixel may be walkable
+ * but the center of its grid cell is not.
+ */
+
+const DESTINATION_SEARCH_RADIUS = 10;
+
+
+/*
+ * Same idea for the player's starting position.
+ */
+
+const START_SEARCH_RADIUS = 6;
+
+
 /* =======================================================
-   GRID HELPERS
+   GRID DIMENSIONS
    ======================================================= */
 
 function getGridWidth() {
@@ -55,6 +58,10 @@ function getGridHeight() {
 
 }
 
+
+/* =======================================================
+   WORLD → GRID
+   ======================================================= */
 
 function worldToGrid(
     x,
@@ -88,6 +95,10 @@ function worldToGrid(
 }
 
 
+/* =======================================================
+   GRID → WORLD
+   ======================================================= */
+
 function gridToWorld(
     gridX,
     gridY
@@ -109,7 +120,7 @@ function gridToWorld(
 
 
 /* =======================================================
-   OBSTACLE INFLATION
+   BLOCKED POINT
    ======================================================= */
 
 function isPointBlocked(
@@ -166,6 +177,47 @@ function isPointBlocked(
 
 
 /* =======================================================
+   VALID WORLD POSITION
+   ======================================================= */
+
+function isValidWorldPosition(
+    x,
+    y
+) {
+
+    if (
+        x < PLAYER_HALF_SIZE ||
+        x >
+            WORLD_WIDTH -
+            PLAYER_HALF_SIZE
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        y < PLAYER_HALF_SIZE ||
+        y >
+            WORLD_HEIGHT -
+            PLAYER_HALF_SIZE
+    ) {
+
+        return false;
+
+    }
+
+
+    return !isPointBlocked(
+        x,
+        y
+    );
+
+}
+
+
+/* =======================================================
    LINE / RECTANGLE COLLISION
    ======================================================= */
 
@@ -202,7 +254,77 @@ function lineIntersectsRectangle(
 
 
     /*
-     * Liang-Barsky style segment test.
+     * Segment bounding-box rejection.
+     */
+
+    const segmentLeft =
+        Math.min(
+            x1,
+            x2
+        );
+
+    const segmentRight =
+        Math.max(
+            x1,
+            x2
+        );
+
+    const segmentTop =
+        Math.min(
+            y1,
+            y2
+        );
+
+    const segmentBottom =
+        Math.max(
+            y1,
+            y2
+        );
+
+
+    if (
+        segmentRight < left ||
+        segmentLeft > right ||
+        segmentBottom < top ||
+        segmentTop > bottom
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+     * If either endpoint is inside the
+     * inflated obstacle, the path is blocked.
+     */
+
+    if (
+        x1 >= left &&
+        x1 <= right &&
+        y1 >= top &&
+        y1 <= bottom
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        x2 >= left &&
+        x2 <= right &&
+        y2 >= top &&
+        y2 <= bottom
+    ) {
+
+        return true;
+
+    }
+
+
+    /*
+     * Parametric line-segment test.
      */
 
     const dx =
@@ -213,32 +335,55 @@ function lineIntersectsRectangle(
 
 
     let tMin = 0;
+
     let tMax = 1;
 
 
-    const checks = [
+    const boundaries = [
 
-        [-dx, x1 - left],
+        {
+            p: -dx,
+            q: x1 - left
+        },
 
-        [ dx, right - x1],
+        {
+            p: dx,
+            q: right - x1
+        },
 
-        [-dy, y1 - top],
+        {
+            p: -dy,
+            q: y1 - top
+        },
 
-        [ dy, bottom - y1]
+        {
+            p: dy,
+            q: bottom - y1
+        }
 
     ];
 
 
     for (
-        const [p, q]
-        of checks
+        const boundary
+        of boundaries
     ) {
+
+        const p =
+            boundary.p;
+
+        const q =
+            boundary.q;
+
 
         if (p === 0) {
 
             if (q < 0) {
+
                 return false;
+
             }
+
 
             continue;
 
@@ -252,21 +397,31 @@ function lineIntersectsRectangle(
         if (p < 0) {
 
             if (t > tMax) {
+
                 return false;
+
             }
 
+
             if (t > tMin) {
+
                 tMin = t;
+
             }
 
         } else {
 
             if (t < tMin) {
+
                 return false;
+
             }
 
+
             if (t < tMax) {
+
                 tMax = t;
+
             }
 
         }
@@ -280,7 +435,7 @@ function lineIntersectsRectangle(
 
 
 /* =======================================================
-   PATH CLEAR TEST
+   DIRECT PATH TEST
    ======================================================= */
 
 function isPathClear(
@@ -290,21 +445,25 @@ function isPathClear(
     y2
 ) {
 
-    /*
-     * World bounds.
-     */
-
     if (
         x2 < PLAYER_HALF_SIZE ||
-        x2 > WORLD_WIDTH - PLAYER_HALF_SIZE ||
+        x2 >
+            WORLD_WIDTH -
+            PLAYER_HALF_SIZE ||
         y2 < PLAYER_HALF_SIZE ||
-        y2 > WORLD_HEIGHT - PLAYER_HALF_SIZE
+        y2 >
+            WORLD_HEIGHT -
+            PLAYER_HALF_SIZE
     ) {
 
         return false;
 
     }
 
+
+    /*
+     * Check every obstacle.
+     */
 
     for (
         const obstacle
@@ -334,7 +493,7 @@ function isPathClear(
 
 
 /* =======================================================
-   GRID NODE
+   NODE
    ======================================================= */
 
 function createNode(
@@ -345,6 +504,7 @@ function createNode(
     return {
 
         x,
+
         y,
 
         g: Infinity,
@@ -382,15 +542,12 @@ function heuristic(
         );
 
 
-    /*
-     * Octile distance.
-     */
-
     const diagonal =
         Math.min(
             dx,
             dy
         );
+
 
     const straight =
         Math.max(
@@ -403,7 +560,8 @@ function heuristic(
     return (
         diagonal *
         Math.SQRT2
-    ) + straight;
+    ) +
+    straight;
 
 }
 
@@ -414,21 +572,53 @@ function heuristic(
 
 const NEIGHBOR_DIRECTIONS = [
 
-    { x:  1, y:  0, cost: 1 },
+    {
+        x: 1,
+        y: 0,
+        cost: 1
+    },
 
-    { x: -1, y:  0, cost: 1 },
+    {
+        x: -1,
+        y: 0,
+        cost: 1
+    },
 
-    { x:  0, y:  1, cost: 1 },
+    {
+        x: 0,
+        y: 1,
+        cost: 1
+    },
 
-    { x:  0, y: -1, cost: 1 },
+    {
+        x: 0,
+        y: -1,
+        cost: 1
+    },
 
-    { x:  1, y:  1, cost: Math.SQRT2 },
+    {
+        x: 1,
+        y: 1,
+        cost: Math.SQRT2
+    },
 
-    { x: -1, y:  1, cost: Math.SQRT2 },
+    {
+        x: -1,
+        y: 1,
+        cost: Math.SQRT2
+    },
 
-    { x:  1, y: -1, cost: Math.SQRT2 },
+    {
+        x: 1,
+        y: -1,
+        cost: Math.SQRT2
+    },
 
-    { x: -1, y: -1, cost: Math.SQRT2 }
+    {
+        x: -1,
+        y: -1,
+        cost: Math.SQRT2
+    }
 
 ];
 
@@ -448,7 +638,216 @@ function nodeKey(
 
 
 /* =======================================================
-   RECONSTRUCT PATH
+   GRID CELL VALIDATION
+   ======================================================= */
+
+function isGridCellWalkable(
+    gridX,
+    gridY
+) {
+
+    if (
+        gridX < 0 ||
+        gridX >= getGridWidth() ||
+        gridY < 0 ||
+        gridY >= getGridHeight()
+    ) {
+
+        return false;
+
+    }
+
+
+    const worldPoint =
+        gridToWorld(
+            gridX,
+            gridY
+        );
+
+
+    return isValidWorldPosition(
+        worldPoint.x,
+        worldPoint.y
+    );
+
+}
+
+
+/* =======================================================
+   FIND NEAREST WALKABLE CELL
+   ======================================================= */
+
+function findNearestWalkableCell(
+    requestedGridX,
+    requestedGridY,
+    searchRadius
+) {
+
+    /*
+     * If the requested cell itself works,
+     * use it immediately.
+     */
+
+    if (
+        isGridCellWalkable(
+            requestedGridX,
+            requestedGridY
+        )
+    ) {
+
+        return {
+
+            x: requestedGridX,
+
+            y: requestedGridY
+
+        };
+
+    }
+
+
+    let bestCell = null;
+
+    let bestDistance =
+        Infinity;
+
+
+    /*
+     * Search outward in rings.
+     */
+
+    for (
+        let radius = 1;
+        radius <= searchRadius;
+        radius++
+    ) {
+
+        for (
+            let x =
+                requestedGridX -
+                radius;
+
+            x <=
+                requestedGridX +
+                radius;
+
+            x++
+        ) {
+
+            for (
+                let y =
+                    requestedGridY -
+                    radius;
+
+                y <=
+                    requestedGridY +
+                    radius;
+
+                y++
+            ) {
+
+                /*
+                 * Only examine the current
+                 * outer ring.
+                 */
+
+                const distanceFromCenter =
+                    Math.max(
+                        Math.abs(
+                            x -
+                            requestedGridX
+                        ),
+                        Math.abs(
+                            y -
+                            requestedGridY
+                        )
+                    );
+
+
+                if (
+                    distanceFromCenter !==
+                    radius
+                ) {
+
+                    continue;
+
+                }
+
+
+                if (
+                    !isGridCellWalkable(
+                        x,
+                        y
+                    )
+                ) {
+
+                    continue;
+
+                }
+
+
+                const dx =
+                    x -
+                    requestedGridX;
+
+                const dy =
+                    y -
+                    requestedGridY;
+
+
+                const distance =
+                    Math.sqrt(
+                        dx * dx +
+                        dy * dy
+                    );
+
+
+                if (
+                    distance <
+                    bestDistance
+                ) {
+
+                    bestDistance =
+                        distance;
+
+
+                    bestCell = {
+
+                        x,
+
+                        y
+
+                    };
+
+                }
+
+            }
+
+        }
+
+
+        /*
+         * If we found something on this
+         * ring, it is the nearest usable
+         * area around the destination.
+         */
+
+        if (bestCell) {
+
+            return bestCell;
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =======================================================
+   RECONSTRUCT GRID PATH
    ======================================================= */
 
 function reconstructPath(
@@ -487,27 +886,13 @@ function reconstructPath(
 
 
 /* =======================================================
-   A* PATHFINDING
+   A* GRID PATH
    ======================================================= */
 
 function calculateGridPath(
-    start,
-    destination
+    startCell,
+    destinationCell
 ) {
-
-    const startGrid =
-        worldToGrid(
-            start.x,
-            start.y
-        );
-
-
-    const destinationGrid =
-        worldToGrid(
-            destination.x,
-            destination.y
-        );
-
 
     const gridWidth =
         getGridWidth();
@@ -527,8 +912,8 @@ function calculateGridPath(
 
     const startNode =
         createNode(
-            startGrid.x,
-            startGrid.y
+            startCell.x,
+            startCell.y
         );
 
 
@@ -538,8 +923,8 @@ function calculateGridPath(
 
     startNode.h =
         heuristic(
-            startGrid,
-            destinationGrid
+            startCell,
+            destinationCell
         );
 
 
@@ -563,6 +948,7 @@ function calculateGridPath(
 
     let iterations = 0;
 
+
     const maximumIterations =
         gridWidth *
         gridHeight;
@@ -571,17 +957,14 @@ function calculateGridPath(
     while (
         openSet.length > 0 &&
         iterations <
-        maximumIterations
+            maximumIterations
     ) {
 
         iterations++;
 
 
-        /*
-         * Find lowest f-score.
-         */
-
-        let currentIndex = 0;
+        let currentIndex =
+            0;
 
 
         for (
@@ -592,10 +975,13 @@ function calculateGridPath(
 
             if (
                 openSet[i].f <
-                openSet[currentIndex].f
+                openSet[
+                    currentIndex
+                ].f
             ) {
 
-                currentIndex = i;
+                currentIndex =
+                    i;
 
             }
 
@@ -634,15 +1020,11 @@ function calculateGridPath(
         );
 
 
-        /*
-         * Destination reached.
-         */
-
         if (
             current.x ===
-                destinationGrid.x &&
+                destinationCell.x &&
             current.y ===
-                destinationGrid.y
+                destinationCell.y
         ) {
 
             return reconstructPath(
@@ -696,22 +1078,10 @@ function calculateGridPath(
             }
 
 
-            const neighborWorld =
-                gridToWorld(
+            if (
+                !isGridCellWalkable(
                     neighborX,
                     neighborY
-                );
-
-
-            /*
-             * The player cannot occupy
-             * a blocked grid cell.
-             */
-
-            if (
-                isPointBlocked(
-                    neighborWorld.x,
-                    neighborWorld.y
                 )
             ) {
 
@@ -722,10 +1092,6 @@ function calculateGridPath(
 
             /*
              * Prevent diagonal corner cutting.
-             *
-             * Without this, the player could
-             * squeeze diagonally between two
-             * buildings.
              */
 
             if (
@@ -733,29 +1099,16 @@ function calculateGridPath(
                 direction.y !== 0
             ) {
 
-                const horizontal =
-                    gridToWorld(
+                if (
+                    !isGridCellWalkable(
                         current.x +
                             direction.x,
                         current.y
-                    );
-
-                const vertical =
-                    gridToWorld(
+                    ) ||
+                    !isGridCellWalkable(
                         current.x,
                         current.y +
                             direction.y
-                    );
-
-
-                if (
-                    isPointBlocked(
-                        horizontal.x,
-                        horizontal.y
-                    ) ||
-                    isPointBlocked(
-                        vertical.x,
-                        vertical.y
                     )
                 ) {
 
@@ -795,10 +1148,11 @@ function calculateGridPath(
                         {
                             x:
                                 neighborX,
+
                             y:
                                 neighborY
                         },
-                        destinationGrid
+                        destinationCell
                     );
 
 
@@ -862,13 +1216,15 @@ function calculateGridPath(
 
 function smoothPath(
     start,
-    path,
+    gridPath,
     destination
 ) {
 
     if (
-        !Array.isArray(path) ||
-        path.length === 0
+        !Array.isArray(
+            gridPath
+        ) ||
+        gridPath.length === 0
     ) {
 
         return null;
@@ -880,14 +1236,18 @@ function smoothPath(
 
         {
             x: start.x,
+
             y: start.y
         },
 
-        ...path,
+        ...gridPath,
 
         {
-            x: destination.x,
-            y: destination.y
+            x:
+                destination.x,
+
+            y:
+                destination.y
         }
 
     ];
@@ -896,7 +1256,8 @@ function smoothPath(
     const smoothed = [];
 
 
-    let currentIndex = 0;
+    let currentIndex =
+        0;
 
 
     while (
@@ -908,26 +1269,28 @@ function smoothPath(
             currentIndex + 1;
 
 
-        /*
-         * Look as far ahead as possible.
-         *
-         * If the player can travel directly
-         * to that point, intermediate grid
-         * points are unnecessary.
-         */
-
         for (
             let i =
                 currentIndex + 2;
-            i < points.length;
+
+            i <
+                points.length;
+
             i++
         ) {
 
             if (
                 isPathClear(
-                    points[currentIndex].x,
-                    points[currentIndex].y,
+                    points[
+                        currentIndex
+                    ].x,
+
+                    points[
+                        currentIndex
+                    ].y,
+
                     points[i].x,
+
                     points[i].y
                 )
             ) {
@@ -963,7 +1326,83 @@ function smoothPath(
 
 
 /* =======================================================
-   PUBLIC PATHFINDING FUNCTION
+   REMOVE REDUNDANT POINTS
+   ======================================================= */
+
+function removeRedundantPoints(
+    path
+) {
+
+    if (
+        !Array.isArray(path) ||
+        path.length <= 1
+    ) {
+
+        return path;
+
+    }
+
+
+    const result = [];
+
+
+    for (
+        const point
+        of path
+    ) {
+
+        const previous =
+            result[
+                result.length - 1
+            ];
+
+
+        if (!previous) {
+
+            result.push(
+                point
+            );
+
+            continue;
+
+        }
+
+
+        const distance =
+            Math.sqrt(
+                Math.pow(
+                    point.x -
+                    previous.x,
+                    2
+                ) +
+                Math.pow(
+                    point.y -
+                    previous.y,
+                    2
+                )
+            );
+
+
+        if (
+            distance >= 5
+        ) {
+
+            result.push(
+                point
+            );
+
+        }
+
+    }
+
+
+    return result;
+
+}
+
+
+/* =======================================================
+   PUBLIC FIND PATH
    ======================================================= */
 
 export function findPath(
@@ -983,14 +1422,6 @@ export function findPath(
         return null;
 
     }
-
-
-    const start = {
-
-        x: startX,
-        y: startY
-
-    };
 
 
     const destination = {
@@ -1016,10 +1447,18 @@ export function findPath(
     };
 
 
-    /*
-     * If the destination can be reached
-     * directly, don't run A* at all.
-     */
+    const start = {
+
+        x: startX,
+
+        y: startY
+
+    };
+
+
+    /* ===================================================
+       DIRECT ROUTE
+       =================================================== */
 
     if (
         isPathClear(
@@ -1033,8 +1472,11 @@ export function findPath(
         return [
 
             {
-                x: destination.x,
-                y: destination.y
+                x:
+                    destination.x,
+
+                y:
+                    destination.y
             }
 
         ];
@@ -1042,16 +1484,167 @@ export function findPath(
     }
 
 
+    /* ===================================================
+       CONVERT TO GRID
+       =================================================== */
+
+    const requestedStartCell =
+        worldToGrid(
+            start.x,
+            start.y
+        );
+
+
+    const requestedDestinationCell =
+        worldToGrid(
+            destination.x,
+            destination.y
+        );
+
+
+    /* ===================================================
+       RECOVER BLOCKED START CELL
+       =================================================== */
+
+    const startCell =
+        findNearestWalkableCell(
+            requestedStartCell.x,
+            requestedStartCell.y,
+            START_SEARCH_RADIUS
+        );
+
+
+    if (!startCell) {
+
+        console.warn(
+            "No usable starting pathfinding cell found."
+        );
+
+
+        return null;
+
+    }
+
+
+    /* ===================================================
+       RECOVER BLOCKED DESTINATION CELL
+       =================================================== */
+
+    const destinationCell =
+        findNearestWalkableCell(
+            requestedDestinationCell.x,
+            requestedDestinationCell.y,
+            DESTINATION_SEARCH_RADIUS
+        );
+
+
+    if (!destinationCell) {
+
+        console.warn(
+            "No usable destination pathfinding cell found."
+        );
+
+
+        return null;
+
+    }
+
+
+    /* ===================================================
+       GRID PATH
+       =================================================== */
+
     const gridPath =
         calculateGridPath(
-            start,
-            destination
+            startCell,
+            destinationCell
         );
 
 
     if (
         !gridPath
     ) {
+
+        /*
+         * There may still be a valid route
+         * to another nearby destination cell.
+         *
+         * Try nearby cells in order of distance.
+         */
+
+        const alternatives =
+            findNearbyDestinationCells(
+                requestedDestinationCell.x,
+                requestedDestinationCell.y,
+                DESTINATION_SEARCH_RADIUS
+            );
+
+
+        for (
+            const alternative
+            of alternatives
+        ) {
+
+            const alternativePath =
+                calculateGridPath(
+                    startCell,
+                    alternative
+                );
+
+
+            if (
+                alternativePath
+            ) {
+
+                const smoothed =
+                    smoothPath(
+                        start,
+                        alternativePath,
+                        destination
+                    );
+
+
+                if (
+                    smoothed &&
+                    smoothed.length > 0
+                ) {
+
+                    const finalPoint =
+                        smoothed[
+                            smoothed.length - 1
+                        ];
+
+
+                    if (
+                        isPathClear(
+                            finalPoint.x,
+                            finalPoint.y,
+                            destination.x,
+                            destination.y
+                        )
+                    ) {
+
+                        smoothed.push({
+                            x:
+                                destination.x,
+
+                            y:
+                                destination.y
+                        });
+
+                    }
+
+
+                    return removeRedundantPoints(
+                        smoothed
+                    );
+
+                }
+
+            }
+
+        }
+
 
         console.warn(
             "No valid path found."
@@ -1062,6 +1655,10 @@ export function findPath(
 
     }
 
+
+    /* ===================================================
+       SMOOTH PATH
+       =================================================== */
 
     const smoothedPath =
         smoothPath(
@@ -1081,11 +1678,9 @@ export function findPath(
     }
 
 
-    /*
-     * Always finish at the exact clicked
-     * coordinate when the final segment
-     * is safe.
-     */
+    /* ===================================================
+       EXACT DESTINATION
+       =================================================== */
 
     const finalPoint =
         smoothedPath[
@@ -1103,20 +1698,122 @@ export function findPath(
     ) {
 
         smoothedPath.push({
-            x: destination.x,
-            y: destination.y
+
+            x:
+                destination.x,
+
+            y:
+                destination.y
+
         });
 
     }
 
 
-    return smoothedPath;
+    return removeRedundantPoints(
+        smoothedPath
+    );
 
 }
 
 
 /* =======================================================
-   PUBLIC PATH VALIDATION
+   FIND NEARBY DESTINATION CELLS
+   ======================================================= */
+
+function findNearbyDestinationCells(
+    centerX,
+    centerY,
+    radius
+) {
+
+    const cells = [];
+
+
+    for (
+        let x =
+            centerX -
+            radius;
+
+        x <=
+            centerX +
+            radius;
+
+        x++
+    ) {
+
+        for (
+            let y =
+                centerY -
+                radius;
+
+            y <=
+                centerY +
+                radius;
+
+            y++
+        ) {
+
+            if (
+                !isGridCellWalkable(
+                    x,
+                    y
+                )
+            ) {
+
+                continue;
+
+            }
+
+
+            const dx =
+                x -
+                centerX;
+
+            const dy =
+                y -
+                centerY;
+
+
+            const distance =
+                Math.sqrt(
+                    dx * dx +
+                    dy * dy
+                );
+
+
+            cells.push({
+
+                x,
+
+                y,
+
+                distance
+
+            });
+
+        }
+
+    }
+
+
+    cells.sort(
+        (
+            a,
+            b
+        ) =>
+            a.distance -
+            b.distance
+    );
+
+
+    return cells;
+
+}
+
+
+/* =======================================================
+   PUBLIC DIRECT WALK TEST
    ======================================================= */
 
 export function canWalkDirectly(

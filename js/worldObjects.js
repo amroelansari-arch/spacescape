@@ -57,12 +57,11 @@ export function createWorldObject({
 
 
     return worldObject;
-
 }
 
 
 /* =======================================================
-   GET WORLD OBJECTS
+   GET ALL WORLD OBJECTS
    ======================================================= */
 
 export function getWorldObjects() {
@@ -102,9 +101,7 @@ export function getNearbyWorldObject(
         !player ||
         !player.position
     ) {
-
         return null;
-
     }
 
 
@@ -115,17 +112,17 @@ export function getNearbyWorldObject(
 
 
     for (
-        const object
+        const worldObject
         of worldObjects
     ) {
 
         const dx =
             player.position.x -
-            object.position.x;
+            worldObject.position.x;
 
         const dy =
             player.position.y -
-            object.position.y;
+            worldObject.position.y;
 
 
         const distance =
@@ -137,12 +134,12 @@ export function getNearbyWorldObject(
 
         if (
             distance <=
-            object.interactionDistance &&
+            worldObject.interactionDistance &&
             distance < closestDistance
         ) {
 
             closestObject =
-                object;
+                worldObject;
 
             closestDistance =
                 distance;
@@ -158,7 +155,7 @@ export function getNearbyWorldObject(
 
 
 /* =======================================================
-   DISTANCE TO WORLD OBJECT
+   GET DISTANCE TO WORLD OBJECT
    ======================================================= */
 
 export function getDistanceToWorldObject(
@@ -172,9 +169,7 @@ export function getDistanceToWorldObject(
         !worldObject ||
         !worldObject.position
     ) {
-
         return Infinity;
-
     }
 
 

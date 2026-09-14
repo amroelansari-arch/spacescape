@@ -73,6 +73,10 @@ import {
     getDistanceToWorldObject
 } from "./worldObjects.js";
 
+import {
+    renderWorldObjects
+} from "./worldObjectRenderer.js";
+
 
 /* =======================================================
    DOM ELEMENTS
@@ -510,8 +514,8 @@ function initializeWorldObjects() {
         id: "colony_terminal_01",
         type: "terminal",
         name: "Colony Terminal",
-        x: 1100,
-        y: 650,
+        x: 1150,
+        y: 800,
         interactionDistance: 85,
         interactionType: "terminal"
     });
@@ -532,7 +536,10 @@ function interactWithWorldObject(
     }
 
 
-    if (worldObject.interactionType === "terminal") {
+    if (
+        worldObject.interactionType ===
+        "terminal"
+    ) {
 
         console.log(
             `${worldObject.name}: Access terminal.`
@@ -570,55 +577,93 @@ function handleWorldObjectClick(
     }
 
 
-    const worldRect =
-        world.getBoundingClientRect();
-
-
-    const clickX =
-        event.clientX -
-        worldRect.left;
-
-
-    const clickY =
-        event.clientY -
-        worldRect.top;
-
-
-    const worldObjects =
-        getWorldObjects();
+    const objectElement =
+        event.target.closest(
+            ".world-object"
+        );
 
 
     let clickedObject = null;
 
 
-    for (
-        const worldObject
-        of worldObjects
-    ) {
+    /*
+     * First try the actual rendered
+     * world-object element.
+     */
 
-        const distance =
-            Math.sqrt(
-                Math.pow(
-                    clickX -
-                    worldObject.position.x,
-                    2
-                ) +
-                Math.pow(
-                    clickY -
-                    worldObject.position.y,
-                    2
-                )
-            );
+    if (objectElement) {
+
+        const worldObjectId =
+            objectElement.dataset.worldObjectId;
 
 
-        if (
-            distance <= 60
-        ) {
+        if (worldObjectId) {
 
             clickedObject =
-                worldObject;
+                getWorldObjectById(
+                    worldObjectId
+                );
 
-            break;
+        }
+
+    }
+
+
+    /*
+     * Fallback to world-coordinate
+     * detection.
+     */
+
+    if (!clickedObject) {
+
+        const worldRect =
+            world.getBoundingClientRect();
+
+
+        const clickX =
+            event.clientX -
+            worldRect.left;
+
+
+        const clickY =
+            event.clientY -
+            worldRect.top;
+
+
+        const worldObjects =
+            getWorldObjects();
+
+
+        for (
+            const worldObject
+            of worldObjects
+        ) {
+
+            const distance =
+                Math.sqrt(
+                    Math.pow(
+                        clickX -
+                        worldObject.position.x,
+                        2
+                    ) +
+                    Math.pow(
+                        clickY -
+                        worldObject.position.y,
+                        2
+                    )
+                );
+
+
+            if (
+                distance <= 60
+            ) {
+
+                clickedObject =
+                    worldObject;
+
+                break;
+
+            }
 
         }
 
@@ -631,8 +676,8 @@ function handleWorldObjectClick(
 
 
     /*
-     * The world-object click owns
-     * this click event.
+     * This click belongs to the
+     * world object.
      */
 
     event.stopImmediatePropagation();
@@ -658,9 +703,11 @@ function handleWorldObjectClick(
 
         clearMovementTarget();
 
+
         interactWithWorldObject(
             clickedObject
         );
+
 
         return;
 
@@ -779,10 +826,10 @@ function updateWorldObjectTarget() {
 
 
 /* =======================================================
-   WORLD OBJECT HOVER CURSOR
+   HOVER CURSOR
    ======================================================= */
 
-function updateWorldObjectHoverCursor(
+function updateInteractionCursor(
     event
 ) {
 
@@ -822,11 +869,54 @@ function updateWorldObjectHoverCursor(
         worldRect.top;
 
 
+    /*
+     * Check NPCs.
+     */
+
+    const interactables =
+        getInteractables();
+
+
+    for (
+        const interactable
+        of interactables
+    ) {
+
+        const distance =
+            Math.sqrt(
+                Math.pow(
+                    mouseX -
+                    interactable.position.x,
+                    2
+                ) +
+                Math.pow(
+                    mouseY -
+                    interactable.position.y,
+                    2
+                )
+            );
+
+
+        if (
+            distance <= 60
+        ) {
+
+            world.style.cursor =
+                "pointer";
+
+            return;
+
+        }
+
+    }
+
+
+    /*
+     * Check world objects.
+     */
+
     const worldObjects =
         getWorldObjects();
-
-
-    let hoveringObject = false;
 
 
     for (
@@ -853,26 +943,23 @@ function updateWorldObjectHoverCursor(
             distance <= 60
         ) {
 
-            hoveringObject = true;
+            world.style.cursor =
+                "pointer";
 
-            break;
+            return;
 
         }
 
     }
 
 
-    if (hoveringObject) {
+    /*
+     * Nothing interactive under
+     * the mouse.
+     */
 
-        world.style.cursor =
-            "pointer";
-
-    } else {
-
-        world.style.cursor =
-            "default";
-
-    }
+    world.style.cursor =
+        "default";
 
 }
 
@@ -1174,105 +1261,6 @@ function handleWorldItemClick(
         0,
         path
     );
-
-}
-
-
-/* =======================================================
-   NPC HOVER CURSOR
-   ======================================================= */
-
-function updateNPCHoverCursor(
-    event
-) {
-
-    if (player.isDead) {
-
-        world.style.cursor =
-            "default";
-
-        return;
-
-    }
-
-
-    if (
-        dialogueController.isOpen()
-    ) {
-
-        world.style.cursor =
-            "default";
-
-        return;
-
-    }
-
-
-    const worldRect =
-        world.getBoundingClientRect();
-
-
-    const mouseX =
-        event.clientX -
-        worldRect.left;
-
-
-    const mouseY =
-        event.clientY -
-        worldRect.top;
-
-
-    const interactables =
-        getInteractables();
-
-
-    let hoveringNPC = false;
-
-
-    for (
-        const interactable
-        of interactables
-    ) {
-
-        const distance =
-            Math.sqrt(
-                Math.pow(
-                    mouseX -
-                    interactable.position.x,
-                    2
-                ) +
-                Math.pow(
-                    mouseY -
-                    interactable.position.y,
-                    2
-                )
-            );
-
-
-        if (
-            distance <= 60
-        ) {
-
-            hoveringNPC = true;
-
-            break;
-
-        }
-
-    }
-
-
-    if (hoveringNPC) {
-
-        world.style.cursor =
-            "pointer";
-
-    } else {
-
-        world.style.cursor =
-            "default";
-
-    }
 
 }
 
@@ -1641,6 +1629,17 @@ function handleGroundClick(
     }
 
 
+    const worldObjectElement =
+        event.target.closest(
+            ".world-object"
+        );
+
+
+    if (worldObjectElement) {
+        return;
+    }
+
+
     const worldRect =
         world.getBoundingClientRect();
 
@@ -1875,6 +1874,11 @@ function updateGame() {
     renderWorldItems();
 
 
+    renderWorldObjects(
+        world
+    );
+
+
     updatePlayerHUD();
 
 
@@ -1950,8 +1954,7 @@ playButton.addEventListener(
 
 
 /*
- * World objects must be checked before
- * the general ground click handler.
+ * World objects are checked first.
  */
 
 world.addEventListener(
@@ -1961,7 +1964,7 @@ world.addEventListener(
 
 
 /*
- * NPC click handler comes next.
+ * NPCs are checked next.
  */
 
 world.addEventListener(
@@ -1971,19 +1974,12 @@ world.addEventListener(
 
 
 /*
- * Hover feedback for NPCs and
- * world objects.
+ * Unified interaction cursor.
  */
 
 world.addEventListener(
     "mousemove",
-    updateNPCHoverCursor
-);
-
-
-world.addEventListener(
-    "mousemove",
-    updateWorldObjectHoverCursor
+    updateInteractionCursor
 );
 
 

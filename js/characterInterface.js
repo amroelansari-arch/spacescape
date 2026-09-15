@@ -686,19 +686,19 @@ function createSkillSection(
 
         const skillLevel =
             getSkillLevel(
-                player,
+                player.skills,
                 skillName
             );
 
         const currentXP =
             getCurrentSkillXP(
-                player,
+                player.skills,
                 skillName
             );
 
         const xpToNextLevel =
             getSkillXPToNextLevel(
-                player,
+                player.skills,
                 skillName
             );
 

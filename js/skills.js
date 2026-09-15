@@ -34,19 +34,75 @@ export const SKILL_NAMES = {
 
 
 /* =======================================================
+   SKILL CHANGE LISTENERS
+   ======================================================= */
+
+const skillChangeListeners = new Set();
+
+
+export function subscribeToSkillChanges(listener) {
+
+    if (
+        typeof listener !== "function"
+    ) {
+        return () => {};
+    }
+
+    skillChangeListeners.add(
+        listener
+    );
+
+    return () => {
+
+        skillChangeListeners.delete(
+            listener
+        );
+
+    };
+
+}
+
+
+function notifySkillChanged(
+    skills,
+    skillName,
+    result
+) {
+
+    for (
+        const listener
+        of skillChangeListeners
+    ) {
+
+        try {
+
+            listener(
+                skills,
+                skillName,
+                result
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Skill listener error:",
+                error
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =======================================================
    CREATE SKILLS
    ======================================================= */
 
 export function createSkills() {
 
     return {
-
-        /*
-         * Core combat skills.
-         *
-         * These are the four skills that will eventually
-         * determine the player's primary combat progression.
-         */
 
         attack: {
             level: 1,
@@ -68,11 +124,6 @@ export function createSkills() {
             xp: 0
         },
 
-
-        /*
-         * Specialized combat / technology skills.
-         */
-
         ballistics: {
             level: 1,
             xp: 0
@@ -82,11 +133,6 @@ export function createSkills() {
             level: 1,
             xp: 0
         },
-
-
-        /*
-         * Non-combat skills.
-         */
 
         mining: {
             level: 1,
@@ -132,7 +178,9 @@ export function createSkills() {
    SKILL XP
    ======================================================= */
 
-export function getSkillXPRequiredForLevel(level) {
+export function getSkillXPRequiredForLevel(
+    level
+) {
 
     if (
         !Number.isFinite(level) ||
@@ -140,13 +188,6 @@ export function getSkillXPRequiredForLevel(level) {
     ) {
         return 100;
     }
-
-    /*
-     * Maximum skill level is currently 99.
-     *
-     * We are keeping the existing XP curve for now.
-     * The exact SpaceScape XP curve can be tuned later.
-     */
 
     return Math.floor(
         100 *
@@ -312,16 +353,13 @@ export function awardSkillXP(
 
     }
 
-    /*
-     * Skills currently cap at level 99.
-     */
 
     const previousLevel =
         skill.level;
 
+
     /*
-     * If the skill is already at 99,
-     * it cannot progress further.
+     * Level 99 is the maximum.
      */
 
     if (
@@ -332,12 +370,22 @@ export function awardSkillXP(
 
         skill.xp = 0;
 
-        return {
+        const result = {
+
             awarded: 0,
             levelsGained: 0,
             previousLevel: 99,
             currentLevel: 99
+
         };
+
+        notifySkillChanged(
+            skills,
+            skillName,
+            result
+        );
+
+        return result;
 
     }
 
@@ -367,10 +415,6 @@ export function awardSkillXP(
     }
 
 
-    /*
-     * Level 99 has no further progression.
-     */
-
     if (
         skill.level >= 99
     ) {
@@ -382,13 +426,28 @@ export function awardSkillXP(
     }
 
 
-    return {
+    const result = {
+
         awarded: amount,
+
         levelsGained,
+
         previousLevel,
+
         currentLevel:
             skill.level
+
     };
+
+
+    notifySkillChanged(
+        skills,
+        skillName,
+        result
+    );
+
+
+    return result;
 
 }
 

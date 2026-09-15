@@ -21,7 +21,8 @@ import {
 import {
     getSkillLevel,
     getCurrentSkillXP,
-    getSkillXPToNextLevel
+    getSkillXPToNextLevel,
+    subscribeToSkillChanges
 } from "./skills.js";
 
 import {
@@ -3274,6 +3275,37 @@ window.addEventListener(
 
 
         toggleCharacterInterface();
+
+    }
+);
+
+/* =======================================================
+   SKILL XP LIVE SYNCHRONIZATION
+   ======================================================= */
+
+subscribeToSkillChanges(
+    skills => {
+
+        if (
+            skills !== player.skills
+        ) {
+            return;
+        }
+
+        if (
+            !characterState.isOpen
+        ) {
+            return;
+        }
+
+        if (
+            characterState.activeTab !==
+            CHARACTER_TABS.SKILLS
+        ) {
+            return;
+        }
+
+        updateCharacterInterface();
 
     }
 );

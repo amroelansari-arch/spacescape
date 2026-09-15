@@ -142,6 +142,57 @@ const keys = {};
 
 
 /* =======================================================
+   MINING ACTION STATE
+   ======================================================= */
+
+const miningState = {
+
+    active: false,
+
+    resourceNodeId: null,
+
+    startedAt: 0,
+
+    duration: 0
+
+};
+
+
+function isMining() {
+
+    return miningState.active;
+
+}
+
+
+function stopMining() {
+
+    if (!miningState.active) {
+        return;
+    }
+
+
+    miningState.active =
+        false;
+
+    miningState.resourceNodeId =
+        null;
+
+    miningState.startedAt =
+        0;
+
+    miningState.duration =
+        0;
+
+
+    console.log(
+        "Mining stopped."
+    );
+
+}
+
+
+/* =======================================================
    DIALOGUE
    ======================================================= */
 
@@ -454,6 +505,9 @@ function handleRespawn() {
     }
 
 
+    stopMining();
+
+
     respawnPlayer();
 
 
@@ -721,6 +775,8 @@ function handleWorldObjectClick(
         clickedObject.interactionDistance
     ) {
 
+        stopMining();
+
         clearMovementTarget();
 
 
@@ -753,6 +809,8 @@ function handleWorldObjectClick(
 
     }
 
+
+    stopMining();
 
     stopCombat();
 
@@ -868,6 +926,11 @@ function gatherResourceNode(
     }
 
 
+    if (isMining()) {
+        return false;
+    }
+
+
     const distance =
         getDistanceToResourceNode(
             player,
@@ -925,6 +988,119 @@ function gatherResourceNode(
     }
 
 
+    const duration =
+        Number.isFinite(
+            resourceNode.gatheringDuration
+        ) &&
+        resourceNode.gatheringDuration > 0
+            ? resourceNode.gatheringDuration
+            : 2500;
+
+
+    miningState.active =
+        true;
+
+    miningState.resourceNodeId =
+        resourceNode.id;
+
+    miningState.startedAt =
+        performance.now();
+
+    miningState.duration =
+        duration;
+
+
+    clearMovementTarget();
+
+
+    console.log(
+        `Mining ${resourceNode.name}...`
+    );
+
+
+    return true;
+
+}
+
+
+/* =======================================================
+   MINING ACTION UPDATE
+   ======================================================= */
+
+function updateMiningAction() {
+
+    if (!miningState.active) {
+        return;
+    }
+
+
+    if (player.isDead) {
+
+        stopMining();
+
+        return;
+
+    }
+
+
+    const resourceNode =
+        getResourceNodeById(
+            miningState.resourceNodeId
+        );
+
+
+    if (!resourceNode) {
+
+        stopMining();
+
+        return;
+
+    }
+
+
+    if (resourceNode.depleted) {
+
+        stopMining();
+
+        return;
+
+    }
+
+
+    const distance =
+        getDistanceToResourceNode(
+            player,
+            resourceNode
+        );
+
+
+    if (
+        distance >
+        resourceNode.gatheringDistance
+    ) {
+
+        stopMining();
+
+        return;
+
+    }
+
+
+    const elapsed =
+        performance.now() -
+        miningState.startedAt;
+
+
+    if (
+        elapsed <
+        miningState.duration
+    ) {
+
+        return;
+
+    }
+
+
     const itemDefinition =
         getItem(
             resourceNode.resourceId
@@ -938,10 +1114,9 @@ function gatherResourceNode(
         );
 
 
-        clearMovementTarget();
+        stopMining();
 
-
-        return false;
+        return;
 
     }
 
@@ -966,27 +1141,15 @@ function gatherResourceNode(
     if (!added) {
 
         console.log(
-            "Inventory is full. Resource remains available."
+            "Inventory is full. Mining stopped. Resource remains available."
         );
 
 
-        clearMovementTarget();
+        stopMining();
 
-
-        return false;
+        return;
 
     }
-
-
-    /*
-     * Refresh the open Character interface immediately
-     * after the inventory changes.
-     *
-     * This is what makes Xenium Ore update from
-     * x1 -> x2 without changing Character tabs.
-     */
-
-    refreshCharacterInterface();
 
 
     const xpReward =
@@ -1032,16 +1195,18 @@ function gatherResourceNode(
         );
 
 
-        return false;
+        stopMining();
+
+        return;
 
     }
 
 
-    clearMovementTarget();
+    stopMining();
 
 
     console.log(
-        `${resourceNode.name} gathered.`
+        `${resourceNode.name} mined successfully.`
     );
 
 
@@ -1054,9 +1219,6 @@ function gatherResourceNode(
         "Inventory:",
         player.inventory
     );
-
-
-    return true;
 
 }
 
@@ -1284,13 +1446,15 @@ function handleResourceNodeClick(
 
     /*
      * If already within gathering range,
-     * gather immediately.
+     * start mining immediately.
      */
 
     if (
         distance <=
         clickedResourceNode.gatheringDistance
     ) {
+
+        stopMining();
 
         clearMovementTarget();
 
@@ -1324,6 +1488,8 @@ function handleResourceNodeClick(
 
     }
 
+
+    stopMining();
 
     stopCombat();
 
@@ -1625,8 +1791,8 @@ function attemptWorldItemPickup(
 
 
     /*
-     * Refresh the open Character interface immediately
-     * after the world item enters the inventory.
+     * The inventory module automatically
+     * refreshes the Character Interface.
      */
 
     refreshCharacterInterface();
@@ -1833,6 +1999,8 @@ function handleWorldItemClick(
 
     if (distance <= 10) {
 
+        stopMining();
+
         attemptWorldItemPickup(
             worldItem
         );
@@ -1841,6 +2009,8 @@ function handleWorldItemClick(
 
     }
 
+
+    stopMining();
 
     stopCombat();
 
@@ -1977,6 +2147,8 @@ function handleNPCClick(
         npc.interactionDistance
     ) {
 
+        stopMining();
+
         clearMovementTarget();
 
         handleInteraction();
@@ -2005,6 +2177,8 @@ function handleNPCClick(
 
     }
 
+
+    stopMining();
 
     stopCombat();
 
@@ -2180,6 +2354,8 @@ function handleEnemyClick(
     }
 
 
+    stopMining();
+
     clearMovementTarget();
 
 
@@ -2319,6 +2495,8 @@ function handleGroundClick(
 
     }
 
+
+    stopMining();
 
     stopCombat();
 
@@ -2496,6 +2674,9 @@ function updateGame() {
 
 
     updateResourceNodeTarget();
+
+
+    updateMiningAction();
 
 
     updateNPCTarget();

@@ -15,6 +15,7 @@ const RESOURCE_NODE_DEFINITIONS = {
         quantity: 1,
         xpReward: 10,
         gatheringDistance: 45,
+        gatheringDuration: 2500,
         respawnTime: 10000
     }
 
@@ -84,6 +85,9 @@ export function createResourceNode(
 
         gatheringDistance:
             definition.gatheringDistance,
+
+        gatheringDuration:
+            definition.gatheringDuration,
 
         respawnTime:
             definition.respawnTime,

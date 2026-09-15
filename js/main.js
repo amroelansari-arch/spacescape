@@ -146,22 +146,15 @@ const keys = {};
    ======================================================= */
 
 const miningState = {
-
     active: false,
-
     resourceNodeId: null,
-
     startedAt: 0,
-
     duration: 0
-
 };
 
 
 function isMining() {
-
     return miningState.active;
-
 }
 
 
@@ -171,23 +164,12 @@ function stopMining() {
         return;
     }
 
+    miningState.active = false;
+    miningState.resourceNodeId = null;
+    miningState.startedAt = 0;
+    miningState.duration = 0;
 
-    miningState.active =
-        false;
-
-    miningState.resourceNodeId =
-        null;
-
-    miningState.startedAt =
-        0;
-
-    miningState.duration =
-        0;
-
-
-    console.log(
-        "Mining stopped."
-    );
+    console.log("Mining stopped.");
 
 }
 
@@ -312,10 +294,7 @@ function createClickMarker() {
 }
 
 
-function showClickMarker(
-    x,
-    y
-) {
+function showClickMarker(x, y) {
 
     createClickMarker();
 
@@ -474,7 +453,6 @@ function showDeathScreen() {
 
     createDeathOverlay();
 
-
     deathOverlay.style.display =
         "flex";
 
@@ -486,7 +464,6 @@ function hideDeathScreen() {
     if (!deathOverlay) {
         return;
     }
-
 
     deathOverlay.style.display =
         "none";
@@ -507,18 +484,13 @@ function handleRespawn() {
 
     stopMining();
 
-
     respawnPlayer();
-
 
     hideDeathScreen();
 
-
     drawPlayer();
 
-
     updatePlayerHUD();
-
 
     updateGame();
 
@@ -620,9 +592,7 @@ function initializeResourceNodes() {
    WORLD OBJECT INTERACTION
    ======================================================= */
 
-function interactWithWorldObject(
-    worldObject
-) {
+function interactWithWorldObject(worldObject) {
 
     if (!worldObject) {
         return;
@@ -645,9 +615,7 @@ function interactWithWorldObject(
    WORLD OBJECT CLICK
    ======================================================= */
 
-function handleWorldObjectClick(
-    event
-) {
+function handleWorldObjectClick(event) {
 
     if (player.isDead) {
         return;
@@ -659,9 +627,7 @@ function handleWorldObjectClick(
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
         return;
     }
 
@@ -733,9 +699,7 @@ function handleWorldObjectClick(
                 );
 
 
-            if (
-                distance <= 60
-            ) {
+            if (distance <= 60) {
 
                 clickedObject =
                     worldObject;
@@ -779,11 +743,9 @@ function handleWorldObjectClick(
 
         clearMovementTarget();
 
-
         interactWithWorldObject(
             clickedObject
         );
-
 
         return;
 
@@ -893,7 +855,6 @@ function updateWorldObjectTarget() {
 
         clearMovementTarget();
 
-
         interactWithWorldObject(
             worldObject
         );
@@ -907,9 +868,7 @@ function updateWorldObjectTarget() {
    RESOURCE GATHERING
    ======================================================= */
 
-function gatherResourceNode(
-    resourceNode
-) {
+function gatherResourceNode(resourceNode) {
 
     if (!resourceNode) {
         return false;
@@ -1174,6 +1133,16 @@ function updateMiningAction() {
             );
 
 
+        /*
+         * IMPORTANT:
+         * Refresh the Character Interface immediately
+         * after skill XP is awarded so the Skills tab
+         * reflects the new Mining XP without requiring
+         * the player to switch tabs.
+         */
+        refreshCharacterInterface();
+
+
         console.log(
             `Mining XP: +${xpReward} ${resourceNode.gatheringSkill} XP.`,
             xpResult
@@ -1268,9 +1237,7 @@ function updateResourceNodeTarget() {
         resourceNode.position.y;
 
 
-    if (
-        resourceNode.depleted
-    ) {
+    if (resourceNode.depleted) {
 
         clearMovementTarget();
 
@@ -1304,9 +1271,7 @@ function updateResourceNodeTarget() {
    RESOURCE NODE CLICK
    ======================================================= */
 
-function handleResourceNodeClick(
-    event
-) {
+function handleResourceNodeClick(event) {
 
     if (player.isDead) {
         return;
@@ -1318,9 +1283,7 @@ function handleResourceNodeClick(
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
         return;
     }
 
@@ -1333,10 +1296,6 @@ function handleResourceNodeClick(
 
     let clickedResourceNode = null;
 
-
-    /*
-     * First use the rendered element.
-     */
 
     if (resourceElement) {
 
@@ -1355,10 +1314,6 @@ function handleResourceNodeClick(
 
     }
 
-
-    /*
-     * Fallback to coordinate detection.
-     */
 
     if (!clickedResourceNode) {
 
@@ -1385,9 +1340,7 @@ function handleResourceNodeClick(
             of resourceNodes
         ) {
 
-            if (
-                resourceNode.depleted
-            ) {
+            if (resourceNode.depleted) {
                 continue;
             }
 
@@ -1407,9 +1360,7 @@ function handleResourceNodeClick(
                 );
 
 
-            if (
-                distance <= 60
-            ) {
+            if (distance <= 60) {
 
                 clickedResourceNode =
                     resourceNode;
@@ -1443,11 +1394,6 @@ function handleResourceNodeClick(
             clickedResourceNode
         );
 
-
-    /*
-     * If already within gathering range,
-     * start mining immediately.
-     */
 
     if (
         distance <=
@@ -1517,9 +1463,7 @@ function handleResourceNodeClick(
    HOVER CURSOR
    ======================================================= */
 
-function updateInteractionCursor(
-    event
-) {
+function updateInteractionCursor(event) {
 
     if (player.isDead) {
 
@@ -1531,9 +1475,7 @@ function updateInteractionCursor(
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
 
         world.style.cursor =
             "default";
@@ -1567,10 +1509,6 @@ function updateInteractionCursor(
         worldRect.top;
 
 
-    /*
-     * Check NPCs.
-     */
-
     const interactables =
         getInteractables();
 
@@ -1595,9 +1533,7 @@ function updateInteractionCursor(
             );
 
 
-        if (
-            distance <= 60
-        ) {
+        if (distance <= 60) {
 
             world.style.cursor =
                 "pointer";
@@ -1608,10 +1544,6 @@ function updateInteractionCursor(
 
     }
 
-
-    /*
-     * Check world objects.
-     */
 
     const worldObjects =
         getWorldObjects();
@@ -1637,9 +1569,7 @@ function updateInteractionCursor(
             );
 
 
-        if (
-            distance <= 60
-        ) {
+        if (distance <= 60) {
 
             world.style.cursor =
                 "pointer";
@@ -1651,10 +1581,6 @@ function updateInteractionCursor(
     }
 
 
-    /*
-     * Check resource nodes.
-     */
-
     const resourceNodes =
         getResourceNodes();
 
@@ -1664,9 +1590,7 @@ function updateInteractionCursor(
         of resourceNodes
     ) {
 
-        if (
-            resourceNode.depleted
-        ) {
+        if (resourceNode.depleted) {
             continue;
         }
 
@@ -1686,9 +1610,7 @@ function updateInteractionCursor(
             );
 
 
-        if (
-            distance <= 60
-        ) {
+        if (distance <= 60) {
 
             world.style.cursor =
                 "pointer";
@@ -1700,11 +1622,6 @@ function updateInteractionCursor(
     }
 
 
-    /*
-     * Nothing interactive under
-     * the mouse.
-     */
-
     world.style.cursor =
         "default";
 
@@ -1715,9 +1632,7 @@ function updateInteractionCursor(
    ITEM PICKUP
    ======================================================= */
 
-function attemptWorldItemPickup(
-    worldItem
-) {
+function attemptWorldItemPickup(worldItem) {
 
     if (!worldItem) {
         return false;
@@ -1789,11 +1704,6 @@ function attemptWorldItemPickup(
 
     }
 
-
-    /*
-     * The inventory module automatically
-     * refreshes the Character Interface.
-     */
 
     refreshCharacterInterface();
 
@@ -1904,9 +1814,7 @@ function updateWorldItemTarget() {
    ITEM CLICK
    ======================================================= */
 
-function handleWorldItemClick(
-    event
-) {
+function handleWorldItemClick(event) {
 
     if (player.isDead) {
         return;
@@ -1949,9 +1857,7 @@ function handleWorldItemClick(
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
         return;
     }
 
@@ -2033,9 +1939,7 @@ function handleWorldItemClick(
    NPC CLICK
    ======================================================= */
 
-function handleNPCClick(
-    event
-) {
+function handleNPCClick(event) {
 
     if (player.isDead) {
         return;
@@ -2047,9 +1951,7 @@ function handleNPCClick(
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
         return;
     }
 
@@ -2087,17 +1989,15 @@ function handleNPCClick(
                     interactable.position.x,
                     2
                 ) +
-                    Math.pow(
-                        clickY -
-                        interactable.position.y,
-                        2
-                    )
+                Math.pow(
+                    clickY -
+                    interactable.position.y,
+                    2
+                )
             );
 
 
-        if (
-            distance <= 60
-        ) {
+        if (distance <= 60) {
 
             clickedInteractable =
                 interactable;
@@ -2134,11 +2034,11 @@ function handleNPCClick(
                 npc.position.x,
                 2
             ) +
-                Math.pow(
-                    player.position.y -
-                    npc.position.y,
-                    2
-                )
+            Math.pow(
+                player.position.y -
+                npc.position.y,
+                2
+            )
         );
 
 
@@ -2260,11 +2160,11 @@ function updateNPCTarget() {
                 npc.position.x,
                 2
             ) +
-                Math.pow(
-                    player.position.y -
-                    npc.position.y,
-                    2
-                )
+            Math.pow(
+                player.position.y -
+                npc.position.y,
+                2
+            )
         );
 
 
@@ -2286,9 +2186,7 @@ function updateNPCTarget() {
    ENEMY CLICK
    ======================================================= */
 
-function handleEnemyClick(
-    event
-) {
+function handleEnemyClick(event) {
 
     if (player.isDead) {
         return;
@@ -2337,9 +2235,7 @@ function handleEnemyClick(
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
         return;
     }
 
@@ -2371,9 +2267,7 @@ function handleEnemyClick(
    GROUND CLICK-TO-MOVE
    ======================================================= */
 
-function handleGroundClick(
-    event
-) {
+function handleGroundClick(event) {
 
     if (player.isDead) {
         return;
@@ -2385,9 +2279,7 @@ function handleGroundClick(
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
         return;
     }
 
@@ -2580,9 +2472,7 @@ function handleInteraction() {
     }
 
 
-    if (
-        dialogueController.isOpen()
-    ) {
+    if (dialogueController.isOpen()) {
         return;
     }
 
@@ -2739,7 +2629,6 @@ function gameLoop() {
 
     updateGame();
 
-
     requestAnimationFrame(
         gameLoop
     );
@@ -2784,20 +2673,11 @@ playButton.addEventListener(
 );
 
 
-/*
- * World objects are checked first.
- */
-
 world.addEventListener(
     "click",
     handleWorldObjectClick
 );
 
-
-/*
- * Resource nodes are checked before
- * normal ground movement.
- */
 
 world.addEventListener(
     "click",
@@ -2805,19 +2685,11 @@ world.addEventListener(
 );
 
 
-/*
- * NPCs are checked next.
- */
-
 world.addEventListener(
     "click",
     handleNPCClick
 );
 
-
-/*
- * Unified interaction cursor.
- */
 
 world.addEventListener(
     "mousemove",

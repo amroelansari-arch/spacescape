@@ -439,6 +439,88 @@ export function rollDamage(
 
 
 /* =======================================================
+   EQUIPMENT COMBAT BONUSES
+   ======================================================= */
+
+/*
+ * Equipment stats are resolved here rather than
+ * hard-coding individual weapons or armor.
+ *
+ * attackBonus and strengthBonus are already included
+ * by combatSystem.js when it calculates effective
+ * Attack and Strength.
+ *
+ * accuracyBonus and damageBonus are additional direct
+ * combat modifiers.
+ */
+
+function getEquipmentCombatBonuses(
+    attacker
+) {
+
+    if (
+        !attacker ||
+        !attacker.equipment
+    ) {
+
+        return {
+
+            accuracyBonus: 0,
+
+            damageBonus: 0
+
+        };
+
+    }
+
+
+    /*
+     * combatSystem.js may provide precomputed equipment
+     * stats on the player object.
+     */
+
+    const equipmentStats =
+        attacker.equipmentStats;
+
+
+    if (
+        equipmentStats &&
+        typeof equipmentStats === "object"
+    ) {
+
+        return {
+
+            accuracyBonus:
+                Number.isFinite(
+                    equipmentStats.accuracyBonus
+                )
+                    ? equipmentStats.accuracyBonus
+                    : 0,
+
+            damageBonus:
+                Number.isFinite(
+                    equipmentStats.damageBonus
+                )
+                    ? equipmentStats.damageBonus
+                    : 0
+
+        };
+
+    }
+
+
+    return {
+
+        accuracyBonus: 0,
+
+        damageBonus: 0
+
+    };
+
+}
+
+
+/* =======================================================
    PERFORM ATTACK
    ======================================================= */
 
@@ -451,11 +533,16 @@ export function rollDamage(
  * a calculated defense value instead of relying on
  * target.defense.
  *
- * This lets SpaceScape use:
+ * Equipment may additionally provide:
  *
- * Attack skill     → accuracy
- * Strength skill   → damage
- * Defense skill    → incoming resistance
+ * accuracyBonus → added to attack accuracy
+ * damageBonus   → added to damage
+ *
+ * Attack skill + equipment attackBonus are supplied
+ * through attackPower by combatSystem.js.
+ *
+ * Strength skill + equipment strengthBonus are supplied
+ * through damagePower by combatSystem.js.
  */
 
 export function performAttack(
@@ -572,9 +659,31 @@ export function performAttack(
     }
 
 
+    const equipmentBonuses =
+        getEquipmentCombatBonuses(
+            attacker
+        );
+
+
+    const effectiveAttackPower =
+        Math.max(
+            1,
+            attackPower +
+            equipmentBonuses.accuracyBonus
+        );
+
+
+    const effectiveDamagePower =
+        Math.max(
+            1,
+            damagePower +
+            equipmentBonuses.damageBonus
+        );
+
+
     const hit =
         rollAttackHit(
-            attackPower,
+            effectiveAttackPower,
             defense,
             combatStyle
         );
@@ -597,7 +706,7 @@ export function performAttack(
 
     const damage =
         rollDamage(
-            damagePower,
+            effectiveDamagePower,
             defense,
             combatStyle
         );

@@ -679,18 +679,14 @@ function initializeWorldItems() {
     /*
        TEST ITEM AREA
 
-       These items are deliberately placed south/east
-       of the starting position instead of directly on
-       the building area.
+       Deliberately moved far away from the previous
+       item positions.
 
        Player start:
        1200, 900
 
-       Test items:
-       1200-1500, 1100-1250
-
-       This gives the pathfinding system room to reach
-       each item without placing them on the building.
+       New test item area:
+       700-900, 1400-1600
     */
 
 
@@ -700,24 +696,24 @@ function initializeWorldItems() {
 
     createWorldItem(
         "combat_saber",
-        1200,
-        1100,
+        700,
+        1400,
         1
     );
 
 
     createWorldItem(
         "laser_rifle",
-        1300,
-        1100,
+        800,
+        1400,
         1
     );
 
 
     createWorldItem(
         "flux_conduit",
+        900,
         1400,
-        1100,
         1
     );
 
@@ -728,8 +724,8 @@ function initializeWorldItems() {
 
     createWorldItem(
         "laser_charge",
-        1200,
-        1200,
+        700,
+        1500,
         25
     );
 
@@ -740,8 +736,8 @@ function initializeWorldItems() {
 
     createWorldItem(
         "flux_crystal",
-        1300,
-        1200,
+        800,
+        1500,
         25
     );
 
@@ -752,25 +748,30 @@ function initializeWorldItems() {
 
     createWorldItem(
         "colony_helmet",
-        1400,
-        1200,
+        900,
+        1500,
         1
     );
 
 
     createWorldItem(
         "colony_suit",
-        1200,
-        1300,
+        700,
+        1600,
         1
     );
 
 
     createWorldItem(
         "colony_boots",
-        1300,
-        1300,
+        800,
+        1600,
         1
+    );
+
+
+    console.log(
+        "World test items initialized at NEW TEST AREA: 700-900, 1400-1600"
     );
 
 }
@@ -1407,6 +1408,8 @@ function updateMiningAction() {
     );
 
 }
+
+
 /* =======================================================
    SALVAGING ACTION UPDATE
    ======================================================= */
@@ -1590,8 +1593,6 @@ function updateSalvagingAction() {
     );
 
 }
-
-
 /* =======================================================
    RESOURCE NODE TARGET
    ======================================================= */
@@ -2308,11 +2309,11 @@ function handleNPCClick(event) {
                     interactable.position.x,
                     2
                 ) +
-                    Math.pow(
-                        clickY -
-                        interactable.position.y,
-                        2
-                    )
+                Math.pow(
+                    clickY -
+                    interactable.position.y,
+                    2
+                )
             );
 
         if (distance <= 60) {

@@ -732,10 +732,78 @@ function initializeEnemies() {
 
 function initializeWorldItems() {
 
+    /* ===================================================
+       WEAPONS
+       =================================================== */
+
+    createWorldItem(
+        "combat_saber",
+        1400,
+        900,
+        1
+    );
+
+
     createWorldItem(
         "laser_rifle",
         1500,
         900,
+        1
+    );
+
+
+    createWorldItem(
+        "flux_conduit",
+        1600,
+        900,
+        1
+    );
+
+
+    /* ===================================================
+       AMMUNITION / FLUX RESOURCE
+       =================================================== */
+
+    createWorldItem(
+        "laser_charge",
+        1450,
+        1000,
+        25
+    );
+
+
+    createWorldItem(
+        "flux_crystal",
+        1550,
+        1000,
+        25
+    );
+
+
+    /* ===================================================
+       ARMOR
+       =================================================== */
+
+    createWorldItem(
+        "colony_helmet",
+        1400,
+        1050,
+        1
+    );
+
+
+    createWorldItem(
+        "colony_suit",
+        1500,
+        1050,
+        1
+    );
+
+
+    createWorldItem(
+        "colony_boots",
+        1600,
+        1050,
         1
     );
 
@@ -1477,8 +1545,6 @@ function updateMiningAction() {
     );
 
 }
-
-
 /* =======================================================
    SALVAGING ACTION UPDATE
    ======================================================= */
@@ -2455,6 +2521,8 @@ function handleWorldItemClick(
     );
 
 }
+
+
 /* =======================================================
    NPC CLICK
    ======================================================= */

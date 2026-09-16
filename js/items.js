@@ -37,6 +37,18 @@ const ITEM_DEFINITIONS = {
         name: "Xenium Ore",
         type: "resource",
         resourceType: "ore"
+    },
+
+
+    /* ===================================================
+       SCRAP METAL
+       =================================================== */
+
+    scrap_metal: {
+        id: "scrap_metal",
+        name: "Scrap Metal",
+        type: "resource",
+        resourceType: "scrap"
     }
 
 };

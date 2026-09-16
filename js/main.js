@@ -175,6 +175,39 @@ function stopMining() {
 
 
 /* =======================================================
+   SALVAGING ACTION STATE
+   ======================================================= */
+
+const salvagingState = {
+    active: false,
+    resourceNodeId: null,
+    startedAt: 0,
+    duration: 0
+};
+
+
+function isSalvaging() {
+    return salvagingState.active;
+}
+
+
+function stopSalvaging() {
+
+    if (!salvagingState.active) {
+        return;
+    }
+
+    salvagingState.active = false;
+    salvagingState.resourceNodeId = null;
+    salvagingState.startedAt = 0;
+    salvagingState.duration = 0;
+
+    console.log("Salvaging stopped.");
+
+}
+
+
+/* =======================================================
    DIALOGUE
    ======================================================= */
 
@@ -484,6 +517,8 @@ function handleRespawn() {
 
     stopMining();
 
+    stopSalvaging();
+
     respawnPlayer();
 
     hideDeathScreen();
@@ -582,6 +617,13 @@ function initializeResourceNodes() {
     createResourceNode(
         "xenium_ore",
         1250,
+        800
+    );
+
+
+    createResourceNode(
+        "damaged_supply_crate",
+        1350,
         800
     );
 
@@ -741,6 +783,8 @@ function handleWorldObjectClick(event) {
 
         stopMining();
 
+        stopSalvaging();
+
         clearMovementTarget();
 
         interactWithWorldObject(
@@ -773,6 +817,8 @@ function handleWorldObjectClick(event) {
 
 
     stopMining();
+
+    stopSalvaging();
 
     stopCombat();
 
@@ -885,7 +931,10 @@ function gatherResourceNode(resourceNode) {
     }
 
 
-    if (isMining()) {
+    if (
+        isMining() ||
+        isSalvaging()
+    ) {
         return false;
     }
 
@@ -907,17 +956,19 @@ function gatherResourceNode(resourceNode) {
     }
 
 
-    const miningSkill =
+    const skillName =
+        resourceNode.gatheringSkill;
+
+
+    const skill =
         player.skills &&
-        player.skills.mining;
+        player.skills[skillName];
 
 
-    const miningLevel =
-        miningSkill &&
-        Number.isFinite(
-            miningSkill.level
-        )
-            ? miningSkill.level
+    const skillLevel =
+        skill &&
+        Number.isFinite(skill.level)
+            ? skill.level
             : 1;
 
 
@@ -930,12 +981,12 @@ function gatherResourceNode(resourceNode) {
 
 
     if (
-        miningLevel <
+        skillLevel <
         requiredLevel
     ) {
 
         console.log(
-            `${resourceNode.name}: Mining level ${requiredLevel} required. Current Mining level: ${miningLevel}.`
+            `${resourceNode.name}: ${skillName} level ${requiredLevel} required. Current level: ${skillLevel}.`
         );
 
 
@@ -956,28 +1007,72 @@ function gatherResourceNode(resourceNode) {
             : 2500;
 
 
-    miningState.active =
-        true;
+    if (
+        skillName === "mining"
+    ) {
 
-    miningState.resourceNodeId =
-        resourceNode.id;
+        miningState.active =
+            true;
 
-    miningState.startedAt =
-        performance.now();
+        miningState.resourceNodeId =
+            resourceNode.id;
 
-    miningState.duration =
-        duration;
+        miningState.startedAt =
+            performance.now();
+
+        miningState.duration =
+            duration;
 
 
-    clearMovementTarget();
+        clearMovementTarget();
 
 
-    console.log(
-        `Mining ${resourceNode.name}...`
+        console.log(
+            `Mining ${resourceNode.name}...`
+        );
+
+
+        return true;
+
+    }
+
+
+    if (
+        skillName === "salvaging"
+    ) {
+
+        salvagingState.active =
+            true;
+
+        salvagingState.resourceNodeId =
+            resourceNode.id;
+
+        salvagingState.startedAt =
+            performance.now();
+
+        salvagingState.duration =
+            duration;
+
+
+        clearMovementTarget();
+
+
+        console.log(
+            `Salvaging ${resourceNode.name}...`
+        );
+
+
+        return true;
+
+    }
+
+
+    console.warn(
+        `Unsupported gathering skill: ${skillName}`
     );
 
 
-    return true;
+    return false;
 
 }
 
@@ -1133,13 +1228,6 @@ function updateMiningAction() {
             );
 
 
-        /*
-         * IMPORTANT:
-         * Refresh the Character Interface immediately
-         * after skill XP is awarded so the Skills tab
-         * reflects the new Mining XP without requiring
-         * the player to switch tabs.
-         */
         refreshCharacterInterface();
 
 
@@ -1176,6 +1264,214 @@ function updateMiningAction() {
 
     console.log(
         `${resourceNode.name} mined successfully.`
+    );
+
+
+    console.log(
+        `Received: ${itemDefinition.name} x${quantity}.`
+    );
+
+
+    console.log(
+        "Inventory:",
+        player.inventory
+    );
+
+}
+/* =======================================================
+   SALVAGING ACTION UPDATE
+   ======================================================= */
+
+function updateSalvagingAction() {
+
+    if (!salvagingState.active) {
+        return;
+    }
+
+
+    if (player.isDead) {
+
+        stopSalvaging();
+
+        return;
+
+    }
+
+
+    const resourceNode =
+        getResourceNodeById(
+            salvagingState.resourceNodeId
+        );
+
+
+    if (!resourceNode) {
+
+        stopSalvaging();
+
+        return;
+
+    }
+
+
+    if (resourceNode.depleted) {
+
+        stopSalvaging();
+
+        return;
+
+    }
+
+
+    const distance =
+        getDistanceToResourceNode(
+            player,
+            resourceNode
+        );
+
+
+    if (
+        distance >
+        resourceNode.gatheringDistance
+    ) {
+
+        stopSalvaging();
+
+        return;
+
+    }
+
+
+    const elapsed =
+        performance.now() -
+        salvagingState.startedAt;
+
+
+    if (
+        elapsed <
+        salvagingState.duration
+    ) {
+
+        return;
+
+    }
+
+
+    const rewardItemId =
+        resourceNode.resourceId ===
+        "damaged_supply_crate"
+            ? "scrap_metal"
+            : resourceNode.resourceId;
+
+
+    const itemDefinition =
+        getItem(
+            rewardItemId
+        );
+
+
+    if (!itemDefinition) {
+
+        console.warn(
+            `Unknown salvage reward: ${rewardItemId}`
+        );
+
+
+        stopSalvaging();
+
+        return;
+
+    }
+
+
+    const quantity =
+        Number.isFinite(
+            resourceNode.quantity
+        ) &&
+        resourceNode.quantity > 0
+            ? resourceNode.quantity
+            : 1;
+
+
+    const added =
+        addItem(
+            player.inventory,
+            rewardItemId,
+            quantity
+        );
+
+
+    if (!added) {
+
+        console.log(
+            "Inventory is full. Salvaging stopped. Resource remains available."
+        );
+
+
+        stopSalvaging();
+
+        return;
+
+    }
+
+
+    const xpReward =
+        Number.isFinite(
+            resourceNode.xpReward
+        ) &&
+        resourceNode.xpReward > 0
+            ? resourceNode.xpReward
+            : 0;
+
+
+    if (
+        xpReward > 0 &&
+        resourceNode.gatheringSkill
+    ) {
+
+        const xpResult =
+            awardSkillXP(
+                player.skills,
+                resourceNode.gatheringSkill,
+                xpReward
+            );
+
+
+        refreshCharacterInterface();
+
+
+        console.log(
+            `Salvaging XP: +${xpReward} ${resourceNode.gatheringSkill} XP.`,
+            xpResult
+        );
+
+    }
+
+
+    const depleted =
+        depleteResourceNode(
+            resourceNode
+        );
+
+
+    if (!depleted) {
+
+        console.warn(
+            `Unable to deplete ${resourceNode.name}.`
+        );
+
+
+        stopSalvaging();
+
+        return;
+
+    }
+
+
+    stopSalvaging();
+
+
+    console.log(
+        `${resourceNode.name} salvaged successfully.`
     );
 
 
@@ -1402,6 +1698,8 @@ function handleResourceNodeClick(event) {
 
         stopMining();
 
+        stopSalvaging();
+
         clearMovementTarget();
 
 
@@ -1436,6 +1734,8 @@ function handleResourceNodeClick(event) {
 
 
     stopMining();
+
+    stopSalvaging();
 
     stopCombat();
 
@@ -1525,11 +1825,11 @@ function updateInteractionCursor(event) {
                     interactable.position.x,
                     2
                 ) +
-                Math.pow(
-                    mouseY -
-                    interactable.position.y,
-                    2
-                )
+                    Math.pow(
+                        mouseY -
+                        interactable.position.y,
+                        2
+                    )
             );
 
 
@@ -1561,11 +1861,11 @@ function updateInteractionCursor(event) {
                     worldObject.position.x,
                     2
                 ) +
-                Math.pow(
-                    mouseY -
-                    worldObject.position.y,
-                    2
-                )
+                    Math.pow(
+                        mouseY -
+                        worldObject.position.y,
+                        2
+                    )
             );
 
 
@@ -1602,11 +1902,11 @@ function updateInteractionCursor(event) {
                     resourceNode.position.x,
                     2
                 ) +
-                Math.pow(
-                    mouseY -
-                    resourceNode.position.y,
-                    2
-                )
+                    Math.pow(
+                        mouseY -
+                        resourceNode.position.y,
+                        2
+                    )
             );
 
 
@@ -1907,6 +2207,8 @@ function handleWorldItemClick(event) {
 
         stopMining();
 
+        stopSalvaging();
+
         attemptWorldItemPickup(
             worldItem
         );
@@ -1917,6 +2219,8 @@ function handleWorldItemClick(event) {
 
 
     stopMining();
+
+    stopSalvaging();
 
     stopCombat();
 
@@ -2049,6 +2353,8 @@ function handleNPCClick(event) {
 
         stopMining();
 
+        stopSalvaging();
+
         clearMovementTarget();
 
         handleInteraction();
@@ -2079,6 +2385,8 @@ function handleNPCClick(event) {
 
 
     stopMining();
+
+    stopSalvaging();
 
     stopCombat();
 
@@ -2252,6 +2560,8 @@ function handleEnemyClick(event) {
 
     stopMining();
 
+    stopSalvaging();
+
     clearMovementTarget();
 
 
@@ -2389,6 +2699,8 @@ function handleGroundClick(event) {
 
 
     stopMining();
+
+    stopSalvaging();
 
     stopCombat();
 
@@ -2567,6 +2879,9 @@ function updateGame() {
 
 
     updateMiningAction();
+
+
+    updateSalvagingAction();
 
 
     updateNPCTarget();

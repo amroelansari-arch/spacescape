@@ -6,11 +6,33 @@ const resourceNodes = [];
 
 const RESOURCE_NODE_DEFINITIONS = {
 
+    /* ===================================================
+       XENIUM ORE
+       =================================================== */
+
     xenium_ore: {
         id: "xenium_ore",
         name: "Xenium Ore",
         resourceType: "ore",
         gatheringSkill: "mining",
+        requiredLevel: 1,
+        quantity: 1,
+        xpReward: 10,
+        gatheringDistance: 45,
+        gatheringDuration: 2500,
+        respawnTime: 10000
+    },
+
+
+    /* ===================================================
+       DAMAGED SUPPLY CRATE
+       =================================================== */
+
+    damaged_supply_crate: {
+        id: "damaged_supply_crate",
+        name: "Damaged Supply Crate",
+        resourceType: "scrap",
+        gatheringSkill: "salvaging",
         requiredLevel: 1,
         quantity: 1,
         xpReward: 10,

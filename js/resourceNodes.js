@@ -14,10 +14,15 @@ const RESOURCE_NODE_DEFINITIONS = {
         id: "xenium_ore",
         name: "Xenium Ore",
         resourceType: "ore",
+
         gatheringSkill: "mining",
         requiredLevel: 1,
+
         quantity: 1,
         xpReward: 10,
+
+        rewardItem: "xenium_ore",
+
         gatheringDistance: 45,
         gatheringDuration: 2500,
         respawnTime: 10000
@@ -32,13 +37,41 @@ const RESOURCE_NODE_DEFINITIONS = {
         id: "damaged_supply_crate",
         name: "Damaged Supply Crate",
         resourceType: "scrap",
+
         gatheringSkill: "salvaging",
         requiredLevel: 1,
+
         quantity: 1,
         xpReward: 10,
+
+        rewardItem: "scrap_metal",
+
         gatheringDistance: 45,
         gatheringDuration: 2500,
         respawnTime: 10000
+    },
+
+
+    /* ===================================================
+       DENSE XENIUM DEPOSIT
+       =================================================== */
+
+    dense_xenium_deposit: {
+        id: "dense_xenium_deposit",
+        name: "Dense Xenium Deposit",
+        resourceType: "ore",
+
+        gatheringSkill: "mining",
+        requiredLevel: 5,
+
+        quantity: 1,
+        xpReward: 25,
+
+        rewardItem: "dense_xenium_ore",
+
+        gatheringDistance: 45,
+        gatheringDuration: 3500,
+        respawnTime: 15000
     }
 
 };
@@ -104,6 +137,9 @@ export function createResourceNode(
 
         xpReward:
             definition.xpReward,
+
+        rewardItem:
+            definition.rewardItem,
 
         gatheringDistance:
             definition.gatheringDistance,

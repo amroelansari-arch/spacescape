@@ -154,7 +154,9 @@ const miningState = {
 
 
 function isMining() {
+
     return miningState.active;
+
 }
 
 
@@ -164,12 +166,23 @@ function stopMining() {
         return;
     }
 
-    miningState.active = false;
-    miningState.resourceNodeId = null;
-    miningState.startedAt = 0;
-    miningState.duration = 0;
 
-    console.log("Mining stopped.");
+    miningState.active =
+        false;
+
+    miningState.resourceNodeId =
+        null;
+
+    miningState.startedAt =
+        0;
+
+    miningState.duration =
+        0;
+
+
+    console.log(
+        "Mining stopped."
+    );
 
 }
 
@@ -187,7 +200,9 @@ const salvagingState = {
 
 
 function isSalvaging() {
+
     return salvagingState.active;
+
 }
 
 
@@ -197,12 +212,23 @@ function stopSalvaging() {
         return;
     }
 
-    salvagingState.active = false;
-    salvagingState.resourceNodeId = null;
-    salvagingState.startedAt = 0;
-    salvagingState.duration = 0;
 
-    console.log("Salvaging stopped.");
+    salvagingState.active =
+        false;
+
+    salvagingState.resourceNodeId =
+        null;
+
+    salvagingState.startedAt =
+        0;
+
+    salvagingState.duration =
+        0;
+
+
+    console.log(
+        "Salvaging stopped."
+    );
 
 }
 
@@ -234,11 +260,14 @@ function createClickMarker() {
         return;
     }
 
+
     clickMarker =
         document.createElement("div");
 
+
     clickMarker.id =
         "spacescape-click-marker";
+
 
     clickMarker.style.position =
         "absolute";
@@ -327,7 +356,10 @@ function createClickMarker() {
 }
 
 
-function showClickMarker(x, y) {
+function showClickMarker(
+    x,
+    y
+) {
 
     createClickMarker();
 
@@ -486,6 +518,7 @@ function showDeathScreen() {
 
     createDeathOverlay();
 
+
     deathOverlay.style.display =
         "flex";
 
@@ -497,6 +530,7 @@ function hideDeathScreen() {
     if (!deathOverlay) {
         return;
     }
+
 
     deathOverlay.style.display =
         "none";
@@ -627,6 +661,13 @@ function initializeResourceNodes() {
         800
     );
 
+
+    createResourceNode(
+        "dense_xenium_deposit",
+        1450,
+        800
+    );
+
 }
 
 
@@ -634,7 +675,9 @@ function initializeResourceNodes() {
    WORLD OBJECT INTERACTION
    ======================================================= */
 
-function interactWithWorldObject(worldObject) {
+function interactWithWorldObject(
+    worldObject
+) {
 
     if (!worldObject) {
         return;
@@ -657,7 +700,9 @@ function interactWithWorldObject(worldObject) {
    WORLD OBJECT CLICK
    ======================================================= */
 
-function handleWorldObjectClick(event) {
+function handleWorldObjectClick(
+    event
+) {
 
     if (player.isDead) {
         return;
@@ -914,7 +959,9 @@ function updateWorldObjectTarget() {
    RESOURCE GATHERING
    ======================================================= */
 
-function gatherResourceNode(resourceNode) {
+function gatherResourceNode(
+    resourceNode
+) {
 
     if (!resourceNode) {
         return false;
@@ -967,7 +1014,9 @@ function gatherResourceNode(resourceNode) {
 
     const skillLevel =
         skill &&
-        Number.isFinite(skill.level)
+        Number.isFinite(
+            skill.level
+        )
             ? skill.level
             : 1;
 
@@ -980,13 +1029,17 @@ function gatherResourceNode(resourceNode) {
             : 1;
 
 
+    /* ===================================================
+       GATHERING LEVEL REQUIREMENT
+       =================================================== */
+
     if (
         skillLevel <
         requiredLevel
     ) {
 
         console.log(
-            `${resourceNode.name}: ${skillName} level ${requiredLevel} required. Current level: ${skillLevel}.`
+            `You need ${skillName} level ${requiredLevel} to gather ${resourceNode.name}. Current level: ${skillLevel}.`
         );
 
 
@@ -1006,6 +1059,10 @@ function gatherResourceNode(resourceNode) {
             ? resourceNode.gatheringDuration
             : 2500;
 
+
+    /* ===================================================
+       MINING
+       =================================================== */
 
     if (
         skillName === "mining"
@@ -1036,6 +1093,10 @@ function gatherResourceNode(resourceNode) {
 
     }
 
+
+    /* ===================================================
+       SALVAGING
+       =================================================== */
 
     if (
         skillName === "salvaging"
@@ -1155,16 +1216,25 @@ function updateMiningAction() {
     }
 
 
+    /* ===================================================
+       RESOURCE REWARD ITEM
+       =================================================== */
+
+    const rewardItemId =
+        resourceNode.rewardItem ||
+        resourceNode.resourceId;
+
+
     const itemDefinition =
         getItem(
-            resourceNode.resourceId
+            rewardItemId
         );
 
 
     if (!itemDefinition) {
 
         console.warn(
-            `Unknown resource item: ${resourceNode.resourceId}`
+            `Unknown mining reward item: ${rewardItemId}`
         );
 
 
@@ -1187,7 +1257,7 @@ function updateMiningAction() {
     const added =
         addItem(
             player.inventory,
-            resourceNode.resourceId,
+            rewardItemId,
             quantity
         );
 
@@ -1205,6 +1275,10 @@ function updateMiningAction() {
 
     }
 
+
+    /* ===================================================
+       MINING XP
+       =================================================== */
 
     const xpReward =
         Number.isFinite(
@@ -1278,6 +1352,8 @@ function updateMiningAction() {
     );
 
 }
+
+
 /* =======================================================
    SALVAGING ACTION UPDATE
    ======================================================= */
@@ -1356,11 +1432,13 @@ function updateSalvagingAction() {
     }
 
 
+    /* ===================================================
+       RESOURCE REWARD ITEM
+       =================================================== */
+
     const rewardItemId =
-        resourceNode.resourceId ===
-        "damaged_supply_crate"
-            ? "scrap_metal"
-            : resourceNode.resourceId;
+        resourceNode.rewardItem ||
+        resourceNode.resourceId;
 
 
     const itemDefinition =
@@ -1372,7 +1450,7 @@ function updateSalvagingAction() {
     if (!itemDefinition) {
 
         console.warn(
-            `Unknown salvage reward: ${rewardItemId}`
+            `Unknown salvage reward item: ${rewardItemId}`
         );
 
 
@@ -1413,6 +1491,10 @@ function updateSalvagingAction() {
 
     }
 
+
+    /* ===================================================
+       SALVAGING XP
+       =================================================== */
 
     const xpReward =
         Number.isFinite(
@@ -1567,7 +1649,9 @@ function updateResourceNodeTarget() {
    RESOURCE NODE CLICK
    ======================================================= */
 
-function handleResourceNodeClick(event) {
+function handleResourceNodeClick(
+    event
+) {
 
     if (player.isDead) {
         return;
@@ -1763,7 +1847,9 @@ function handleResourceNodeClick(event) {
    HOVER CURSOR
    ======================================================= */
 
-function updateInteractionCursor(event) {
+function updateInteractionCursor(
+    event
+) {
 
     if (player.isDead) {
 
@@ -1825,11 +1911,11 @@ function updateInteractionCursor(event) {
                     interactable.position.x,
                     2
                 ) +
-                    Math.pow(
-                        mouseY -
-                        interactable.position.y,
-                        2
-                    )
+                Math.pow(
+                    mouseY -
+                    interactable.position.y,
+                    2
+                )
             );
 
 
@@ -1861,11 +1947,11 @@ function updateInteractionCursor(event) {
                     worldObject.position.x,
                     2
                 ) +
-                    Math.pow(
-                        mouseY -
-                        worldObject.position.y,
-                        2
-                    )
+                Math.pow(
+                    mouseY -
+                    worldObject.position.y,
+                    2
+                )
             );
 
 
@@ -1902,11 +1988,11 @@ function updateInteractionCursor(event) {
                     resourceNode.position.x,
                     2
                 ) +
-                    Math.pow(
-                        mouseY -
-                        resourceNode.position.y,
-                        2
-                    )
+                Math.pow(
+                    mouseY -
+                    resourceNode.position.y,
+                    2
+                )
             );
 
 
@@ -1932,7 +2018,9 @@ function updateInteractionCursor(event) {
    ITEM PICKUP
    ======================================================= */
 
-function attemptWorldItemPickup(worldItem) {
+function attemptWorldItemPickup(
+    worldItem
+) {
 
     if (!worldItem) {
         return false;
@@ -2114,7 +2202,9 @@ function updateWorldItemTarget() {
    ITEM CLICK
    ======================================================= */
 
-function handleWorldItemClick(event) {
+function handleWorldItemClick(
+    event
+) {
 
     if (player.isDead) {
         return;
@@ -2237,13 +2327,13 @@ function handleWorldItemClick(event) {
     );
 
 }
-
-
 /* =======================================================
    NPC CLICK
    ======================================================= */
 
-function handleNPCClick(event) {
+function handleNPCClick(
+    event
+) {
 
     if (player.isDead) {
         return;
@@ -2494,7 +2584,9 @@ function updateNPCTarget() {
    ENEMY CLICK
    ======================================================= */
 
-function handleEnemyClick(event) {
+function handleEnemyClick(
+    event
+) {
 
     if (player.isDead) {
         return;
@@ -2577,7 +2669,9 @@ function handleEnemyClick(event) {
    GROUND CLICK-TO-MOVE
    ======================================================= */
 
-function handleGroundClick(event) {
+function handleGroundClick(
+    event
+) {
 
     if (player.isDead) {
         return;
@@ -2841,7 +2935,9 @@ function updateCombatSystem() {
     if (!combatState.active) {
 
         if (player.isDead) {
+
             showDeathScreen();
+
         }
 
         return;
@@ -2944,6 +3040,7 @@ function gameLoop() {
 
     updateGame();
 
+
     requestAnimationFrame(
         gameLoop
     );
@@ -3034,7 +3131,8 @@ window.addEventListener(
     "keydown",
     event => {
 
-        keys[event.key] = true;
+        keys[event.key] =
+            true;
 
 
         if (
@@ -3083,7 +3181,8 @@ window.addEventListener(
     "keyup",
     event => {
 
-        keys[event.key] = false;
+        keys[event.key] =
+            false;
 
     }
 );

@@ -146,7 +146,6 @@ const keys = {};
    ======================================================= */
 
 let gameMessageElement = null;
-
 let gameMessageTimer = null;
 
 
@@ -156,14 +155,11 @@ function createGameMessageElement() {
         return;
     }
 
-
     gameMessageElement =
         document.createElement("div");
 
-
     gameMessageElement.id =
         "spacescape-game-message";
-
 
     gameMessageElement.style.position =
         "fixed";
@@ -210,28 +206,21 @@ function createGameMessageElement() {
     gameMessageElement.style.transition =
         "opacity 0.2s ease";
 
-
     document.body.appendChild(
         gameMessageElement
     );
-
 }
 
 
-function showGameMessage(
-    message
-) {
+function showGameMessage(message) {
 
     createGameMessageElement();
-
 
     gameMessageElement.textContent =
         message;
 
-
     gameMessageElement.style.opacity =
         "1";
-
 
     if (gameMessageTimer) {
 
@@ -240,7 +229,6 @@ function showGameMessage(
         );
 
     }
-
 
     gameMessageTimer =
         setTimeout(
@@ -256,7 +244,6 @@ function showGameMessage(
             },
             2500
         );
-
 }
 
 
@@ -285,7 +272,6 @@ function stopMining() {
         return;
     }
 
-
     miningState.active =
         false;
 
@@ -297,7 +283,6 @@ function stopMining() {
 
     miningState.duration =
         0;
-
 
     console.log(
         "Mining stopped."
@@ -331,7 +316,6 @@ function stopSalvaging() {
         return;
     }
 
-
     salvagingState.active =
         false;
 
@@ -343,7 +327,6 @@ function stopSalvaging() {
 
     salvagingState.duration =
         0;
-
 
     console.log(
         "Salvaging stopped."
@@ -369,7 +352,6 @@ const dialogueController =
    ======================================================= */
 
 let clickMarker = null;
-
 let clickMarkerTimer = null;
 
 
@@ -379,14 +361,11 @@ function createClickMarker() {
         return;
     }
 
-
     clickMarker =
         document.createElement("div");
 
-
     clickMarker.id =
         "spacescape-click-marker";
-
 
     clickMarker.style.position =
         "absolute";
@@ -412,13 +391,11 @@ function createClickMarker() {
     clickMarker.style.transition =
         "opacity 0.15s ease";
 
-
     const lineOne =
         document.createElement("div");
 
     const lineTwo =
         document.createElement("div");
-
 
     for (
         const line
@@ -451,13 +428,11 @@ function createClickMarker() {
 
     }
 
-
     lineOne.style.transform =
         "rotate(45deg)";
 
     lineTwo.style.transform =
         "rotate(-45deg)";
-
 
     clickMarker.appendChild(
         lineOne
@@ -467,21 +442,15 @@ function createClickMarker() {
         lineTwo
     );
 
-
     world.appendChild(
         clickMarker
     );
-
 }
 
 
-function showClickMarker(
-    x,
-    y
-) {
+function showClickMarker(x, y) {
 
     createClickMarker();
-
 
     clickMarker.style.left =
         `${x}px`;
@@ -492,7 +461,6 @@ function showClickMarker(
     clickMarker.style.opacity =
         "1";
 
-
     if (clickMarkerTimer) {
 
         clearTimeout(
@@ -500,7 +468,6 @@ function showClickMarker(
         );
 
     }
-
 
     clickMarkerTimer =
         setTimeout(
@@ -516,7 +483,6 @@ function showClickMarker(
             },
             900
         );
-
 }
 
 
@@ -525,7 +491,6 @@ function showClickMarker(
    ======================================================= */
 
 let deathOverlay = null;
-
 let respawnButton = null;
 
 
@@ -535,14 +500,11 @@ function createDeathOverlay() {
         return;
     }
 
-
     deathOverlay =
         document.createElement("div");
 
-
     deathOverlay.id =
         "spacescape-death-overlay";
-
 
     deathOverlay.style.position =
         "fixed";
@@ -568,14 +530,11 @@ function createDeathOverlay() {
     deathOverlay.style.zIndex =
         "10000";
 
-
     const title =
         document.createElement("div");
 
-
     title.textContent =
         "YOU DIED";
-
 
     title.style.color =
         "#ffffff";
@@ -589,14 +548,11 @@ function createDeathOverlay() {
     title.style.marginBottom =
         "20px";
 
-
     respawnButton =
         document.createElement("button");
 
-
     respawnButton.textContent =
         "RESPAWN";
-
 
     respawnButton.style.padding =
         "12px 28px";
@@ -610,12 +566,10 @@ function createDeathOverlay() {
     respawnButton.style.cursor =
         "pointer";
 
-
     respawnButton.addEventListener(
         "click",
         handleRespawn
     );
-
 
     deathOverlay.appendChild(
         title
@@ -625,11 +579,9 @@ function createDeathOverlay() {
         respawnButton
     );
 
-
     document.body.appendChild(
         deathOverlay
     );
-
 }
 
 
@@ -637,10 +589,8 @@ function showDeathScreen() {
 
     createDeathOverlay();
 
-
     deathOverlay.style.display =
         "flex";
-
 }
 
 
@@ -650,10 +600,8 @@ function hideDeathScreen() {
         return;
     }
 
-
     deathOverlay.style.display =
         "none";
-
 }
 
 
@@ -666,7 +614,6 @@ function handleRespawn() {
     if (!player.isDead) {
         return;
     }
-
 
     stopMining();
 
@@ -681,7 +628,6 @@ function handleRespawn() {
     updatePlayerHUD();
 
     updateGame();
-
 }
 
 
@@ -701,7 +647,6 @@ function initializeEnemies() {
         900
     );
 
-
     spawnWorldEnemy(
         "Test Enemy",
         1,
@@ -711,7 +656,6 @@ function initializeEnemies() {
         1800,
         1100
     );
-
 
     spawnWorldEnemy(
         "Test Enemy",
@@ -732,50 +676,72 @@ function initializeEnemies() {
 
 function initializeWorldItems() {
 
+    /*
+       TEST ITEM AREA
+
+       These items are deliberately placed south/east
+       of the starting position instead of directly on
+       the building area.
+
+       Player start:
+       1200, 900
+
+       Test items:
+       1200-1500, 1100-1250
+
+       This gives the pathfinding system room to reach
+       each item without placing them on the building.
+    */
+
+
     /* ===================================================
        WEAPONS
        =================================================== */
 
     createWorldItem(
         "combat_saber",
-        1400,
-        900,
+        1200,
+        1100,
         1
     );
 
 
     createWorldItem(
         "laser_rifle",
-        1500,
-        900,
+        1300,
+        1100,
         1
     );
 
 
     createWorldItem(
         "flux_conduit",
-        1600,
-        900,
+        1400,
+        1100,
         1
     );
 
 
     /* ===================================================
-       AMMUNITION / FLUX RESOURCE
+       AMMUNITION
        =================================================== */
 
     createWorldItem(
         "laser_charge",
-        1450,
-        1000,
+        1200,
+        1200,
         25
     );
 
 
+    /* ===================================================
+       FLUX RESOURCE
+       =================================================== */
+
     createWorldItem(
         "flux_crystal",
-        1550,
-        1000,
+        1300,
+        1200,
         25
     );
 
@@ -787,23 +753,23 @@ function initializeWorldItems() {
     createWorldItem(
         "colony_helmet",
         1400,
-        1050,
+        1200,
         1
     );
 
 
     createWorldItem(
         "colony_suit",
-        1500,
-        1050,
+        1200,
+        1300,
         1
     );
 
 
     createWorldItem(
         "colony_boots",
-        1600,
-        1050,
+        1300,
+        1300,
         1
     );
 
@@ -841,13 +807,11 @@ function initializeResourceNodes() {
         800
     );
 
-
     createResourceNode(
         "damaged_supply_crate",
         1350,
         800
     );
-
 
     createResourceNode(
         "dense_xenium_deposit",
@@ -862,19 +826,15 @@ function initializeResourceNodes() {
    WORLD OBJECT INTERACTION
    ======================================================= */
 
-function interactWithWorldObject(
-    worldObject
-) {
+function interactWithWorldObject(worldObject) {
 
     if (!worldObject) {
         return;
     }
 
-
     openWorldObjectUI(
         worldObject
     );
-
 
     console.log(
         `${worldObject.name}: Interaction opened.`
@@ -887,39 +847,31 @@ function interactWithWorldObject(
    WORLD OBJECT CLICK
    ======================================================= */
 
-function handleWorldObjectClick(
-    event
-) {
+function handleWorldObjectClick(event) {
 
     if (player.isDead) {
         return;
     }
 
-
     if (isWorldObjectUIOpen()) {
         return;
     }
 
-
     if (dialogueController.isOpen()) {
         return;
     }
-
 
     const objectElement =
         event.target.closest(
             ".world-object"
         );
 
-
     let clickedObject = null;
-
 
     if (objectElement) {
 
         const worldObjectId =
             objectElement.dataset.worldObjectId;
-
 
         if (worldObjectId) {
 
@@ -932,26 +884,21 @@ function handleWorldObjectClick(
 
     }
 
-
     if (!clickedObject) {
 
         const worldRect =
             world.getBoundingClientRect();
 
-
         const clickX =
             event.clientX -
             worldRect.left;
-
 
         const clickY =
             event.clientY -
             worldRect.top;
 
-
         const worldObjects =
             getWorldObjects();
-
 
         for (
             const worldObject
@@ -972,7 +919,6 @@ function handleWorldObjectClick(
                     )
                 );
 
-
             if (distance <= 60) {
 
                 clickedObject =
@@ -986,27 +932,22 @@ function handleWorldObjectClick(
 
     }
 
-
     if (!clickedObject) {
         return;
     }
 
-
     event.stopImmediatePropagation();
-
 
     showClickMarker(
         clickedObject.position.x,
         clickedObject.position.y
     );
 
-
     const distanceToObject =
         getDistanceToWorldObject(
             player,
             clickedObject
         );
-
 
     if (
         distanceToObject <=
@@ -1027,7 +968,6 @@ function handleWorldObjectClick(
 
     }
 
-
     const path =
         findPath(
             player.position.x,
@@ -1035,7 +975,6 @@ function handleWorldObjectClick(
             clickedObject.position.x,
             clickedObject.position.y
         );
-
 
     if (!path) {
 
@@ -1047,7 +986,6 @@ function handleWorldObjectClick(
 
     }
 
-
     stopMining();
 
     stopSalvaging();
@@ -1055,7 +993,6 @@ function handleWorldObjectClick(
     stopCombat();
 
     clearMovementTarget();
-
 
     setMovementTarget(
         "world_object",
@@ -1065,7 +1002,6 @@ function handleWorldObjectClick(
         0,
         path
     );
-
 
     console.log(
         `Walking to ${clickedObject.name}.`
@@ -1084,10 +1020,8 @@ function updateWorldObjectTarget() {
         return;
     }
 
-
     const target =
         getMovementTarget();
-
 
     if (
         !target ||
@@ -1096,12 +1030,10 @@ function updateWorldObjectTarget() {
         return;
     }
 
-
     const worldObject =
         getWorldObjectById(
             target.id
         );
-
 
     if (!worldObject) {
 
@@ -1111,20 +1043,17 @@ function updateWorldObjectTarget() {
 
     }
 
-
     target.x =
         worldObject.position.x;
 
     target.y =
         worldObject.position.y;
 
-
     const distance =
         getDistanceToWorldObject(
             player,
             worldObject
         );
-
 
     if (
         distance <=
@@ -1146,24 +1075,19 @@ function updateWorldObjectTarget() {
    RESOURCE GATHERING
    ======================================================= */
 
-function gatherResourceNode(
-    resourceNode
-) {
+function gatherResourceNode(resourceNode) {
 
     if (!resourceNode) {
         return false;
     }
 
-
     if (player.isDead) {
         return false;
     }
 
-
     if (resourceNode.depleted) {
         return false;
     }
-
 
     if (
         isMining() ||
@@ -1172,13 +1096,11 @@ function gatherResourceNode(
         return false;
     }
 
-
     const distance =
         getDistanceToResourceNode(
             player,
             resourceNode
         );
-
 
     if (
         distance >
@@ -1189,15 +1111,12 @@ function gatherResourceNode(
 
     }
 
-
     const skillName =
         resourceNode.gatheringSkill;
-
 
     const skill =
         player.skills &&
         player.skills[skillName];
-
 
     const skillLevel =
         skill &&
@@ -1207,18 +1126,12 @@ function gatherResourceNode(
             ? skill.level
             : 1;
 
-
     const requiredLevel =
         Number.isFinite(
             resourceNode.requiredLevel
         )
             ? resourceNode.requiredLevel
             : 1;
-
-
-    /* ===================================================
-       GATHERING LEVEL REQUIREMENT
-       =================================================== */
 
     if (
         skillLevel <
@@ -1228,24 +1141,19 @@ function gatherResourceNode(
         const message =
             `You need ${skillName} level ${requiredLevel} to gather ${resourceNode.name}.`;
 
-
         console.log(
             `${message} Current level: ${skillLevel}.`
         );
-
 
         showGameMessage(
             message
         );
 
-
         clearMovementTarget();
-
 
         return false;
 
     }
-
 
     const duration =
         Number.isFinite(
@@ -1254,11 +1162,6 @@ function gatherResourceNode(
         resourceNode.gatheringDuration > 0
             ? resourceNode.gatheringDuration
             : 2500;
-
-
-    /* ===================================================
-       MINING
-       =================================================== */
 
     if (
         skillName === "mining"
@@ -1276,23 +1179,15 @@ function gatherResourceNode(
         miningState.duration =
             duration;
 
-
         clearMovementTarget();
-
 
         console.log(
             `Mining ${resourceNode.name}...`
         );
 
-
         return true;
 
     }
-
-
-    /* ===================================================
-       SALVAGING
-       =================================================== */
 
     if (
         skillName === "salvaging"
@@ -1310,24 +1205,19 @@ function gatherResourceNode(
         salvagingState.duration =
             duration;
 
-
         clearMovementTarget();
-
 
         console.log(
             `Salvaging ${resourceNode.name}...`
         );
 
-
         return true;
 
     }
 
-
     console.warn(
         `Unsupported gathering skill: ${skillName}`
     );
-
 
     return false;
 
@@ -1344,7 +1234,6 @@ function updateMiningAction() {
         return;
     }
 
-
     if (player.isDead) {
 
         stopMining();
@@ -1353,12 +1242,10 @@ function updateMiningAction() {
 
     }
 
-
     const resourceNode =
         getResourceNodeById(
             miningState.resourceNodeId
         );
-
 
     if (!resourceNode) {
 
@@ -1368,7 +1255,6 @@ function updateMiningAction() {
 
     }
 
-
     if (resourceNode.depleted) {
 
         stopMining();
@@ -1377,13 +1263,11 @@ function updateMiningAction() {
 
     }
 
-
     const distance =
         getDistanceToResourceNode(
             player,
             resourceNode
         );
-
 
     if (
         distance >
@@ -1396,11 +1280,9 @@ function updateMiningAction() {
 
     }
 
-
     const elapsed =
         performance.now() -
         miningState.startedAt;
-
 
     if (
         elapsed <
@@ -1411,17 +1293,14 @@ function updateMiningAction() {
 
     }
 
-
     const rewardItemId =
         resourceNode.rewardItem ||
         resourceNode.resourceId;
-
 
     const itemDefinition =
         getItem(
             rewardItemId
         );
-
 
     if (!itemDefinition) {
 
@@ -1429,13 +1308,11 @@ function updateMiningAction() {
             `Unknown mining reward item: ${rewardItemId}`
         );
 
-
         stopMining();
 
         return;
 
     }
-
 
     const quantity =
         Number.isFinite(
@@ -1445,7 +1322,6 @@ function updateMiningAction() {
             ? resourceNode.quantity
             : 1;
 
-
     const added =
         addItem(
             player.inventory,
@@ -1453,25 +1329,21 @@ function updateMiningAction() {
             quantity
         );
 
-
     if (!added) {
 
         console.log(
             "Inventory is full. Mining stopped. Resource remains available."
         );
 
-
         showGameMessage(
             "Inventory is full."
         );
-
 
         stopMining();
 
         return;
 
     }
-
 
     const xpReward =
         Number.isFinite(
@@ -1480,7 +1352,6 @@ function updateMiningAction() {
         resourceNode.xpReward > 0
             ? resourceNode.xpReward
             : 0;
-
 
     if (
         xpReward > 0 &&
@@ -1494,9 +1365,7 @@ function updateMiningAction() {
                 xpReward
             );
 
-
         refreshCharacterInterface();
-
 
         console.log(
             `Mining XP: +${xpReward} ${resourceNode.gatheringSkill} XP.`,
@@ -1505,12 +1374,10 @@ function updateMiningAction() {
 
     }
 
-
     const depleted =
         depleteResourceNode(
             resourceNode
         );
-
 
     if (!depleted) {
 
@@ -1518,26 +1385,21 @@ function updateMiningAction() {
             `Unable to deplete ${resourceNode.name}.`
         );
 
-
         stopMining();
 
         return;
 
     }
 
-
     stopMining();
-
 
     console.log(
         `${resourceNode.name} mined successfully.`
     );
 
-
     console.log(
         `Received: ${itemDefinition.name} x${quantity}.`
     );
-
 
     console.log(
         "Inventory:",
@@ -1555,7 +1417,6 @@ function updateSalvagingAction() {
         return;
     }
 
-
     if (player.isDead) {
 
         stopSalvaging();
@@ -1564,12 +1425,10 @@ function updateSalvagingAction() {
 
     }
 
-
     const resourceNode =
         getResourceNodeById(
             salvagingState.resourceNodeId
         );
-
 
     if (!resourceNode) {
 
@@ -1579,7 +1438,6 @@ function updateSalvagingAction() {
 
     }
 
-
     if (resourceNode.depleted) {
 
         stopSalvaging();
@@ -1588,13 +1446,11 @@ function updateSalvagingAction() {
 
     }
 
-
     const distance =
         getDistanceToResourceNode(
             player,
             resourceNode
         );
-
 
     if (
         distance >
@@ -1607,11 +1463,9 @@ function updateSalvagingAction() {
 
     }
 
-
     const elapsed =
         performance.now() -
         salvagingState.startedAt;
-
 
     if (
         elapsed <
@@ -1622,17 +1476,14 @@ function updateSalvagingAction() {
 
     }
 
-
     const rewardItemId =
         resourceNode.rewardItem ||
         resourceNode.resourceId;
-
 
     const itemDefinition =
         getItem(
             rewardItemId
         );
-
 
     if (!itemDefinition) {
 
@@ -1640,13 +1491,11 @@ function updateSalvagingAction() {
             `Unknown salvage reward item: ${rewardItemId}`
         );
 
-
         stopSalvaging();
 
         return;
 
     }
-
 
     const quantity =
         Number.isFinite(
@@ -1656,7 +1505,6 @@ function updateSalvagingAction() {
             ? resourceNode.quantity
             : 1;
 
-
     const added =
         addItem(
             player.inventory,
@@ -1664,25 +1512,21 @@ function updateSalvagingAction() {
             quantity
         );
 
-
     if (!added) {
 
         console.log(
             "Inventory is full. Salvaging stopped. Resource remains available."
         );
 
-
         showGameMessage(
             "Inventory is full."
         );
-
 
         stopSalvaging();
 
         return;
 
     }
-
 
     const xpReward =
         Number.isFinite(
@@ -1691,7 +1535,6 @@ function updateSalvagingAction() {
         resourceNode.xpReward > 0
             ? resourceNode.xpReward
             : 0;
-
 
     if (
         xpReward > 0 &&
@@ -1705,9 +1548,7 @@ function updateSalvagingAction() {
                 xpReward
             );
 
-
         refreshCharacterInterface();
-
 
         console.log(
             `Salvaging XP: +${xpReward} ${resourceNode.gatheringSkill} XP.`,
@@ -1716,12 +1557,10 @@ function updateSalvagingAction() {
 
     }
 
-
     const depleted =
         depleteResourceNode(
             resourceNode
         );
-
 
     if (!depleted) {
 
@@ -1729,26 +1568,21 @@ function updateSalvagingAction() {
             `Unable to deplete ${resourceNode.name}.`
         );
 
-
         stopSalvaging();
 
         return;
 
     }
 
-
     stopSalvaging();
-
 
     console.log(
         `${resourceNode.name} salvaged successfully.`
     );
 
-
     console.log(
         `Received: ${itemDefinition.name} x${quantity}.`
     );
-
 
     console.log(
         "Inventory:",
@@ -1768,10 +1602,8 @@ function updateResourceNodeTarget() {
         return;
     }
 
-
     const target =
         getMovementTarget();
-
 
     if (
         !target ||
@@ -1780,12 +1612,10 @@ function updateResourceNodeTarget() {
         return;
     }
 
-
     const resourceNode =
         getResourceNodeById(
             target.id
         );
-
 
     if (!resourceNode) {
 
@@ -1795,13 +1625,11 @@ function updateResourceNodeTarget() {
 
     }
 
-
     target.x =
         resourceNode.position.x;
 
     target.y =
         resourceNode.position.y;
-
 
     if (resourceNode.depleted) {
 
@@ -1811,13 +1639,11 @@ function updateResourceNodeTarget() {
 
     }
 
-
     const distance =
         getDistanceToResourceNode(
             player,
             resourceNode
         );
-
 
     if (
         distance <=
@@ -1837,39 +1663,31 @@ function updateResourceNodeTarget() {
    RESOURCE NODE CLICK
    ======================================================= */
 
-function handleResourceNodeClick(
-    event
-) {
+function handleResourceNodeClick(event) {
 
     if (player.isDead) {
         return;
     }
 
-
     if (isWorldObjectUIOpen()) {
         return;
     }
 
-
     if (dialogueController.isOpen()) {
         return;
     }
-
 
     const resourceElement =
         event.target.closest(
             ".resource-node"
         );
 
-
     let clickedResourceNode = null;
-
 
     if (resourceElement) {
 
         const resourceNodeId =
             resourceElement.dataset.resourceNodeId;
-
 
         if (resourceNodeId) {
 
@@ -1882,26 +1700,21 @@ function handleResourceNodeClick(
 
     }
 
-
     if (!clickedResourceNode) {
 
         const worldRect =
             world.getBoundingClientRect();
 
-
         const clickX =
             event.clientX -
             worldRect.left;
-
 
         const clickY =
             event.clientY -
             worldRect.top;
 
-
         const resourceNodes =
             getResourceNodes();
-
 
         for (
             const resourceNode
@@ -1911,7 +1724,6 @@ function handleResourceNodeClick(
             if (resourceNode.depleted) {
                 continue;
             }
-
 
             const distance =
                 Math.sqrt(
@@ -1927,7 +1739,6 @@ function handleResourceNodeClick(
                     )
                 );
 
-
             if (distance <= 60) {
 
                 clickedResourceNode =
@@ -1941,27 +1752,22 @@ function handleResourceNodeClick(
 
     }
 
-
     if (!clickedResourceNode) {
         return;
     }
 
-
     event.stopImmediatePropagation();
-
 
     showClickMarker(
         clickedResourceNode.position.x,
         clickedResourceNode.position.y
     );
 
-
     const distance =
         getDistanceToResourceNode(
             player,
             clickedResourceNode
         );
-
 
     if (
         distance <=
@@ -1974,16 +1780,13 @@ function handleResourceNodeClick(
 
         clearMovementTarget();
 
-
         gatherResourceNode(
             clickedResourceNode
         );
 
-
         return;
 
     }
-
 
     const path =
         findPath(
@@ -1992,7 +1795,6 @@ function handleResourceNodeClick(
             clickedResourceNode.position.x,
             clickedResourceNode.position.y
         );
-
 
     if (!path) {
 
@@ -2004,7 +1806,6 @@ function handleResourceNodeClick(
 
     }
 
-
     stopMining();
 
     stopSalvaging();
@@ -2012,7 +1813,6 @@ function handleResourceNodeClick(
     stopCombat();
 
     clearMovementTarget();
-
 
     setMovementTarget(
         "resource",
@@ -2022,7 +1822,6 @@ function handleResourceNodeClick(
         0,
         path
     );
-
 
     console.log(
         `Walking to ${clickedResourceNode.name}.`
@@ -2035,9 +1834,7 @@ function handleResourceNodeClick(
    HOVER CURSOR
    ======================================================= */
 
-function updateInteractionCursor(
-    event
-) {
+function updateInteractionCursor(event) {
 
     if (player.isDead) {
 
@@ -2048,7 +1845,6 @@ function updateInteractionCursor(
 
     }
 
-
     if (dialogueController.isOpen()) {
 
         world.style.cursor =
@@ -2057,7 +1853,6 @@ function updateInteractionCursor(
         return;
 
     }
-
 
     if (isWorldObjectUIOpen()) {
 
@@ -2068,24 +1863,19 @@ function updateInteractionCursor(
 
     }
 
-
     const worldRect =
         world.getBoundingClientRect();
-
 
     const mouseX =
         event.clientX -
         worldRect.left;
 
-
     const mouseY =
         event.clientY -
         worldRect.top;
 
-
     const interactables =
         getInteractables();
-
 
     for (
         const interactable
@@ -2106,7 +1896,6 @@ function updateInteractionCursor(
                 )
             );
 
-
         if (distance <= 60) {
 
             world.style.cursor =
@@ -2118,10 +1907,8 @@ function updateInteractionCursor(
 
     }
 
-
     const worldObjects =
         getWorldObjects();
-
 
     for (
         const worldObject
@@ -2142,7 +1929,6 @@ function updateInteractionCursor(
                 )
             );
 
-
         if (distance <= 60) {
 
             world.style.cursor =
@@ -2154,10 +1940,8 @@ function updateInteractionCursor(
 
     }
 
-
     const resourceNodes =
         getResourceNodes();
-
 
     for (
         const resourceNode
@@ -2167,7 +1951,6 @@ function updateInteractionCursor(
         if (resourceNode.depleted) {
             continue;
         }
-
 
         const distance =
             Math.sqrt(
@@ -2183,7 +1966,6 @@ function updateInteractionCursor(
                 )
             );
 
-
         if (distance <= 60) {
 
             world.style.cursor =
@@ -2195,7 +1977,6 @@ function updateInteractionCursor(
 
     }
 
-
     world.style.cursor =
         "default";
 
@@ -2206,19 +1987,15 @@ function updateInteractionCursor(
    ITEM PICKUP
    ======================================================= */
 
-function attemptWorldItemPickup(
-    worldItem
-) {
+function attemptWorldItemPickup(worldItem) {
 
     if (!worldItem) {
         return false;
     }
 
-
     if (player.isDead) {
         return false;
     }
-
 
     const distance =
         Math.sqrt(
@@ -2234,17 +2011,14 @@ function attemptWorldItemPickup(
             )
         );
 
-
     if (distance > 10) {
         return false;
     }
-
 
     const itemDefinition =
         getItem(
             worldItem.itemId
         );
-
 
     if (!itemDefinition) {
 
@@ -2259,7 +2033,6 @@ function attemptWorldItemPickup(
 
     }
 
-
     const added =
         addItem(
             player.inventory,
@@ -2267,18 +2040,15 @@ function attemptWorldItemPickup(
             worldItem.quantity
         );
 
-
     if (!added) {
 
         console.log(
             "Inventory is full. Item remains in the world."
         );
 
-
         showGameMessage(
             "Inventory is full."
         );
-
 
         clearMovementTarget();
 
@@ -2286,28 +2056,22 @@ function attemptWorldItemPickup(
 
     }
 
-
     refreshCharacterInterface();
-
 
     removeWorldItem(
         worldItem
     );
 
-
     clearMovementTarget();
-
 
     console.log(
         `${itemDefinition.name} picked up.`
     );
 
-
     console.log(
         "Inventory:",
         player.inventory
     );
-
 
     return true;
 
@@ -2324,10 +2088,8 @@ function updateWorldItemTarget() {
         return;
     }
 
-
     const target =
         getMovementTarget();
-
 
     if (
         !target ||
@@ -2336,12 +2098,10 @@ function updateWorldItemTarget() {
         return;
     }
 
-
     const worldItem =
         findWorldItemById(
             target.id
         );
-
 
     if (!worldItem) {
 
@@ -2351,13 +2111,11 @@ function updateWorldItemTarget() {
 
     }
 
-
     target.x =
         worldItem.position.x;
 
     target.y =
         worldItem.position.y;
-
 
     const distance =
         Math.sqrt(
@@ -2373,7 +2131,6 @@ function updateWorldItemTarget() {
             )
         );
 
-
     if (distance <= 10) {
 
         player.position.x =
@@ -2381,7 +2138,6 @@ function updateWorldItemTarget() {
 
         player.position.y =
             worldItem.position.y;
-
 
         attemptWorldItemPickup(
             worldItem
@@ -2396,61 +2152,49 @@ function updateWorldItemTarget() {
    ITEM CLICK
    ======================================================= */
 
-function handleWorldItemClick(
-    event
-) {
+function handleWorldItemClick(event) {
 
     if (player.isDead) {
         return;
     }
 
-
     if (isWorldObjectUIOpen()) {
         return;
     }
-
 
     const itemElement =
         event.target.closest(
             ".world-item"
         );
 
-
     if (!itemElement) {
         return;
     }
 
-
     const worldItemId =
         itemElement.dataset.worldItemId;
-
 
     if (!worldItemId) {
         return;
     }
-
 
     const worldItem =
         findWorldItemById(
             worldItemId
         );
 
-
     if (!worldItem) {
         return;
     }
-
 
     if (dialogueController.isOpen()) {
         return;
     }
 
-
     showClickMarker(
         worldItem.position.x,
         worldItem.position.y
     );
-
 
     const path =
         findPath(
@@ -2459,7 +2203,6 @@ function handleWorldItemClick(
             worldItem.position.x,
             worldItem.position.y
         );
-
 
     if (!path) {
 
@@ -2470,7 +2213,6 @@ function handleWorldItemClick(
         return;
 
     }
-
 
     const distance =
         Math.sqrt(
@@ -2485,7 +2227,6 @@ function handleWorldItemClick(
                 2
             )
         );
-
 
     if (distance <= 10) {
 
@@ -2501,7 +2242,6 @@ function handleWorldItemClick(
 
     }
 
-
     stopMining();
 
     stopSalvaging();
@@ -2509,7 +2249,6 @@ function handleWorldItemClick(
     stopCombat();
 
     clearMovementTarget();
-
 
     setMovementTarget(
         "item",
@@ -2527,45 +2266,35 @@ function handleWorldItemClick(
    NPC CLICK
    ======================================================= */
 
-function handleNPCClick(
-    event
-) {
+function handleNPCClick(event) {
 
     if (player.isDead) {
         return;
     }
 
-
     if (isWorldObjectUIOpen()) {
         return;
     }
-
 
     if (dialogueController.isOpen()) {
         return;
     }
 
-
     const worldRect =
         world.getBoundingClientRect();
-
 
     const clickX =
         event.clientX -
         worldRect.left;
 
-
     const clickY =
         event.clientY -
         worldRect.top;
 
-
     const interactables =
         getInteractables();
 
-
     let clickedInteractable = null;
-
 
     for (
         const interactable
@@ -2579,13 +2308,12 @@ function handleNPCClick(
                     interactable.position.x,
                     2
                 ) +
-                Math.pow(
-                    clickY -
-                    interactable.position.y,
-                    2
-                )
+                    Math.pow(
+                        clickY -
+                        interactable.position.y,
+                        2
+                    )
             );
-
 
         if (distance <= 60) {
 
@@ -2598,24 +2326,19 @@ function handleNPCClick(
 
     }
 
-
     if (!clickedInteractable) {
         return;
     }
 
-
     event.stopImmediatePropagation();
-
 
     const npc =
         clickedInteractable;
-
 
     showClickMarker(
         npc.position.x,
         npc.position.y
     );
-
 
     const distanceToNPC =
         Math.sqrt(
@@ -2630,7 +2353,6 @@ function handleNPCClick(
                 2
             )
         );
-
 
     if (
         distanceToNPC <=
@@ -2649,7 +2371,6 @@ function handleNPCClick(
 
     }
 
-
     const path =
         findPath(
             player.position.x,
@@ -2657,7 +2378,6 @@ function handleNPCClick(
             npc.position.x,
             npc.position.y
         );
-
 
     if (!path) {
 
@@ -2669,7 +2389,6 @@ function handleNPCClick(
 
     }
 
-
     stopMining();
 
     stopSalvaging();
@@ -2677,7 +2396,6 @@ function handleNPCClick(
     stopCombat();
 
     clearMovementTarget();
-
 
     setMovementTarget(
         "npc",
@@ -2687,7 +2405,6 @@ function handleNPCClick(
         npc.interactionDistance,
         path
     );
-
 
     console.log(
         `Walking to ${npc.name}.`
@@ -2706,10 +2423,8 @@ function updateNPCTarget() {
         return;
     }
 
-
     const target =
         getMovementTarget();
-
 
     if (
         !target ||
@@ -2718,10 +2433,8 @@ function updateNPCTarget() {
         return;
     }
 
-
     const interactables =
         getInteractables();
-
 
     const npc =
         interactables.find(
@@ -2729,7 +2442,6 @@ function updateNPCTarget() {
                 interactable.id ===
                 target.id
         );
-
 
     if (!npc) {
 
@@ -2739,13 +2451,11 @@ function updateNPCTarget() {
 
     }
 
-
     target.x =
         npc.position.x;
 
     target.y =
         npc.position.y;
-
 
     const distance =
         Math.sqrt(
@@ -2760,7 +2470,6 @@ function updateNPCTarget() {
                 2
             )
         );
-
 
     if (
         distance <=
@@ -2780,43 +2489,34 @@ function updateNPCTarget() {
    ENEMY CLICK
    ======================================================= */
 
-function handleEnemyClick(
-    event
-) {
+function handleEnemyClick(event) {
 
     if (player.isDead) {
         return;
     }
 
-
     if (isWorldObjectUIOpen()) {
         return;
     }
-
 
     const enemyElement =
         event.target.closest(
             ".enemy"
         );
 
-
     if (!enemyElement) {
         return;
     }
 
-
     const enemyId =
         enemyElement.dataset.enemyId;
-
 
     if (!enemyId) {
         return;
     }
 
-
     const enemies =
         getEnemyCollection();
-
 
     const enemy =
         enemies.find(
@@ -2825,16 +2525,13 @@ function handleEnemyClick(
                 enemyId
         );
 
-
     if (!enemy) {
         return;
     }
 
-
     if (dialogueController.isOpen()) {
         return;
     }
-
 
     if (enemy.position) {
 
@@ -2845,13 +2542,11 @@ function handleEnemyClick(
 
     }
 
-
     stopMining();
 
     stopSalvaging();
 
     clearMovementTarget();
-
 
     startCombat(
         player,
@@ -2865,82 +2560,66 @@ function handleEnemyClick(
    GROUND CLICK-TO-MOVE
    ======================================================= */
 
-function handleGroundClick(
-    event
-) {
+function handleGroundClick(event) {
 
     if (player.isDead) {
         return;
     }
 
-
     if (isWorldObjectUIOpen()) {
         return;
     }
 
-
     if (dialogueController.isOpen()) {
         return;
     }
-
 
     const itemElement =
         event.target.closest(
             ".world-item"
         );
 
-
     if (itemElement) {
         return;
     }
-
 
     const enemyElement =
         event.target.closest(
             ".enemy"
         );
 
-
     if (enemyElement) {
         return;
     }
-
 
     const worldObjectElement =
         event.target.closest(
             ".world-object"
         );
 
-
     if (worldObjectElement) {
         return;
     }
-
 
     const resourceElement =
         event.target.closest(
             ".resource-node"
         );
 
-
     if (resourceElement) {
         return;
     }
 
-
     const worldRect =
         world.getBoundingClientRect();
-
 
     let targetX =
         event.clientX -
         worldRect.left;
 
-
     let targetY =
         event.clientY -
         worldRect.top;
-
 
     targetX =
         Math.max(
@@ -2951,7 +2630,6 @@ function handleGroundClick(
             )
         );
 
-
     targetY =
         Math.max(
             0,
@@ -2961,12 +2639,10 @@ function handleGroundClick(
             )
         );
 
-
     showClickMarker(
         targetX,
         targetY
     );
-
 
     const path =
         findPath(
@@ -2975,7 +2651,6 @@ function handleGroundClick(
             targetX,
             targetY
         );
-
 
     if (!path) {
 
@@ -2987,7 +2662,6 @@ function handleGroundClick(
 
     }
 
-
     stopMining();
 
     stopSalvaging();
@@ -2995,7 +2669,6 @@ function handleGroundClick(
     stopCombat();
 
     clearMovementTarget();
-
 
     setMovementTarget(
         "ground",
@@ -3006,11 +2679,9 @@ function handleGroundClick(
         path
     );
 
-
     console.log(
         `Path found: ${path.length} waypoint(s).`
     );
-
 
     console.log(
         `Moving to ${Math.round(targetX)}, ${Math.round(targetY)}`
@@ -3038,7 +2709,6 @@ function updateInteraction() {
 
     }
 
-
     if (player.isDead) {
 
         if (interactionPrompt) {
@@ -3051,7 +2721,6 @@ function updateInteraction() {
         return;
 
     }
-
 
     return updateInteractionPrompt(
         player,
@@ -3068,22 +2737,18 @@ function handleInteraction() {
         return;
     }
 
-
     if (isWorldObjectUIOpen()) {
         return;
     }
-
 
     if (dialogueController.isOpen()) {
         return;
     }
 
-
     const interactable =
         getNearbyInteractable(
             player
         );
-
 
     if (interactable) {
 
@@ -3095,12 +2760,10 @@ function handleInteraction() {
 
     }
 
-
     const worldObject =
         getNearbyWorldObject(
             player
         );
-
 
     if (worldObject) {
 
@@ -3123,10 +2786,8 @@ function updateCombatSystem() {
         player
     );
 
-
     const combatState =
         getCombatState();
-
 
     if (!combatState.active) {
 
@@ -3160,64 +2821,46 @@ function updateGame() {
 
     }
 
-
     updateWorldItemTarget();
-
 
     updateWorldObjectTarget();
 
-
     updateResourceNodeTarget();
-
 
     updateMiningAction();
 
-
     updateSalvagingAction();
-
 
     updateNPCTarget();
 
-
     updateCombatSystem();
-
 
     updateEnemyRespawns();
 
-
     updateResourceNodeRespawns();
-
 
     drawPlayer();
 
-
     renderEnemies();
 
-
     renderWorldItems();
-
 
     renderWorldObjects(
         world
     );
 
-
     renderResourceNodes(
         world
     );
 
-
     updatePlayerHUD();
 
-
     updateInteraction();
-
 
     updateCamera(
         player,
         world
     );
-
 
     if (player.isDead) {
 
@@ -3236,7 +2879,6 @@ function gameLoop() {
 
     updateGame();
 
-
     requestAnimationFrame(
         gameLoop
     );
@@ -3253,18 +2895,14 @@ function startGame() {
     titleScreen.style.display =
         "none";
 
-
     gameScreen.style.display =
         "block";
-
 
     setCharacterInterfaceAvailability(
         true
     );
 
-
     drawPlayer();
-
 
     updateGame();
 
@@ -3330,7 +2968,6 @@ window.addEventListener(
         keys[event.key] =
             true;
 
-
         if (
             event.key === "Escape"
         ) {
@@ -3347,14 +2984,12 @@ window.addEventListener(
 
         }
 
-
         if (
             event.key === "e" ||
             event.key === "E"
         ) {
 
             event.preventDefault();
-
 
             if (
                 isWorldObjectUIOpen()
@@ -3363,7 +2998,6 @@ window.addEventListener(
                 return;
 
             }
-
 
             handleInteraction();
 

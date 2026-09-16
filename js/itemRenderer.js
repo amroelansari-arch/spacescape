@@ -11,11 +11,87 @@ const ITEM_PICKUP_RANGE = 100;
 
 
 /* =======================================================
-   ITEM ELEMENTS
+   RENDERED ITEM ELEMENTS
    ======================================================= */
 
 const renderedItems =
     new Map();
+
+
+/* =======================================================
+   ITEM VISUAL
+   ======================================================= */
+
+function getItemSymbol(
+    itemDefinition
+) {
+
+    if (!itemDefinition) {
+        return "?";
+    }
+
+
+    if (
+        itemDefinition.type ===
+        "weapon"
+    ) {
+
+        if (
+            itemDefinition.combatDiscipline ===
+            "ballistics"
+        ) {
+            return "⚡";
+        }
+
+
+        if (
+            itemDefinition.combatDiscipline ===
+            "flux"
+        ) {
+            return "✦";
+        }
+
+
+        return "⚔";
+
+    }
+
+
+    if (
+        itemDefinition.type ===
+        "armor"
+    ) {
+        return "◆";
+    }
+
+
+    if (
+        itemDefinition.type ===
+        "ammunition"
+    ) {
+        return "▣";
+    }
+
+
+    if (
+        itemDefinition.type ===
+        "resource"
+    ) {
+        return "◇";
+    }
+
+
+    if (
+        itemDefinition.type ===
+        "consumable"
+    ) {
+        return "+";
+    }
+
+
+    return "•";
+
+}
 
 
 /* =======================================================
@@ -30,32 +106,49 @@ function createItemElement(
     const element =
         document.createElement("div");
 
+
     element.className =
         "world-item";
 
+
     element.dataset.worldItemId =
         worldItem.id;
+
+
+    /* ---------------------------------------------------
+       POSITION
+       --------------------------------------------------- */
 
     element.style.position =
         "absolute";
 
     element.style.left =
-        worldItem.position.x + "px";
+        `${worldItem.position.x}px`;
 
     element.style.top =
-        worldItem.position.y + "px";
+        `${worldItem.position.y}px`;
+
 
     element.style.width =
-        "42px";
+        "52px";
 
     element.style.height =
-        "42px";
+        "52px";
+
 
     element.style.transform =
         "translate(-50%, -50%)";
 
+
+    /* ---------------------------------------------------
+       DISPLAY
+       --------------------------------------------------- */
+
     element.style.display =
         "flex";
+
+    element.style.flexDirection =
+        "column";
 
     element.style.alignItems =
         "center";
@@ -63,93 +156,165 @@ function createItemElement(
     element.style.justifyContent =
         "center";
 
-    element.style.border =
-        "2px solid rgba(0, 220, 255, 0.9)";
 
-    element.style.borderRadius =
-        "8px";
+    /* ---------------------------------------------------
+       VISIBILITY
+       --------------------------------------------------- */
+
+    element.style.visibility =
+        "visible";
+
+    element.style.opacity =
+        "1";
+
+    element.style.pointerEvents =
+        "auto";
+
+
+    /* ---------------------------------------------------
+       VISUAL
+       --------------------------------------------------- */
 
     element.style.background =
-        "rgba(0, 40, 65, 0.92)";
+        "rgba(8, 20, 30, 0.96)";
+
+
+    element.style.border =
+        "3px solid #00dcff";
+
+
+    element.style.borderRadius =
+        "10px";
+
 
     element.style.boxShadow =
-        "0 0 14px rgba(0, 220, 255, 0.65)";
+        "0 0 8px #00dcff, 0 0 20px rgba(0, 220, 255, 0.7)";
+
 
     element.style.color =
         "#ffffff";
 
+
     element.style.fontSize =
-        "22px";
+        "25px";
+
 
     element.style.fontWeight =
-        "bold";
+        "900";
+
+
+    element.style.lineHeight =
+        "1";
+
+
+    element.style.textAlign =
+        "center";
+
 
     element.style.cursor =
         "pointer";
 
+
     element.style.zIndex =
-        "150";
+        "200";
 
 
-    /*
-     * Simple visual representation.
-     * We can replace this with proper item
-     * artwork later.
-     */
-    if (
-        itemDefinition &&
-        itemDefinition.type ===
-        "weapon"
-    ) {
+    element.style.userSelect =
+        "none";
 
-        element.textContent =
-            "⚡";
 
-    } else {
+    /* ---------------------------------------------------
+       SYMBOL
+       --------------------------------------------------- */
 
-        element.textContent =
-            "◆";
+    const symbol =
+        document.createElement("div");
 
-    }
 
+    symbol.textContent =
+        getItemSymbol(
+            itemDefinition
+        );
+
+
+    symbol.style.width =
+        "100%";
+
+    symbol.style.height =
+        "28px";
+
+    symbol.style.display =
+        "flex";
+
+    symbol.style.alignItems =
+        "center";
+
+    symbol.style.justifyContent =
+        "center";
+
+
+    symbol.style.pointerEvents =
+        "none";
+
+
+    element.appendChild(
+        symbol
+    );
+
+
+    /* ---------------------------------------------------
+       ITEM NAME
+       --------------------------------------------------- */
 
     const label =
         document.createElement("div");
+
 
     label.textContent =
         itemDefinition
             ? itemDefinition.name
             : worldItem.itemId;
 
+
     label.style.position =
         "absolute";
 
+
     label.style.top =
-        "44px";
+        "56px";
+
 
     label.style.left =
         "50%";
 
+
     label.style.transform =
         "translateX(-50%)";
+
 
     label.style.whiteSpace =
         "nowrap";
 
-    label.style.fontSize =
-        "11px";
-
-    label.style.fontFamily =
-        "Arial, sans-serif";
-
-    label.style.fontWeight =
-        "bold";
 
     label.style.color =
         "#ffffff";
 
+
+    label.style.fontFamily =
+        "Arial, sans-serif";
+
+
+    label.style.fontSize =
+        "12px";
+
+
+    label.style.fontWeight =
+        "bold";
+
+
     label.style.textShadow =
-        "0 1px 3px #000000";
+        "0 2px 4px #000000";
+
 
     label.style.pointerEvents =
         "none";
@@ -160,13 +325,103 @@ function createItemElement(
     );
 
 
+    /* ---------------------------------------------------
+       QUANTITY
+       --------------------------------------------------- */
+
+    if (
+        Number.isFinite(
+            worldItem.quantity
+        ) &&
+        worldItem.quantity > 1
+    ) {
+
+        const quantity =
+            document.createElement("div");
+
+
+        quantity.textContent =
+            `x${worldItem.quantity}`;
+
+
+        quantity.style.position =
+            "absolute";
+
+
+        quantity.style.right =
+            "-7px";
+
+
+        quantity.style.top =
+            "-7px";
+
+
+        quantity.style.minWidth =
+            "24px";
+
+
+        quantity.style.height =
+            "24px";
+
+
+        quantity.style.padding =
+            "2px 5px";
+
+
+        quantity.style.display =
+            "flex";
+
+
+        quantity.style.alignItems =
+            "center";
+
+
+        quantity.style.justifyContent =
+            "center";
+
+
+        quantity.style.background =
+            "#101820";
+
+
+        quantity.style.border =
+            "2px solid #ffffff";
+
+
+        quantity.style.borderRadius =
+            "12px";
+
+
+        quantity.style.color =
+            "#ffffff";
+
+
+        quantity.style.fontSize =
+            "10px";
+
+
+        quantity.style.fontWeight =
+            "bold";
+
+
+        quantity.style.pointerEvents =
+            "none";
+
+
+        element.appendChild(
+            quantity
+        );
+
+    }
+
+
     return element;
 
 }
 
 
 /* =======================================================
-   RENDER
+   RENDER WORLD ITEMS
    ======================================================= */
 
 export function renderWorldItems() {
@@ -176,12 +431,21 @@ export function renderWorldItems() {
             "world"
         );
 
+
     if (!world) {
+
+        console.warn(
+            "renderWorldItems(): #world was not found."
+        );
+
         return;
+
     }
+
 
     const currentItems =
         getWorldItems();
+
 
     const activeIds =
         new Set();
@@ -192,15 +456,30 @@ export function renderWorldItems() {
         of currentItems
     ) {
 
+        if (!worldItem) {
+            continue;
+        }
+
+
+        if (!worldItem.position) {
+            continue;
+        }
+
+
         activeIds.add(
             worldItem.id
         );
+
 
         let element =
             renderedItems.get(
                 worldItem.id
             );
 
+
+        /* ------------------------------------------------
+           CREATE
+           ------------------------------------------------ */
 
         if (!element) {
 
@@ -209,39 +488,65 @@ export function renderWorldItems() {
                     worldItem.itemId
                 );
 
+
             element =
                 createItemElement(
                     worldItem,
                     itemDefinition
                 );
 
+
             renderedItems.set(
                 worldItem.id,
                 element
             );
 
+
             world.appendChild(
                 element
+            );
+
+
+            console.log(
+                "WORLD ITEM RENDERED:",
+                itemDefinition
+                    ? itemDefinition.name
+                    : worldItem.itemId,
+                worldItem.position
             );
 
         }
 
 
+        /* ------------------------------------------------
+           UPDATE POSITION
+           ------------------------------------------------ */
+
         element.style.left =
-            worldItem.position.x +
-            "px";
+            `${worldItem.position.x}px`;
+
 
         element.style.top =
-            worldItem.position.y +
-            "px";
+            `${worldItem.position.y}px`;
+
+
+        element.style.display =
+            "flex";
+
+
+        element.style.visibility =
+            "visible";
+
+
+        element.style.opacity =
+            "1";
 
     }
 
 
-    /*
-     * Remove DOM elements for items
-     * that no longer exist in the world.
-     */
+    /* ===================================================
+       REMOVE ITEMS NO LONGER IN WORLD
+       =================================================== */
 
     for (
         const [
@@ -259,10 +564,27 @@ export function renderWorldItems() {
             continue;
         }
 
+
         element.remove();
+
 
         renderedItems.delete(
             worldItemId
+        );
+
+    }
+
+
+    /* ===================================================
+       DEBUG
+       =================================================== */
+
+    if (
+        currentItems.length > 0
+    ) {
+
+        console.log(
+            `World items active: ${currentItems.length}`
         );
 
     }
@@ -281,24 +603,32 @@ export function isWithinItemPickupRange(
 
     if (
         !player ||
-        !worldItem
+        !worldItem ||
+        !player.position ||
+        !worldItem.position
     ) {
+
         return false;
+
     }
+
 
     const dx =
         player.position.x -
         worldItem.position.x;
 
+
     const dy =
         player.position.y -
         worldItem.position.y;
+
 
     const distance =
         Math.sqrt(
             dx * dx +
             dy * dy
         );
+
 
     return (
         distance <=

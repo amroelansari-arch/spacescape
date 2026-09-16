@@ -142,6 +142,125 @@ const keys = {};
 
 
 /* =======================================================
+   GAME MESSAGE
+   ======================================================= */
+
+let gameMessageElement = null;
+
+let gameMessageTimer = null;
+
+
+function createGameMessageElement() {
+
+    if (gameMessageElement) {
+        return;
+    }
+
+
+    gameMessageElement =
+        document.createElement("div");
+
+
+    gameMessageElement.id =
+        "spacescape-game-message";
+
+
+    gameMessageElement.style.position =
+        "fixed";
+
+    gameMessageElement.style.left =
+        "50%";
+
+    gameMessageElement.style.bottom =
+        "90px";
+
+    gameMessageElement.style.transform =
+        "translateX(-50%)";
+
+    gameMessageElement.style.padding =
+        "10px 18px";
+
+    gameMessageElement.style.background =
+        "rgba(0, 0, 0, 0.85)";
+
+    gameMessageElement.style.border =
+        "1px solid rgba(255, 255, 255, 0.25)";
+
+    gameMessageElement.style.borderRadius =
+        "6px";
+
+    gameMessageElement.style.color =
+        "#ffffff";
+
+    gameMessageElement.style.fontSize =
+        "14px";
+
+    gameMessageElement.style.fontWeight =
+        "600";
+
+    gameMessageElement.style.zIndex =
+        "15000";
+
+    gameMessageElement.style.pointerEvents =
+        "none";
+
+    gameMessageElement.style.opacity =
+        "0";
+
+    gameMessageElement.style.transition =
+        "opacity 0.2s ease";
+
+
+    document.body.appendChild(
+        gameMessageElement
+    );
+
+}
+
+
+function showGameMessage(
+    message
+) {
+
+    createGameMessageElement();
+
+
+    gameMessageElement.textContent =
+        message;
+
+
+    gameMessageElement.style.opacity =
+        "1";
+
+
+    if (gameMessageTimer) {
+
+        clearTimeout(
+            gameMessageTimer
+        );
+
+    }
+
+
+    gameMessageTimer =
+        setTimeout(
+            () => {
+
+                if (gameMessageElement) {
+
+                    gameMessageElement.style.opacity =
+                        "0";
+
+                }
+
+            },
+            2500
+        );
+
+}
+
+
+/* =======================================================
    MINING ACTION STATE
    ======================================================= */
 
@@ -1038,8 +1157,17 @@ function gatherResourceNode(
         requiredLevel
     ) {
 
+        const message =
+            `You need ${skillName} level ${requiredLevel} to gather ${resourceNode.name}.`;
+
+
         console.log(
-            `You need ${skillName} level ${requiredLevel} to gather ${resourceNode.name}. Current level: ${skillLevel}.`
+            `${message} Current level: ${skillLevel}.`
+        );
+
+
+        showGameMessage(
+            message
         );
 
 
@@ -1216,10 +1344,6 @@ function updateMiningAction() {
     }
 
 
-    /* ===================================================
-       RESOURCE REWARD ITEM
-       =================================================== */
-
     const rewardItemId =
         resourceNode.rewardItem ||
         resourceNode.resourceId;
@@ -1269,16 +1393,17 @@ function updateMiningAction() {
         );
 
 
+        showGameMessage(
+            "Inventory is full."
+        );
+
+
         stopMining();
 
         return;
 
     }
 
-
-    /* ===================================================
-       MINING XP
-       =================================================== */
 
     const xpReward =
         Number.isFinite(
@@ -1432,10 +1557,6 @@ function updateSalvagingAction() {
     }
 
 
-    /* ===================================================
-       RESOURCE REWARD ITEM
-       =================================================== */
-
     const rewardItemId =
         resourceNode.rewardItem ||
         resourceNode.resourceId;
@@ -1485,16 +1606,17 @@ function updateSalvagingAction() {
         );
 
 
+        showGameMessage(
+            "Inventory is full."
+        );
+
+
         stopSalvaging();
 
         return;
 
     }
 
-
-    /* ===================================================
-       SALVAGING XP
-       =================================================== */
 
     const xpReward =
         Number.isFinite(
@@ -2085,6 +2207,12 @@ function attemptWorldItemPickup(
         console.log(
             "Inventory is full. Item remains in the world."
         );
+
+
+        showGameMessage(
+            "Inventory is full."
+        );
+
 
         clearMovementTarget();
 

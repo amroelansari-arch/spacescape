@@ -5,29 +5,19 @@
 export const SKILL_NAMES = {
 
     ATTACK: "attack",
-
     STRENGTH: "strength",
-
     DEFENSE: "defense",
-
     VITALITY: "vitality",
 
     BALLISTICS: "ballistics",
-
     ENERGY_WEAPONS: "energyWeapons",
 
     MINING: "mining",
-
     SALVAGING: "salvaging",
-
     XENOBIOLOGY: "xenobiology",
-
     ENGINEERING: "engineering",
-
     CRAFTING: "crafting",
-
     HACKING: "hacking",
-
     NAVIGATION: "navigation"
 
 };
@@ -37,20 +27,28 @@ export const SKILL_NAMES = {
    SKILL CHANGE LISTENERS
    ======================================================= */
 
-const skillChangeListeners = new Set();
+const skillChangeListeners =
+    new Set();
 
 
-export function subscribeToSkillChanges(listener) {
+export function subscribeToSkillChanges(
+    listener
+) {
 
     if (
-        typeof listener !== "function"
+        typeof listener !==
+        "function"
     ) {
+
         return () => {};
+
     }
+
 
     skillChangeListeners.add(
         listener
     );
+
 
     return () => {
 
@@ -186,8 +184,11 @@ export function getSkillXPRequiredForLevel(
         !Number.isFinite(level) ||
         level < 1
     ) {
+
         return 100;
+
     }
+
 
     return Math.floor(
         100 *
@@ -214,8 +215,11 @@ export function getSkill(
         typeof skills !== "object" ||
         !skills[skillName]
     ) {
+
         return null;
+
     }
+
 
     return skills[skillName];
 
@@ -237,12 +241,18 @@ export function getSkillLevel(
             skillName
         );
 
+
     if (
         !skill ||
-        !Number.isFinite(skill.level)
+        !Number.isFinite(
+            skill.level
+        )
     ) {
+
         return 1;
+
     }
+
 
     return skill.level;
 
@@ -264,12 +274,18 @@ export function getCurrentSkillXP(
             skillName
         );
 
+
     if (
         !skill ||
-        !Number.isFinite(skill.xp)
+        !Number.isFinite(
+            skill.xp
+        )
     ) {
+
         return 0;
+
     }
+
 
     return skill.xp;
 
@@ -277,7 +293,7 @@ export function getCurrentSkillXP(
 
 
 /* =======================================================
-   XP TO NEXT SKILL LEVEL
+   XP TO NEXT LEVEL
    ======================================================= */
 
 export function getSkillXPToNextLevel(
@@ -291,20 +307,40 @@ export function getSkillXPToNextLevel(
             skillName
         );
 
+
     if (
         !skill ||
-        !Number.isFinite(skill.level) ||
-        !Number.isFinite(skill.xp)
+        !Number.isFinite(
+            skill.level
+        ) ||
+        !Number.isFinite(
+            skill.xp
+        )
     ) {
+
         return 0;
+
     }
 
+
+    if (
+        skill.level >= 99
+    ) {
+
+        return 0;
+
+    }
+
+
     return Math.max(
+
         0,
+
         getSkillXPRequiredForLevel(
             skill.level
         ) -
         skill.xp
+
     );
 
 }
@@ -326,16 +362,21 @@ export function awardSkillXP(
             skillName
         );
 
+
     if (!skill) {
 
         return {
+
             awarded: 0,
             levelsGained: 0,
             previousLevel: 0,
-            currentLevel: 0
+            currentLevel: 0,
+            leveledUp: false
+
         };
 
     }
+
 
     if (
         !Number.isFinite(amount) ||
@@ -343,12 +384,18 @@ export function awardSkillXP(
     ) {
 
         return {
+
             awarded: 0,
             levelsGained: 0,
+
             previousLevel:
                 skill.level,
+
             currentLevel:
-                skill.level
+                skill.level,
+
+            leveledUp: false
+
         };
 
     }
@@ -358,32 +405,35 @@ export function awardSkillXP(
         skill.level;
 
 
-    /*
-     * Level 99 is the maximum.
-     */
-
     if (
         skill.level >= 99
     ) {
 
         skill.level = 99;
-
         skill.xp = 0;
+
 
         const result = {
 
             awarded: 0,
+
             levelsGained: 0,
+
             previousLevel: 99,
-            currentLevel: 99
+
+            currentLevel: 99,
+
+            leveledUp: false
 
         };
+
 
         notifySkillChanged(
             skills,
             skillName,
             result
         );
+
 
         return result;
 
@@ -392,7 +442,9 @@ export function awardSkillXP(
 
     skill.xp += amount;
 
-    let levelsGained = 0;
+
+    let levelsGained =
+        0;
 
 
     while (
@@ -408,6 +460,7 @@ export function awardSkillXP(
                 skill.level
             );
 
+
         skill.level++;
 
         levelsGained++;
@@ -420,7 +473,6 @@ export function awardSkillXP(
     ) {
 
         skill.level = 99;
-
         skill.xp = 0;
 
     }
@@ -428,14 +480,18 @@ export function awardSkillXP(
 
     const result = {
 
-        awarded: amount,
+        awarded:
+            amount,
 
         levelsGained,
 
         previousLevel,
 
         currentLevel:
-            skill.level
+            skill.level,
+
+        leveledUp:
+            levelsGained > 0
 
     };
 
@@ -447,13 +503,54 @@ export function awardSkillXP(
     );
 
 
+    /*
+     * Emit a browser event for player-facing
+     * progression UI.
+     *
+     * Nothing depends on this event yet,
+     * so existing systems remain compatible.
+     */
+
+    if (
+        result.leveledUp &&
+        typeof window !==
+        "undefined"
+    ) {
+
+        window.dispatchEvent(
+
+            new CustomEvent(
+                "spacescape:skillLevelUp",
+                {
+
+                    detail: {
+
+                        skillName,
+
+                        previousLevel,
+
+                        currentLevel:
+                            skill.level,
+
+                        levelsGained
+
+                    }
+
+                }
+            )
+
+        );
+
+    }
+
+
     return result;
 
 }
 
 
 /* =======================================================
-   COMBAT SKILL ACCESS
+   COMBAT SKILLS
    ======================================================= */
 
 export function getCombatSkills(
@@ -464,8 +561,11 @@ export function getCombatSkills(
         !skills ||
         typeof skills !== "object"
     ) {
+
         return null;
+
     }
+
 
     return {
 
@@ -498,8 +598,11 @@ export function getSpecializedCombatSkills(
         !skills ||
         typeof skills !== "object"
     ) {
+
         return null;
+
     }
+
 
     return {
 

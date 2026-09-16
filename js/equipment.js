@@ -2,21 +2,16 @@
  * =======================================================
  * SPACESCAPE EQUIPMENT SYSTEM
  * =======================================================
- *
- * Handles equipped items and equipment slots.
- *
- * Equipment slots:
- * head
- * body
- * weapon
- * offhand
- * legs
- * feet
- * accessory
- * =======================================================
  */
 
+import {
+    meetsEquipmentRequirements,
+    getFailedEquipmentRequirement
+} from "./equipmentStats.js";
+
+
 export const EQUIPMENT_SLOTS = [
+
     "head",
     "body",
     "weapon",
@@ -24,6 +19,7 @@ export const EQUIPMENT_SLOTS = [
     "legs",
     "feet",
     "accessory"
+
 ];
 
 
@@ -32,7 +28,9 @@ export const EQUIPMENT_SLOTS = [
    ======================================================= */
 
 export function createEquipment() {
+
     return {
+
         head: null,
         body: null,
         weapon: null,
@@ -40,7 +38,9 @@ export function createEquipment() {
         legs: null,
         feet: null,
         accessory: null
+
     };
+
 }
 
 
@@ -48,7 +48,10 @@ export function createEquipment() {
    VALIDATION
    ======================================================= */
 
-export function isValidEquipment(equipment) {
+export function isValidEquipment(
+    equipment
+) {
+
     if (!equipment) {
         return false;
     }
@@ -60,11 +63,18 @@ export function isValidEquipment(equipment) {
                 slot
             )
     );
+
 }
 
 
-export function isValidEquipmentSlot(slot) {
-    return EQUIPMENT_SLOTS.includes(slot);
+export function isValidEquipmentSlot(
+    slot
+) {
+
+    return EQUIPMENT_SLOTS.includes(
+        slot
+    );
+
 }
 
 
@@ -76,14 +86,18 @@ export function getEquippedItem(
     equipment,
     slot
 ) {
+
     if (
         !isValidEquipment(equipment) ||
         !isValidEquipmentSlot(slot)
     ) {
+
         return null;
+
     }
 
     return equipment[slot];
+
 }
 
 
@@ -95,11 +109,14 @@ export function isItemEquipped(
     equipment,
     itemId
 ) {
+
     if (
         !isValidEquipment(equipment) ||
         !itemId
     ) {
+
         return false;
+
     }
 
     return EQUIPMENT_SLOTS.some(
@@ -107,6 +124,7 @@ export function isItemEquipped(
             equipment[slot] &&
             equipment[slot].id === itemId
     );
+
 }
 
 
@@ -118,23 +136,33 @@ export function findEquipmentSlot(
     equipment,
     itemId
 ) {
+
     if (
         !isValidEquipment(equipment) ||
         !itemId
     ) {
+
         return null;
+
     }
 
-    for (const slot of EQUIPMENT_SLOTS) {
+    for (
+        const slot of EQUIPMENT_SLOTS
+    ) {
+
         if (
             equipment[slot] &&
             equipment[slot].id === itemId
         ) {
+
             return slot;
+
         }
+
     }
 
     return null;
+
 }
 
 
@@ -144,52 +172,120 @@ export function findEquipmentSlot(
 
 export function equipItem(
     equipment,
-    item
+    item,
+    player = null
 ) {
+
     if (
         !isValidEquipment(equipment) ||
         !item ||
         !item.id
     ) {
+
         return {
+
             success: false,
             reason: "invalid_item"
+
         };
+
     }
+
 
     if (
         item.type !== "weapon" &&
         item.type !== "equipment" &&
         item.type !== "armor"
     ) {
+
         return {
+
             success: false,
             reason: "not_equippable"
+
         };
+
     }
 
-    if (!isValidEquipmentSlot(item.slot)) {
+
+    if (
+        !isValidEquipmentSlot(
+            item.slot
+        )
+    ) {
+
         return {
+
             success: false,
             reason: "invalid_slot"
+
         };
+
     }
 
-    const slot = item.slot;
+
+    /*
+     * Requirements are only enforced when
+     * a player object is supplied.
+     *
+     * This preserves compatibility with
+     * existing direct equipment tests.
+     */
+
+    if (
+        player &&
+        !meetsEquipmentRequirements(
+            player,
+            item
+        )
+    ) {
+
+        return {
+
+            success: false,
+
+            reason:
+                "requirements_not_met",
+
+            requirement:
+                getFailedEquipmentRequirement(
+                    player,
+                    item
+                )
+
+        };
+
+    }
+
+
+    const slot =
+        item.slot;
+
 
     const previousItem =
         equipment[slot];
 
+
     equipment[slot] = {
-        id: item.id
+
+        id:
+            item.id
+
     };
 
+
     return {
+
         success: true,
+
         slot,
+
         item,
+
         previousItem
+
     };
+
 }
 
 
@@ -201,33 +297,53 @@ export function unequipItem(
     equipment,
     slot
 ) {
+
     if (
         !isValidEquipment(equipment) ||
         !isValidEquipmentSlot(slot)
     ) {
+
         return {
+
             success: false,
             reason: "invalid_slot"
+
         };
+
     }
+
 
     const equippedItem =
         equipment[slot];
 
+
     if (!equippedItem) {
+
         return {
+
             success: false,
             reason: "slot_empty"
+
         };
+
     }
 
-    equipment[slot] = null;
+
+    equipment[slot] =
+        null;
+
 
     return {
+
         success: true,
+
         slot,
-        item: equippedItem
+
+        item:
+            equippedItem
+
     };
+
 }
 
 
@@ -238,21 +354,33 @@ export function unequipItem(
 export function getEquippedItems(
     equipment
 ) {
-    if (!isValidEquipment(equipment)) {
+
+    if (
+        !isValidEquipment(equipment)
+    ) {
+
         return [];
+
     }
 
     return EQUIPMENT_SLOTS
+
         .filter(
             slot =>
                 equipment[slot] !== null
         )
+
         .map(
             slot => ({
+
                 slot,
-                item: equipment[slot]
+
+                item:
+                    equipment[slot]
+
             })
         );
+
 }
 
 
@@ -263,11 +391,23 @@ export function getEquippedItems(
 export function clearEquipment(
     equipment
 ) {
-    if (!isValidEquipment(equipment)) {
+
+    if (
+        !isValidEquipment(equipment)
+    ) {
+
         return;
+
     }
 
-    for (const slot of EQUIPMENT_SLOTS) {
-        equipment[slot] = null;
+
+    for (
+        const slot of EQUIPMENT_SLOTS
+    ) {
+
+        equipment[slot] =
+            null;
+
     }
+
 }

@@ -24,7 +24,19 @@ const ITEM_DEFINITIONS = {
         id: "laser_rifle",
         name: "Laser Rifle",
         type: "weapon",
-        slot: "weapon"
+        slot: "weapon",
+
+        stats: {
+            attackBonus: 5,
+            strengthBonus: 2,
+            accuracyBonus: 5,
+            damageBonus: 1,
+            defenseBonus: 0
+        },
+
+        requirements: {
+            attack: 1
+        }
     },
 
 

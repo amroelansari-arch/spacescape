@@ -29,6 +29,10 @@ import {
     handlePlayerDeath
 } from "./player.js";
 
+import {
+    getEffectivePlayerCombatStats
+} from "./equipmentStats.js";
+
 
 const PLAYER_ATTACK_SPEED = 2000;
 
@@ -361,8 +365,8 @@ function getEffectivePlayerDefense(
     player
 ) {
 
-    const defenseLevel =
-        getPlayerDefenseLevel(
+    const combatStats =
+        getEffectivePlayerCombatStats(
             player
         );
 
@@ -391,7 +395,7 @@ function getEffectivePlayerDefense(
 
     return Math.max(
         0,
-        defenseLevel *
+        combatStats.defense *
         defenseMultiplier
     );
 
@@ -462,6 +466,12 @@ export function startCombat(
     );
 
 
+    const combatStats =
+        getEffectivePlayerCombatStats(
+            player
+        );
+
+
     console.log(
         `Target selected: ${enemy.name}`
     );
@@ -474,10 +484,18 @@ export function startCombat(
 
     console.log(
         `Combat skills: ` +
-        `Attack ${getPlayerAttackLevel(player)}, ` +
-        `Strength ${getPlayerStrengthLevel(player)}, ` +
-        `Defense ${getPlayerDefenseLevel(player)}, ` +
+        `Attack ${combatStats.attack}, ` +
+        `Strength ${combatStats.strength}, ` +
+        `Defense ${combatStats.defense}, ` +
         `Vitality ${getPlayerVitalityLevel(player)}`
+    );
+
+
+    console.log(
+        `Equipment bonuses: ` +
+        `Attack +${combatStats.attack - getPlayerAttackLevel(player)}, ` +
+        `Strength +${combatStats.strength - getPlayerStrengthLevel(player)}, ` +
+        `Defense +${combatStats.defense - getPlayerDefenseLevel(player)}`
     );
 
 
@@ -1187,26 +1205,32 @@ function processPlayerAttack(
         getCombatStyle();
 
 
-    const attackLevel =
-        getPlayerAttackLevel(
+    /*
+     * Equipment is now incorporated into the
+     * effective combat levels.
+     *
+     * Example:
+     *
+     * Attack 1 + Laser Rifle +5
+     * = effective Attack 6
+     *
+     * Strength 1 + Laser Rifle +2
+     * = effective Strength 3
+     */
+
+    const combatStats =
+        getEffectivePlayerCombatStats(
             player
         );
+
+
+    const attackLevel =
+        combatStats.attack;
 
 
     const strengthLevel =
-        getPlayerStrengthLevel(
-            player
-        );
+        combatStats.strength;
 
-
-    /*
-     * Attack controls accuracy.
-     *
-     * Strength controls damage.
-     *
-     * Enemy defense remains an independent
-     * enemy stat.
-     */
 
     const result =
         performAttack(
@@ -1352,7 +1376,7 @@ function processEnemyAttack(
         console.log(
             `${enemy.name} hits player for ${result.damage}. ` +
             `${player.health.current}/${player.health.maximum} HP remaining. ` +
-            `Player Defense ${getPlayerDefenseLevel(player)}`
+            `Player Defense ${playerDefense}`
         );
 
     } else {
@@ -1369,7 +1393,7 @@ function processEnemyAttack(
 
         console.log(
             `${enemy.name} misses player. ` +
-            `Player Defense ${getPlayerDefenseLevel(player)}`
+            `Player Defense ${playerDefense}`
         );
 
     }

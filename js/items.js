@@ -29,9 +29,12 @@ const ITEM_DEFINITIONS = {
         stats: {
             attackBonus: 5,
             strengthBonus: 2,
+            defenseBonus: 0,
+
             accuracyBonus: 5,
             damageBonus: 1,
-            defenseBonus: 0
+
+            weaponDamage: 5
         },
 
         requirements: {

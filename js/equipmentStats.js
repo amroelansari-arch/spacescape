@@ -32,7 +32,9 @@ const EMPTY_STATS = {
 
     accuracyBonus: 0,
 
-    damageBonus: 0
+    damageBonus: 0,
+
+    weaponDamage: 0
 
 };
 
@@ -97,6 +99,13 @@ export function getItemEquipmentStats(
                 stats.damageBonus
             )
                 ? stats.damageBonus
+                : 0,
+
+        weaponDamage:
+            Number.isFinite(
+                stats.weaponDamage
+            )
+                ? stats.weaponDamage
                 : 0
 
     };
@@ -192,6 +201,9 @@ export function getEquipmentStats(
         totals.damageBonus +=
             stats.damageBonus;
 
+        totals.weaponDamage +=
+            stats.weaponDamage;
+
     }
 
 
@@ -276,7 +288,10 @@ export function getEffectivePlayerCombatStats(
             equipmentStats.accuracyBonus,
 
         damageBonus:
-            equipmentStats.damageBonus
+            equipmentStats.damageBonus,
+
+        weaponDamage:
+            equipmentStats.weaponDamage
 
     };
 

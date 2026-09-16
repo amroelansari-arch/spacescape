@@ -460,7 +460,9 @@ function getEquipmentCombatBonuses(
 
             accuracyBonus: 0,
 
-            damageBonus: 0
+            damageBonus: 0,
+
+            weaponDamage: 0
 
         };
 
@@ -487,6 +489,13 @@ function getEquipmentCombatBonuses(
                 equipmentStats.damageBonus
             )
                 ? equipmentStats.damageBonus
+                : 0,
+
+        weaponDamage:
+            Number.isFinite(
+                equipmentStats.weaponDamage
+            )
+                ? equipmentStats.weaponDamage
                 : 0
 
     };
@@ -501,7 +510,9 @@ function getEquipmentCombatBonuses(
 /*
  * attackPower controls ACCURACY.
  *
- * damagePower controls DAMAGE.
+ * damagePower controls CHARACTER DAMAGE.
+ *
+ * weaponDamage controls WEAPON POWER.
  *
  * defenseOverride allows the combat system to use
  * a calculated defense value instead of relying on
@@ -516,8 +527,8 @@ function getEquipmentCombatBonuses(
  * Equipment accuracyBonus is added to attackPower
  * for the actual hit calculation.
  *
- * Equipment damageBonus is added to damagePower
- * for the actual damage calculation.
+ * Equipment damageBonus and weaponDamage are added
+ * to damagePower for the actual damage calculation.
  */
 
 export function performAttack(
@@ -652,7 +663,8 @@ export function performAttack(
         Math.max(
             1,
             damagePower +
-            equipmentBonuses.damageBonus
+            equipmentBonuses.damageBonus +
+            equipmentBonuses.weaponDamage
         );
 
 

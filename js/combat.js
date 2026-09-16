@@ -1,3 +1,8 @@
+import {
+    getEquipmentStats
+} from "./equipmentStats.js";
+
+
 export const COMBAT_STYLES = {
 
     ACCURATE: "accurate",
@@ -439,20 +444,8 @@ export function rollDamage(
 
 
 /* =======================================================
-   EQUIPMENT COMBAT BONUSES
+   GET EQUIPMENT COMBAT BONUSES
    ======================================================= */
-
-/*
- * Equipment stats are resolved here rather than
- * hard-coding individual weapons or armor.
- *
- * attackBonus and strengthBonus are already included
- * by combatSystem.js when it calculates effective
- * Attack and Strength.
- *
- * accuracyBonus and damageBonus are additional direct
- * combat modifiers.
- */
 
 function getEquipmentCombatBonuses(
     attacker
@@ -474,46 +467,27 @@ function getEquipmentCombatBonuses(
     }
 
 
-    /*
-     * combatSystem.js may provide precomputed equipment
-     * stats on the player object.
-     */
-
     const equipmentStats =
-        attacker.equipmentStats;
-
-
-    if (
-        equipmentStats &&
-        typeof equipmentStats === "object"
-    ) {
-
-        return {
-
-            accuracyBonus:
-                Number.isFinite(
-                    equipmentStats.accuracyBonus
-                )
-                    ? equipmentStats.accuracyBonus
-                    : 0,
-
-            damageBonus:
-                Number.isFinite(
-                    equipmentStats.damageBonus
-                )
-                    ? equipmentStats.damageBonus
-                    : 0
-
-        };
-
-    }
+        getEquipmentStats(
+            attacker.equipment
+        );
 
 
     return {
 
-        accuracyBonus: 0,
+        accuracyBonus:
+            Number.isFinite(
+                equipmentStats.accuracyBonus
+            )
+                ? equipmentStats.accuracyBonus
+                : 0,
 
-        damageBonus: 0
+        damageBonus:
+            Number.isFinite(
+                equipmentStats.damageBonus
+            )
+                ? equipmentStats.damageBonus
+                : 0
 
     };
 
@@ -533,16 +507,17 @@ function getEquipmentCombatBonuses(
  * a calculated defense value instead of relying on
  * target.defense.
  *
- * Equipment may additionally provide:
- *
- * accuracyBonus → added to attack accuracy
- * damageBonus   → added to damage
- *
  * Attack skill + equipment attackBonus are supplied
  * through attackPower by combatSystem.js.
  *
  * Strength skill + equipment strengthBonus are supplied
  * through damagePower by combatSystem.js.
+ *
+ * Equipment accuracyBonus is added to attackPower
+ * for the actual hit calculation.
+ *
+ * Equipment damageBonus is added to damagePower
+ * for the actual damage calculation.
  */
 
 export function performAttack(

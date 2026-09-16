@@ -11,7 +11,9 @@ import {
     getPlayerAttackXPToNextLevel,
     getPlayerStrengthXPToNextLevel,
     getPlayerDefenseXPToNextLevel,
-    getPlayerVitalityXPToNextLevel
+    getPlayerVitalityXPToNextLevel,
+    setCombatStyle,
+    getCombatStyle
 } from "./player.js";
 
 import {
@@ -47,13 +49,80 @@ import {
    ======================================================= */
 
 export const CHARACTER_TABS = {
+
     COMBAT: "combat",
+
     SKILLS: "skills",
+
     INVENTORY: "inventory",
+
     EQUIPMENT: "equipment",
+
     QUESTS: "quests",
+
     MAP: "map"
+
 };
+
+
+/* =======================================================
+   COMBAT STYLES
+   ======================================================= */
+
+export const CHARACTER_COMBAT_STYLES = {
+
+    ACCURATE: "accurate",
+
+    AGGRESSIVE: "aggressive",
+
+    DEFENSIVE: "defensive"
+
+};
+
+
+/* =======================================================
+   COMBAT STYLE DEFINITIONS
+   ======================================================= */
+
+const COMBAT_STYLE_DEFINITIONS = [
+
+    {
+        style:
+            CHARACTER_COMBAT_STYLES.ACCURATE,
+
+        label:
+            "Accurate",
+
+        description:
+            "Prioritizes accuracy and grants Attack XP."
+
+    },
+
+    {
+        style:
+            CHARACTER_COMBAT_STYLES.AGGRESSIVE,
+
+        label:
+            "Aggressive",
+
+        description:
+            "Prioritizes damage and grants Strength XP."
+
+    },
+
+    {
+        style:
+            CHARACTER_COMBAT_STYLES.DEFENSIVE,
+
+        label:
+            "Defensive",
+
+        description:
+            "Prioritizes defense and grants Defense XP."
+
+    }
+
+];
 
 
 /* =======================================================
@@ -177,16 +246,346 @@ let characterContent = null;
 
 
 /* =======================================================
+   COMBAT STYLE HELPERS
+   ======================================================= */
+
+function normalizeCombatStyle(
+    style
+) {
+
+    if (
+        Object.values(
+            CHARACTER_COMBAT_STYLES
+        ).includes(style)
+    ) {
+
+        return style;
+
+    }
+
+    return CHARACTER_COMBAT_STYLES.ACCURATE;
+
+}
+
+
+/* =======================================================
+   COMBAT STYLE DISPLAY NAME
+   ======================================================= */
+
+function getCombatStyleDisplayName(
+    style
+) {
+
+    const normalizedStyle =
+        normalizeCombatStyle(
+            style
+        );
+
+    const definition =
+        COMBAT_STYLE_DEFINITIONS.find(
+            entry =>
+                entry.style ===
+                normalizedStyle
+        );
+
+    if (definition) {
+
+        return definition.label;
+
+    }
+
+    return "Accurate";
+
+}
+
+
+/* =======================================================
+   GET CURRENT COMBAT STYLE
+   ======================================================= */
+
+export function getCharacterCombatStyle() {
+
+    return normalizeCombatStyle(
+        getCombatStyle()
+    );
+
+}
+
+
+/* =======================================================
+   SET COMBAT STYLE
+   ======================================================= */
+
+export function setCharacterCombatStyle(
+    style
+) {
+
+    const normalizedStyle =
+        normalizeCombatStyle(
+            style
+        );
+
+
+    /*
+     * Use the player's actual combat-style
+     * setter so all validation remains inside
+     * player.js.
+     */
+
+    const changed =
+        setCombatStyle(
+            normalizedStyle
+        );
+
+
+    if (!changed) {
+
+        return getCharacterCombatStyle();
+
+    }
+
+
+    /*
+     * Refresh the Combat tab immediately so
+     * the active button and current style update.
+     */
+
+    if (
+        characterState.isOpen &&
+        characterState.activeTab ===
+            CHARACTER_TABS.COMBAT
+    ) {
+
+        updateCharacterInterface();
+
+    }
+
+
+    return getCharacterCombatStyle();
+
+}
+
+
+/* =======================================================
+   CREATE COMBAT STYLE BUTTON
+   ======================================================= */
+
+function createCombatStyleButton(
+    definition
+) {
+
+    const button =
+        document.createElement(
+            "button"
+        );
+
+
+    button.type =
+        "button";
+
+
+    button.className =
+        "combat-style-button";
+
+
+    button.dataset.style =
+        definition.style;
+
+
+    const selectedStyle =
+        getCharacterCombatStyle();
+
+
+    if (
+        selectedStyle ===
+        definition.style
+    ) {
+
+        button.classList.add(
+            "active"
+        );
+
+    }
+
+
+    const name =
+        document.createElement(
+            "div"
+        );
+
+    name.className =
+        "combat-style-button-name";
+
+    name.textContent =
+        definition.label;
+
+
+    const description =
+        document.createElement(
+            "div"
+        );
+
+    description.className =
+        "combat-style-button-description";
+
+    description.textContent =
+        definition.description;
+
+
+    button.appendChild(
+        name
+    );
+
+    button.appendChild(
+        description
+    );
+
+
+    button.addEventListener(
+        "click",
+        event => {
+
+            event.stopPropagation();
+
+            setCharacterCombatStyle(
+                definition.style
+            );
+
+        }
+    );
+
+
+    return button;
+
+}
+
+
+/* =======================================================
+   CREATE COMBAT STYLE SELECTOR
+   ======================================================= */
+
+function createCombatStyleSelector() {
+
+    const container =
+        document.createElement(
+            "div"
+        );
+
+    container.className =
+        "combat-style-section";
+
+
+    const title =
+        document.createElement(
+            "div"
+        );
+
+    title.className =
+        "character-section-title";
+
+    title.textContent =
+        "COMBAT STYLE";
+
+
+    const current =
+        document.createElement(
+            "div"
+        );
+
+    current.className =
+        "combat-style-current";
+
+
+    const currentLabel =
+        document.createElement(
+            "div"
+        );
+
+    currentLabel.className =
+        "combat-style-current-label";
+
+    currentLabel.textContent =
+        "CURRENT STYLE";
+
+
+    const currentValue =
+        document.createElement(
+            "div"
+        );
+
+    currentValue.className =
+        "combat-style-current-value";
+
+    currentValue.textContent =
+        getCombatStyleDisplayName(
+            getCharacterCombatStyle()
+        );
+
+
+    current.appendChild(
+        currentLabel
+    );
+
+    current.appendChild(
+        currentValue
+    );
+
+
+    const buttonContainer =
+        document.createElement(
+            "div"
+        );
+
+    buttonContainer.className =
+        "combat-style-options";
+
+
+    for (
+        const definition
+        of COMBAT_STYLE_DEFINITIONS
+    ) {
+
+        buttonContainer.appendChild(
+            createCombatStyleButton(
+                definition
+            )
+        );
+
+    }
+
+
+    container.appendChild(
+        title
+    );
+
+    container.appendChild(
+        current
+    );
+
+    container.appendChild(
+        buttonContainer
+    );
+
+
+    return container;
+
+}
+
+
+/* =======================================================
    STATE FUNCTIONS
    ======================================================= */
 
 export function openCharacterInterface() {
 
-    if (!characterState.gameAvailable) {
+    if (
+        !characterState.gameAvailable
+    ) {
         return;
     }
 
-    characterState.isOpen = true;
+    characterState.isOpen =
+        true;
 
     updateCharacterInterface();
 
@@ -195,9 +594,11 @@ export function openCharacterInterface() {
 
 export function closeCharacterInterface() {
 
-    characterState.isOpen = false;
+    characterState.isOpen =
+        false;
 
     removeInventoryItemPopup();
+
     removeEquipmentItemPopup();
 
     updateCharacterInterface();
@@ -207,7 +608,9 @@ export function closeCharacterInterface() {
 
 export function toggleCharacterInterface() {
 
-    if (!characterState.gameAvailable) {
+    if (
+        !characterState.gameAvailable
+    ) {
         return;
     }
 
@@ -226,26 +629,35 @@ export function isCharacterInterfaceOpen() {
 }
 
 
-export function setCharacterTab(tab) {
+export function setCharacterTab(
+    tab
+) {
 
     if (
         !Object.values(
             CHARACTER_TABS
         ).includes(tab)
     ) {
+
         return false;
+
     }
+
 
     characterState.activeTab =
         tab;
 
+
     characterState.selectedEquipmentSlot =
         null;
 
+
     removeEquipmentItemPopup();
 
+
     if (
-        tab !== CHARACTER_TABS.INVENTORY
+        tab !==
+        CHARACTER_TABS.INVENTORY
     ) {
 
         characterState.selectedInventoryItem =
@@ -254,6 +666,7 @@ export function setCharacterTab(tab) {
         removeInventoryItemPopup();
 
     }
+
 
     updateCharacterInterface();
 
@@ -294,7 +707,10 @@ export function setCharacterInterfaceAvailability(
 ) {
 
     characterState.gameAvailable =
-        Boolean(available);
+        Boolean(
+            available
+        );
+
 
     if (
         !characterState.gameAvailable
@@ -310,9 +726,11 @@ export function setCharacterInterfaceAvailability(
             null;
 
         removeInventoryItemPopup();
+
         removeEquipmentItemPopup();
 
     }
+
 
     updateCharacterInterface();
 
@@ -363,9 +781,13 @@ export function getCharacterCombatSummary(
    FORMAT XP
    ======================================================= */
 
-function formatXP(value) {
+function formatXP(
+    value
+) {
 
-    return Number.isFinite(value)
+    return Number.isFinite(
+        value
+    )
         ? value.toLocaleString()
         : "0";
 
@@ -428,7 +850,9 @@ function createSkillCard(
     level.textContent =
         skillLevel >= 99
             ? "99"
-            : String(skillLevel);
+            : String(
+                skillLevel
+            );
 
 
     top.appendChild(
@@ -526,6 +950,7 @@ function createSkillCard(
         const totalXP =
             currentXP +
             xpToNextLevel;
+
 
         if (
             totalXP > 0
@@ -690,11 +1115,13 @@ function createSkillSection(
                 skillName
             );
 
+
         const currentXP =
             getCurrentSkillXP(
                 player.skills,
                 skillName
             );
+
 
         const xpToNextLevel =
             getSkillXPToNextLevel(
@@ -911,6 +1338,7 @@ function renderCombatTab() {
         combatLevel
     );
 
+
     characterContent.appendChild(
         combatLevelPanel
     );
@@ -947,29 +1375,29 @@ function renderCombatTab() {
         [
             "Attack",
             summary.attack,
-            getPlayerAttackXP(player),
-            getPlayerAttackXPToNextLevel(player)
+            getPlayerAttackXP(),
+            getPlayerAttackXPToNextLevel()
         ],
 
         [
             "Strength",
             summary.strength,
-            getPlayerStrengthXP(player),
-            getPlayerStrengthXPToNextLevel(player)
+            getPlayerStrengthXP(),
+            getPlayerStrengthXPToNextLevel()
         ],
 
         [
             "Defense",
             summary.defense,
-            getPlayerDefenseXP(player),
-            getPlayerDefenseXPToNextLevel(player)
+            getPlayerDefenseXP(),
+            getPlayerDefenseXPToNextLevel()
         ],
 
         [
             "Vitality",
             summary.vitality,
-            getPlayerVitalityXP(player),
-            getPlayerVitalityXPToNextLevel(player)
+            getPlayerVitalityXP(),
+            getPlayerVitalityXPToNextLevel()
         ]
 
     ];
@@ -1002,6 +1430,15 @@ function renderCombatTab() {
     );
 
 
+    /*
+     * Player-facing combat style selector.
+     */
+
+    characterContent.appendChild(
+        createCombatStyleSelector()
+    );
+
+
     const statusTitle =
         document.createElement(
             "div"
@@ -1028,6 +1465,10 @@ function renderCombatTab() {
         "character-status-grid";
 
 
+    const currentStyle =
+        getCharacterCombatStyle();
+
+
     const statusRows = [
 
         [
@@ -1042,7 +1483,9 @@ function renderCombatTab() {
 
         [
             "Combat Style",
-            player.combatStyle
+            getCombatStyleDisplayName(
+                currentStyle
+            )
         ]
 
     ];
@@ -1198,8 +1641,6 @@ function renderSkillsTab() {
     );
 
 }
-
-
 /* =======================================================
    INVENTORY ITEM SYMBOL
    ======================================================= */
@@ -1212,13 +1653,26 @@ function getInventoryItemSymbol(
         return "•";
     }
 
-    if (item.type === "consumable") {
+
+    if (
+        item.type ===
+        "consumable"
+    ) {
+
         return "+";
+
     }
 
-    if (item.type === "weapon") {
+
+    if (
+        item.type ===
+        "weapon"
+    ) {
+
         return "◆";
+
     }
+
 
     return "•";
 
@@ -1235,10 +1689,12 @@ function removeInventoryItemPopup() {
         return;
     }
 
+
     const existingPopup =
         characterInterface.querySelector(
             ".inventory-item-popup-overlay"
         );
+
 
     if (existingPopup) {
 
@@ -1259,10 +1715,12 @@ function removeEquipmentItemPopup() {
         return;
     }
 
+
     const existingPopup =
         characterInterface.querySelector(
             ".equipment-item-popup-overlay"
         );
+
 
     if (existingPopup) {
 
@@ -1289,6 +1747,7 @@ function createInventorySlot(
 
     slot.className =
         "skill-card inventory-slot";
+
 
     if (inventoryItem) {
 
@@ -1327,9 +1786,11 @@ function createInventorySlot(
         emptyLabel.style.opacity =
             "0.35";
 
+
         slot.appendChild(
             emptyLabel
         );
+
 
         return slot;
 
@@ -1506,9 +1967,11 @@ function createInventoryActionButton(
 
             event.stopPropagation();
 
+
             if (!enabled) {
                 return;
             }
+
 
             action();
 
@@ -1564,6 +2027,7 @@ function renderInventoryTab() {
 
     const usedSlots =
         inventory.items.length;
+
 
     const capacity =
         inventory.capacity;
@@ -1630,7 +2094,9 @@ function renderInventoryTab() {
 
 
     if (!selectedItemId) {
+
         return;
+
     }
 
 
@@ -1687,14 +2153,21 @@ function getEquipmentSlotSymbol(
     const symbols = {
 
         head: "◈",
+
         body: "▣",
+
         weapon: "◆",
+
         offhand: "◇",
+
         legs: "▥",
+
         feet: "⌄",
+
         accessory: "✦"
 
     };
+
 
     return (
         symbols[slot] ||
@@ -1819,6 +2292,7 @@ function createEquipmentSlot(
             emptyText
         );
 
+
         return slot;
 
     }
@@ -1831,7 +2305,9 @@ function createEquipmentSlot(
 
 
     if (!item) {
+
         return slot;
+
     }
 
 
@@ -2061,7 +2537,9 @@ function createEquipmentItemPopup(
         "inventory-item-popup-effect";
 
     slotText.textContent =
-        `Slot: ${String(slot).toUpperCase()}`;
+        `Slot: ${String(
+            slot
+        ).toUpperCase()}`;
 
 
     info.appendChild(
@@ -2086,7 +2564,7 @@ function createEquipmentItemPopup(
 
                 /*
                  * Add the item back to inventory FIRST.
-                 * If the inventory is full, the item remains
+                 * If inventory is full, the item remains
                  * equipped and nothing is lost.
                  */
 
@@ -2096,6 +2574,7 @@ function createEquipmentItemPopup(
                         item.id,
                         1
                     );
+
 
                 if (!added) {
 
@@ -2131,6 +2610,7 @@ function createEquipmentItemPopup(
 
                 characterState.selectedEquipmentSlot =
                     null;
+
 
                 updateCharacterInterface();
 
@@ -2184,7 +2664,9 @@ function equipInventoryItem(
 
 
     if (!item) {
+
         return false;
+
     }
 
 
@@ -2200,7 +2682,9 @@ function equipInventoryItem(
 
 
     if (!item.slot) {
+
         return false;
+
     }
 
 
@@ -2213,7 +2697,9 @@ function equipInventoryItem(
 
 
     if (!inventoryItem) {
+
         return false;
+
     }
 
 
@@ -2226,8 +2712,8 @@ function equipInventoryItem(
 
     /*
      * Remove the inventory item first.
-     * This frees an inventory slot if the
-     * equipment slot is already occupied.
+     * This creates room for the previous
+     * equipped item if necessary.
      */
 
     const removed =
@@ -2239,7 +2725,9 @@ function equipInventoryItem(
 
 
     if (!removed) {
+
         return false;
+
     }
 
 
@@ -2264,8 +2752,8 @@ function equipInventoryItem(
 
 
     /*
-     * If another item was already equipped,
-     * return it to the inventory.
+     * Return the previously equipped item
+     * to inventory.
      */
 
     if (
@@ -2284,12 +2772,7 @@ function equipInventoryItem(
         if (!returned) {
 
             /*
-             * This should normally be impossible because
-             * removing the newly equipped item created a
-             * free inventory slot.
-             *
-             * Keep the result safe rather than silently
-             * destroying the previous item.
+             * Safety rollback.
              */
 
             unequipItem(
@@ -2297,11 +2780,13 @@ function equipInventoryItem(
                 item.slot
             );
 
+
             addItem(
                 player.inventory,
                 itemId,
                 1
             );
+
 
             return false;
 
@@ -2313,7 +2798,9 @@ function equipInventoryItem(
     characterState.selectedInventoryItem =
         null;
 
+
     removeInventoryItemPopup();
+
 
     return true;
 
@@ -2329,7 +2816,9 @@ function createEquipmentInventoryAction(
 ) {
 
     if (!item) {
+
         return null;
+
     }
 
 
@@ -2339,11 +2828,15 @@ function createEquipmentInventoryAction(
             item.type === "equipment" ||
             item.type === "armor"
         ) &&
-        Boolean(item.slot);
+        Boolean(
+            item.slot
+        );
 
 
     if (!canEquip) {
+
         return null;
+
     }
 
 
@@ -2359,7 +2852,9 @@ function createEquipmentInventoryAction(
 
 
             if (!equipped) {
+
                 return;
+
             }
 
 
@@ -2408,8 +2903,11 @@ function getInventoryPopupActions(
                         inventoryItem.id
                     );
 
+
                 if (!used) {
+
                     return;
+
                 }
 
 
@@ -2455,8 +2953,11 @@ function getInventoryPopupActions(
                         1
                     );
 
+
                 if (!removed) {
+
                     return;
+
                 }
 
 
@@ -2584,7 +3085,9 @@ function renderEquipmentTab() {
 
 
     if (!selectedSlot) {
+
         return;
+
     }
 
 
@@ -2781,7 +3284,8 @@ function createInventoryItemPopup(
 
     if (
         item.effect &&
-        item.effect.type === "heal"
+        item.effect.type ===
+            "heal"
     ) {
 
         const effect =
@@ -2906,7 +3410,9 @@ function updateCharacterInterface() {
         !characterInterface ||
         !characterButton
     ) {
+
         return;
+
     }
 
 
@@ -2922,12 +3428,16 @@ function updateCharacterInterface() {
         characterButton.style.display =
             "none";
 
+
         characterInterface.classList.remove(
             "character-interface-open"
         );
 
+
         removeInventoryItemPopup();
+
         removeEquipmentItemPopup();
+
 
         return;
 
@@ -2948,7 +3458,9 @@ function updateCharacterInterface() {
             "character-interface-open"
         );
 
+
         removeInventoryItemPopup();
+
         removeEquipmentItemPopup();
 
     }
@@ -2984,8 +3496,12 @@ function updateCharacterInterface() {
     );
 
 
-    if (!characterState.isOpen) {
+    if (
+        !characterState.isOpen
+    ) {
+
         return;
+
     }
 
 
@@ -3052,7 +3568,9 @@ function createCharacterInterface() {
     if (
         characterInterface
     ) {
+
         return;
+
     }
 
 
@@ -3249,7 +3767,9 @@ window.addEventListener(
             event.key !== "c" &&
             event.key !== "C"
         ) {
+
             return;
+
         }
 
 
@@ -3263,14 +3783,18 @@ window.addEventListener(
                 "TEXTAREA"
             )
         ) {
+
             return;
+
         }
 
 
         if (
             !characterState.gameAvailable
         ) {
+
             return;
+
         }
 
 
@@ -3278,6 +3802,7 @@ window.addEventListener(
 
     }
 );
+
 
 /* =======================================================
    SKILL XP LIVE SYNCHRONIZATION
@@ -3287,28 +3812,40 @@ subscribeToSkillChanges(
     skills => {
 
         if (
-            skills !== player.skills
+            skills !==
+            player.skills
         ) {
+
             return;
+
         }
+
 
         if (
             !characterState.isOpen
         ) {
+
             return;
+
         }
+
 
         if (
             characterState.activeTab !==
             CHARACTER_TABS.SKILLS
         ) {
+
             return;
+
         }
+
 
         updateCharacterInterface();
 
     }
 );
+
+
 /* =======================================================
    INITIALIZE
    ======================================================= */

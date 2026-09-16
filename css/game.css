@@ -715,7 +715,13 @@ body {
     position: fixed;
 
     right: 15px;
-    bottom: 15px;
+
+    /*
+     * The Character button occupies the bottom-right
+     * corner. Keep the interface above it so the button
+     * never covers the bottom of the Character window.
+     */
+    bottom: 70px;
 
     width: 430px;
     height: 485px;
@@ -1012,6 +1018,141 @@ body {
     color: #7f8a95;
 
     font-size: 10px;
+}
+
+
+/* =========================================================
+   COMBAT STYLE
+   ========================================================= */
+
+.combat-style-section {
+    margin-top: 18px;
+
+    margin-bottom: 18px;
+}
+
+.combat-style-current {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 10px 12px;
+
+    margin-bottom: 9px;
+
+    background:
+        rgba(0, 0, 0, 0.32);
+
+    border: 1px solid #39414a;
+
+    border-radius: 6px;
+}
+
+.combat-style-current-label {
+    color: #7f8a95;
+
+    font-size: 10px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+}
+
+.combat-style-current-value {
+    color: #e8d27b;
+
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.combat-style-options {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 7px;
+}
+
+.combat-style-button {
+    width: 100%;
+
+    padding: 10px 12px;
+
+    text-align: left;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(38, 46, 56, 0.78),
+            rgba(12, 16, 22, 0.78)
+        );
+
+    border: 1px solid #39414a;
+
+    border-radius: 6px;
+
+    color: #ffffff;
+
+    cursor: pointer;
+
+    transition:
+        background 0.12s ease,
+        border-color 0.12s ease,
+        transform 0.12s ease;
+}
+
+.combat-style-button:hover {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(48, 58, 68, 0.9),
+            rgba(15, 20, 27, 0.9)
+        );
+
+    border-color: #68737c;
+
+    transform: translateY(-1px);
+}
+
+.combat-style-button.active {
+    border-color: #e8d27b;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(76, 70, 47, 0.55),
+            rgba(25, 24, 18, 0.75)
+        );
+
+    box-shadow:
+        0 0 10px rgba(232, 210, 123, 0.12);
+}
+
+.combat-style-button-name {
+    display: block;
+
+    color: #d8dde3;
+
+    font-size: 12px;
+    font-weight: bold;
+
+    letter-spacing: 0.5px;
+}
+
+.combat-style-button.active .combat-style-button-name {
+    color: #e8d27b;
+}
+
+.combat-style-button-description {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #7f8a95;
+
+    font-size: 10px;
+
+    line-height: 1.35;
 }
 
 
@@ -1549,7 +1690,12 @@ body {
 
     #character-interface {
         right: 10px;
-        bottom: 10px;
+
+        /*
+         * Keep the Character window above
+         * the Character button.
+         */
+        bottom: 65px;
 
         width: min(
             390px,
@@ -1558,7 +1704,7 @@ body {
 
         height: min(
             500px,
-            calc(100vh - 70px)
+            calc(100vh - 80px)
         );
     }
 
@@ -1590,11 +1736,15 @@ body {
 
     #character-interface {
         right: 5px;
-        bottom: 5px;
+
+        /*
+         * Reserve space for the Character button.
+         */
+        bottom: 60px;
 
         width: calc(100vw - 10px);
 
-        height: calc(100vh - 65px);
+        height: calc(100vh - 70px);
 
         border-radius: 7px;
     }

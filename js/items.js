@@ -1,3 +1,9 @@
+/*
+ * =======================================================
+ * SPACESCAPE ITEM DEFINITIONS
+ * =======================================================
+ */
+
 const ITEM_DEFINITIONS = {
 
     /* ===================================================
@@ -26,6 +32,21 @@ const ITEM_DEFINITIONS = {
         type: "weapon",
         slot: "weapon",
 
+        /*
+         * Identifies the combat discipline used
+         * by this weapon.
+         *
+         * Laser weapons are Ballistics weapons.
+         */
+
+        combatDiscipline: "ballistics",
+
+        /*
+         * Ammunition required to fire this weapon.
+         */
+
+        ammunitionType: "laser_charge",
+
         stats: {
             attackBonus: 5,
             strengthBonus: 2,
@@ -44,6 +65,205 @@ const ITEM_DEFINITIONS = {
 
 
     /* ===================================================
+       COMBAT SABER
+       =================================================== */
+
+    combat_saber: {
+        id: "combat_saber",
+        name: "Combat Saber",
+        type: "weapon",
+        slot: "weapon",
+
+        /*
+         * No combatDiscipline is required for melee.
+         * The combat system will treat this as a
+         * traditional melee weapon.
+         */
+
+        stats: {
+            attackBonus: 3,
+            strengthBonus: 4,
+            defenseBonus: 0,
+
+            accuracyBonus: 2,
+            damageBonus: 2,
+
+            weaponDamage: 4
+        },
+
+        requirements: {
+            attack: 1
+        }
+    },
+
+
+    /* ===================================================
+       FLUX CONDUIT
+       =================================================== */
+
+    flux_conduit: {
+        id: "flux_conduit",
+        name: "Flux Conduit",
+        type: "weapon",
+        slot: "weapon",
+
+        /*
+         * The Flux Conduit is the sci-fi equivalent
+         * of a traditional magic weapon.
+         *
+         * It does not use ammunition.
+         *
+         * Flux attacks instead consume Flux Crystals
+         * from the player's inventory.
+         */
+
+        combatDiscipline: "flux",
+
+        stats: {
+            attackBonus: 0,
+            strengthBonus: 0,
+            defenseBonus: 0,
+
+            accuracyBonus: 4,
+            damageBonus: 3,
+
+            weaponDamage: 5
+        },
+
+        requirements: {
+            flux: 1
+        }
+    },
+
+
+    /* ===================================================
+       LASER CHARGES
+       =================================================== */
+
+    laser_charge: {
+        id: "laser_charge",
+        name: "Laser Charge",
+        type: "ammunition",
+        slot: "ammunition",
+
+        /*
+         * Identifies which weapon ammunition system
+         * this ammunition belongs to.
+         */
+
+        ammunitionType: "laser_charge",
+
+        stackable: true,
+
+        maxStack: 1000
+    },
+
+
+    /* ===================================================
+       FLUX CRYSTAL
+       =================================================== */
+
+    flux_crystal: {
+        id: "flux_crystal",
+        name: "Flux Crystal",
+        type: "resource",
+        resourceType: "flux",
+
+        /*
+         * Flux Crystals are consumed directly from
+         * inventory when using Flux abilities.
+         *
+         * They are intentionally NOT an equipment slot.
+         */
+
+        stackable: true,
+
+        maxStack: 1000
+    },
+
+
+    /* ===================================================
+       COLONY HELMET
+       =================================================== */
+
+    colony_helmet: {
+        id: "colony_helmet",
+        name: "Colony Helmet",
+        type: "armor",
+        slot: "head",
+
+        stats: {
+            attackBonus: 0,
+            strengthBonus: 0,
+            defenseBonus: 3,
+
+            accuracyBonus: 0,
+            damageBonus: 0,
+
+            weaponDamage: 0
+        },
+
+        requirements: {
+            defense: 1
+        }
+    },
+
+
+    /* ===================================================
+       COLONY SUIT
+       =================================================== */
+
+    colony_suit: {
+        id: "colony_suit",
+        name: "Colony Suit",
+        type: "armor",
+        slot: "body",
+
+        stats: {
+            attackBonus: 0,
+            strengthBonus: 0,
+            defenseBonus: 5,
+
+            accuracyBonus: 0,
+            damageBonus: 0,
+
+            weaponDamage: 0
+        },
+
+        requirements: {
+            defense: 1
+        }
+    },
+
+
+    /* ===================================================
+       COLONY BOOTS
+       =================================================== */
+
+    colony_boots: {
+        id: "colony_boots",
+        name: "Colony Boots",
+        type: "armor",
+        slot: "feet",
+
+        stats: {
+            attackBonus: 0,
+            strengthBonus: 0,
+            defenseBonus: 2,
+
+            accuracyBonus: 0,
+            damageBonus: 0,
+
+            weaponDamage: 0
+        },
+
+        requirements: {
+            defense: 1
+        }
+    },
+
+
+    /* ===================================================
        XENIUM ORE
        =================================================== */
 
@@ -51,7 +271,11 @@ const ITEM_DEFINITIONS = {
         id: "xenium_ore",
         name: "Xenium Ore",
         type: "resource",
-        resourceType: "ore"
+        resourceType: "ore",
+
+        stackable: true,
+
+        maxStack: 1000
     },
 
 
@@ -63,7 +287,11 @@ const ITEM_DEFINITIONS = {
         id: "scrap_metal",
         name: "Scrap Metal",
         type: "resource",
-        resourceType: "scrap"
+        resourceType: "scrap",
+
+        stackable: true,
+
+        maxStack: 1000
     },
 
 
@@ -75,7 +303,11 @@ const ITEM_DEFINITIONS = {
         id: "dense_xenium_ore",
         name: "Dense Xenium Ore",
         type: "resource",
-        resourceType: "ore"
+        resourceType: "ore",
+
+        stackable: true,
+
+        maxStack: 1000
     }
 
 };
@@ -85,7 +317,9 @@ const ITEM_DEFINITIONS = {
    GET ITEM
    ======================================================= */
 
-export function getItem(itemId) {
+export function getItem(
+    itemId
+) {
 
     if (!itemId) {
         return null;
@@ -103,9 +337,13 @@ export function getItem(itemId) {
    ITEM EXISTS
    ======================================================= */
 
-export function itemExists(itemId) {
+export function itemExists(
+    itemId
+) {
 
-    return getItem(itemId) !== null;
+    return getItem(
+        itemId
+    ) !== null;
 
 }
 
@@ -138,12 +376,16 @@ export function useItem(
         !inventory ||
         !itemId
     ) {
+
         return false;
+
     }
 
 
     const item =
-        getItem(itemId);
+        getItem(
+            itemId
+        );
 
 
     if (!item) {
@@ -152,9 +394,12 @@ export function useItem(
 
 
     if (
-        item.type !== "consumable"
+        item.type !==
+        "consumable"
     ) {
+
         return false;
+
     }
 
 
@@ -163,7 +408,9 @@ export function useItem(
             inventory.items
         )
     ) {
+
         return false;
+
     }
 
 
@@ -183,13 +430,16 @@ export function useItem(
     if (
         inventoryItem.quantity <= 0
     ) {
+
         return false;
+
     }
 
 
     if (
         item.effect &&
-        item.effect.type === "heal"
+        item.effect.type ===
+        "heal"
     ) {
 
         player.health.current =

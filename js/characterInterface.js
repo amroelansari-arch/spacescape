@@ -39,6 +39,7 @@ import {
 
 import {
     getEquippedItem,
+    getEquippedAmmunitionQuantity,
     equipItem,
     unequipItem
 } from "./equipment.js";
@@ -209,6 +210,11 @@ const EQUIPMENT_SLOT_DEFINITIONS = [
     {
         slot: "accessory",
         label: "ACCESSORY"
+    },
+
+    {
+        slot: "ammunition",
+        label: "AMMUNITION"
     }
 
 ];
@@ -326,12 +332,6 @@ export function setCharacterCombatStyle(
         );
 
 
-    /*
-     * Use the player's actual combat-style
-     * setter so all validation remains inside
-     * player.js.
-     */
-
     const changed =
         setCombatStyle(
             normalizedStyle
@@ -344,11 +344,6 @@ export function setCharacterCombatStyle(
 
     }
 
-
-    /*
-     * Refresh the Combat tab immediately so
-     * the active button and current style update.
-     */
 
     if (
         characterState.isOpen &&
@@ -581,7 +576,9 @@ export function openCharacterInterface() {
     if (
         !characterState.gameAvailable
     ) {
+
         return;
+
     }
 
     characterState.isOpen =
@@ -611,7 +608,9 @@ export function toggleCharacterInterface() {
     if (
         !characterState.gameAvailable
     ) {
+
         return;
+
     }
 
     characterState.isOpen =
@@ -1030,8 +1029,8 @@ function getSkillDisplayName(
         ballistics:
             "Ballistics",
 
-        energyWeapons:
-            "Energy Weapons",
+        flux:
+            "Flux",
 
         mining:
             "Mining",
@@ -1430,10 +1429,6 @@ function renderCombatTab() {
     );
 
 
-    /*
-     * Player-facing combat style selector.
-     */
-
     characterContent.appendChild(
         createCombatStyleSelector()
     );
@@ -1469,6 +1464,36 @@ function renderCombatTab() {
         getCharacterCombatStyle();
 
 
+    const equippedWeapon =
+        getEquippedItem(
+            player.equipment,
+            "weapon"
+        );
+
+
+    const equippedAmmunition =
+        getEquippedItem(
+            player.equipment,
+            "ammunition"
+        );
+
+
+    const weapon =
+        equippedWeapon
+            ? getItem(
+                equippedWeapon.id
+            )
+            : null;
+
+
+    const ammunition =
+        equippedAmmunition
+            ? getItem(
+                equippedAmmunition.id
+            )
+            : null;
+
+
     const statusRows = [
 
         [
@@ -1486,6 +1511,20 @@ function renderCombatTab() {
             getCombatStyleDisplayName(
                 currentStyle
             )
+        ],
+
+        [
+            "Weapon",
+            weapon
+                ? weapon.name
+                : "None"
+        ],
+
+        [
+            "Ammunition",
+            ammunition
+                ? `${ammunition.name} ×${getEquippedAmmunitionQuantity(player.equipment)}`
+                : "None"
         ]
 
     ];
@@ -1610,7 +1649,7 @@ function renderSkillsTab() {
             "COMBAT SPECIALIZATION",
             [
                 "ballistics",
-                "energyWeapons"
+                "flux"
             ]
         )
     );
@@ -1641,6 +1680,8 @@ function renderSkillsTab() {
     );
 
 }
+
+
 /* =======================================================
    INVENTORY ITEM SYMBOL
    ======================================================= */
@@ -1650,7 +1691,9 @@ function getInventoryItemSymbol(
 ) {
 
     if (!item) {
+
         return "•";
+
     }
 
 
@@ -1666,10 +1709,40 @@ function getInventoryItemSymbol(
 
     if (
         item.type ===
+        "ammunition"
+    ) {
+
+        return "▰";
+
+    }
+
+
+    if (
+        item.type ===
         "weapon"
     ) {
 
         return "◆";
+
+    }
+
+
+    if (
+        item.type ===
+        "armor"
+    ) {
+
+        return "◇";
+
+    }
+
+
+    if (
+        item.type ===
+        "equipment"
+    ) {
+
+        return "▣";
 
     }
 
@@ -1686,7 +1759,9 @@ function getInventoryItemSymbol(
 function removeInventoryItemPopup() {
 
     if (!characterInterface) {
+
         return;
+
     }
 
 
@@ -1712,7 +1787,9 @@ function removeInventoryItemPopup() {
 function removeEquipmentItemPopup() {
 
     if (!characterInterface) {
+
         return;
+
     }
 
 
@@ -1969,7 +2046,9 @@ function createInventoryActionButton(
 
 
             if (!enabled) {
+
                 return;
+
             }
 
 
@@ -2140,8 +2219,6 @@ function renderInventoryTab() {
     );
 
 }
-
-
 /* =======================================================
    EQUIPMENT SLOT SYMBOL
    ======================================================= */
@@ -2164,7 +2241,9 @@ function getEquipmentSlotSymbol(
 
         feet: "⌄",
 
-        accessory: "✦"
+        accessory: "✦",
+
+        ammunition: "▰"
 
     };
 
@@ -2333,8 +2412,20 @@ function createEquipmentSlot(
     itemName.className =
         "skill-next";
 
-    itemName.textContent =
-        item.name;
+    if (
+        definition.slot ===
+        "ammunition"
+    ) {
+
+        itemName.textContent =
+            `${item.name} ×${getEquippedAmmunitionQuantity(player.equipment)}`;
+
+    } else {
+
+        itemName.textContent =
+            item.name;
+
+    }
 
 
     slot.appendChild(
@@ -2509,6 +2600,14 @@ function createEquipmentItemPopup(
         "inventory-item-popup-info";
 
 
+    const equippedQuantity =
+        slot === "ammunition"
+            ? getEquippedAmmunitionQuantity(
+                player.equipment
+            )
+            : null;
+
+
     const type =
         document.createElement(
             "div"
@@ -2517,10 +2616,24 @@ function createEquipmentItemPopup(
     type.className =
         "inventory-item-popup-type";
 
-    type.textContent =
-        `${String(
-            item.type
-        ).toUpperCase()} • EQUIPPED`;
+
+    if (
+        slot === "ammunition"
+    ) {
+
+        type.textContent =
+            `${String(
+                item.type
+            ).toUpperCase()} • EQUIPPED • QUANTITY ${equippedQuantity}`;
+
+    } else {
+
+        type.textContent =
+            `${String(
+                item.type
+            ).toUpperCase()} • EQUIPPED`;
+
+    }
 
 
     info.appendChild(
@@ -2562,6 +2675,23 @@ function createEquipmentItemPopup(
             true,
             () => {
 
+                const quantity =
+                    slot === "ammunition"
+                        ? getEquippedAmmunitionQuantity(
+                            player.equipment
+                        )
+                        : 1;
+
+
+                if (
+                    quantity <= 0
+                ) {
+
+                    return;
+
+                }
+
+
                 /*
                  * Add the item back to inventory FIRST.
                  * If inventory is full, the item remains
@@ -2572,7 +2702,7 @@ function createEquipmentItemPopup(
                     addItem(
                         player.inventory,
                         item.id,
-                        1
+                        quantity
                     );
 
 
@@ -2592,15 +2722,10 @@ function createEquipmentItemPopup(
 
                 if (!result.success) {
 
-                    /*
-                     * Roll back the inventory change if
-                     * unequip somehow fails.
-                     */
-
                     removeItem(
                         player.inventory,
                         item.id,
-                        1
+                        quantity
                     );
 
                     return;
@@ -2670,7 +2795,13 @@ function equipInventoryItem(
     }
 
 
+    const isAmmunition =
+        item.type === "ammunition" ||
+        item.slot === "ammunition";
+
+
     if (
+        !isAmmunition &&
         item.type !== "weapon" &&
         item.type !== "equipment" &&
         item.type !== "armor"
@@ -2703,6 +2834,24 @@ function equipInventoryItem(
     }
 
 
+    const quantityToEquip =
+        isAmmunition
+            ? inventoryItem.quantity
+            : 1;
+
+
+    if (
+        !Number.isFinite(
+            quantityToEquip
+        ) ||
+        quantityToEquip <= 0
+    ) {
+
+        return false;
+
+    }
+
+
     const currentEquippedItem =
         getEquippedItem(
             player.equipment,
@@ -2710,17 +2859,30 @@ function equipInventoryItem(
         );
 
 
+    const currentEquippedQuantity =
+        (
+            isAmmunition &&
+            currentEquippedItem &&
+            Number.isFinite(
+                currentEquippedItem.quantity
+            )
+        )
+            ? currentEquippedItem.quantity
+            : 0;
+
+
     /*
      * Remove the inventory item first.
-     * This creates room for the previous
-     * equipped item if necessary.
+     *
+     * For ammunition, the entire stack is moved
+     * into the ammunition equipment slot.
      */
 
     const removed =
         removeItem(
             player.inventory,
             itemId,
-            1
+            quantityToEquip
         );
 
 
@@ -2734,7 +2896,11 @@ function equipInventoryItem(
     const result =
         equipItem(
             player.equipment,
-            item
+            item,
+            player,
+            isAmmunition
+                ? quantityToEquip
+                : null
         );
 
 
@@ -2743,7 +2909,7 @@ function equipInventoryItem(
         addItem(
             player.inventory,
             itemId,
-            1
+            quantityToEquip
         );
 
         return false;
@@ -2761,18 +2927,29 @@ function equipInventoryItem(
         currentEquippedItem.id
     ) {
 
+        const previousQuantity =
+            (
+                isAmmunition &&
+                Number.isFinite(
+                    currentEquippedItem.quantity
+                )
+            )
+                ? currentEquippedItem.quantity
+                : 1;
+
+
         const returned =
             addItem(
                 player.inventory,
                 currentEquippedItem.id,
-                1
+                previousQuantity
             );
 
 
         if (!returned) {
 
             /*
-             * Safety rollback.
+             * Roll back the newly equipped item.
              */
 
             unequipItem(
@@ -2781,11 +2958,40 @@ function equipInventoryItem(
             );
 
 
+            /*
+             * Restore the newly selected
+             * inventory stack.
+             */
+
             addItem(
                 player.inventory,
                 itemId,
-                1
+                quantityToEquip
             );
+
+
+            /*
+             * Restore the previous equipment.
+             */
+
+            const previousItem =
+                getItem(
+                    currentEquippedItem.id
+                );
+
+
+            if (previousItem) {
+
+                equipItem(
+                    player.equipment,
+                    previousItem,
+                    player,
+                    isAmmunition
+                        ? previousQuantity
+                        : null
+                );
+
+            }
 
 
             return false;
@@ -2822,8 +3028,14 @@ function createEquipmentInventoryAction(
     }
 
 
+    const isAmmunition =
+        item.type === "ammunition" ||
+        item.slot === "ammunition";
+
+
     const canEquip =
         (
+            isAmmunition ||
             item.type === "weapon" ||
             item.type === "equipment" ||
             item.type === "armor"
@@ -2841,7 +3053,9 @@ function createEquipmentInventoryAction(
 
 
     return createInventoryActionButton(
-        "EQUIP",
+        isAmmunition
+            ? "EQUIP AMMO"
+            : "EQUIP",
         true,
         () => {
 
@@ -3040,7 +3254,7 @@ function renderEquipmentTab() {
         "character-skills-description";
 
     description.textContent =
-        "Manage the equipment currently worn by your character.";
+        "Manage weapons, armor, gear, and ammunition currently equipped by your character.";
 
 
     characterContent.appendChild(

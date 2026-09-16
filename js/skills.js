@@ -10,7 +10,7 @@ export const SKILL_NAMES = {
     VITALITY: "vitality",
 
     BALLISTICS: "ballistics",
-    ENERGY_WEAPONS: "energyWeapons",
+    FLUX: "flux",
 
     MINING: "mining",
     SALVAGING: "salvaging",
@@ -102,6 +102,10 @@ export function createSkills() {
 
     return {
 
+        /*
+         * MELEE COMBAT
+         */
+
         attack: {
             level: 1,
             xp: 0
@@ -117,20 +121,35 @@ export function createSkills() {
             xp: 0
         },
 
+
+        /*
+         * GENERAL COMBAT
+         */
+
         vitality: {
             level: 1,
             xp: 0
         },
+
+
+        /*
+         * RANGED / EXOTIC COMBAT
+         */
 
         ballistics: {
             level: 1,
             xp: 0
         },
 
-        energyWeapons: {
+        flux: {
             level: 1,
             xp: 0
         },
+
+
+        /*
+         * NON-COMBAT SKILLS
+         */
 
         mining: {
             level: 1,
@@ -506,9 +525,6 @@ export function awardSkillXP(
     /*
      * Emit a browser event for player-facing
      * progression UI.
-     *
-     * Nothing depends on this event yet,
-     * so existing systems remain compatible.
      */
 
     if (
@@ -553,6 +569,23 @@ export function awardSkillXP(
    COMBAT SKILLS
    ======================================================= */
 
+/*
+ * All six skills that participate directly
+ * in the combat system.
+ *
+ * Melee:
+ *   Attack
+ *   Strength
+ *   Defense
+ *
+ * General:
+ *   Vitality
+ *
+ * Ranged / Exotic:
+ *   Ballistics
+ *   Flux
+ */
+
 export function getCombatSkills(
     skills
 ) {
@@ -579,7 +612,13 @@ export function getCombatSkills(
             skills.defense,
 
         vitality:
-            skills.vitality
+            skills.vitality,
+
+        ballistics:
+            skills.ballistics,
+
+        flux:
+            skills.flux
 
     };
 
@@ -589,6 +628,12 @@ export function getCombatSkills(
 /* =======================================================
    SPECIALIZED COMBAT SKILLS
    ======================================================= */
+
+/*
+ * Ballistics and Flux are the two combat
+ * disciplines outside of the three-part
+ * Melee system.
+ */
 
 export function getSpecializedCombatSkills(
     skills
@@ -609,8 +654,8 @@ export function getSpecializedCombatSkills(
         ballistics:
             skills.ballistics,
 
-        energyWeapons:
-            skills.energyWeapons
+        flux:
+            skills.flux
 
     };
 

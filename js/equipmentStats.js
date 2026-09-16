@@ -5,11 +5,11 @@
  *
  * Centralizes all combat/stat bonuses provided by equipment.
  *
- * Equipment itself stores item IDs.
+ * Equipment stores item IDs.
  * This module resolves those IDs through items.js.
  *
- * This keeps combat from needing to understand individual
- * item definitions.
+ * Ammunition is an equipment slot, but ammunition itself
+ * does not provide combat stat bonuses.
  * =======================================================
  */
 
@@ -50,6 +50,22 @@ export function getItemEquipmentStats(
     if (
         !item ||
         typeof item !== "object"
+    ) {
+
+        return {
+            ...EMPTY_STATS
+        };
+
+    }
+
+
+    /*
+     * Ammunition does not contribute combat stats.
+     */
+
+    if (
+        item.type === "ammunition" ||
+        item.slot === "ammunition"
     ) {
 
         return {
@@ -168,6 +184,22 @@ export function getEquipmentStats(
             equipment
         )
     ) {
+
+        /*
+         * Ammunition is intentionally skipped.
+         *
+         * The slot exists for combat ammunition
+         * management, not stat bonuses.
+         */
+
+        if (
+            slot === "ammunition"
+        ) {
+
+            continue;
+
+        }
+
 
         const equippedItem =
             resolveEquippedItem(
@@ -318,7 +350,8 @@ export function getEquipmentRequirements(
 
     if (
         !item.requirements ||
-        typeof item.requirements !== "object"
+        typeof item.requirements !==
+        "object"
     ) {
 
         return {};
@@ -370,9 +403,8 @@ export function meetsEquipmentRequirements(
 
 
     for (
-        const skillName of Object.keys(
-            requirements
-        )
+        const skillName of
+        Object.keys(requirements)
     ) {
 
         const requiredLevel =
@@ -451,9 +483,8 @@ export function getFailedEquipmentRequirement(
 
 
     for (
-        const skillName of Object.keys(
-            requirements
-        )
+        const skillName of
+        Object.keys(requirements)
     ) {
 
         const requiredLevel =

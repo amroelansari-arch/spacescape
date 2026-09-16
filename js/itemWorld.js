@@ -15,7 +15,9 @@ function isValidWorldItem(item) {
         typeof item.itemId === "string" &&
         item.position &&
         Number.isFinite(item.position.x) &&
-        Number.isFinite(item.position.y)
+        Number.isFinite(item.position.y) &&
+        Number.isFinite(item.quantity) &&
+        item.quantity > 0
     );
 
 }
@@ -43,6 +45,7 @@ export function createWorldItem(
         return null;
     }
 
+
     const worldItem = {
 
         id:
@@ -59,9 +62,11 @@ export function createWorldItem(
 
     };
 
+
     itemWorld.items.push(
         worldItem
     );
+
 
     return worldItem;
 
@@ -114,19 +119,23 @@ export function removeWorldItem(
         return false;
     }
 
+
     const index =
         itemWorld.items.indexOf(
             worldItem
         );
 
+
     if (index === -1) {
         return false;
     }
+
 
     itemWorld.items.splice(
         index,
         1
     );
+
 
     return true;
 
@@ -151,13 +160,16 @@ export function getDistanceToWorldItem(
         return Infinity;
     }
 
+
     const dx =
         player.position.x -
         worldItem.position.x;
 
+
     const dy =
         player.position.y -
         worldItem.position.y;
+
 
     return Math.sqrt(
         dx * dx +

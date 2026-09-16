@@ -18,7 +18,8 @@ export const EQUIPMENT_SLOTS = [
     "offhand",
     "legs",
     "feet",
-    "accessory"
+    "accessory",
+    "ammunition"
 
 ];
 
@@ -37,7 +38,22 @@ export function createEquipment() {
         offhand: null,
         legs: null,
         feet: null,
-        accessory: null
+        accessory: null,
+
+        /*
+         * Ammunition is an equipment slot because
+         * the currently equipped ammunition must be
+         * directly available to the combat system.
+         *
+         * Ammunition is stored as:
+         *
+         * {
+         *     id: "laser_charge",
+         *     quantity: 25
+         * }
+         */
+
+        ammunition: null
 
     };
 
@@ -79,6 +95,26 @@ export function isValidEquipmentSlot(
 
 
 /* =======================================================
+   AMMUNITION CHECK
+   ======================================================= */
+
+export function isAmmunitionItem(
+    item
+) {
+
+    if (!item) {
+        return false;
+    }
+
+    return (
+        item.type === "ammunition" ||
+        item.slot === "ammunition"
+    );
+
+}
+
+
+/* =======================================================
    GET EQUIPPED ITEM
    ======================================================= */
 
@@ -97,6 +133,46 @@ export function getEquippedItem(
     }
 
     return equipment[slot];
+
+}
+
+
+/* =======================================================
+   GET EQUIPPED AMMUNITION QUANTITY
+   ======================================================= */
+
+export function getEquippedAmmunitionQuantity(
+    equipment
+) {
+
+    if (
+        !isValidEquipment(equipment)
+    ) {
+
+        return 0;
+
+    }
+
+    const ammunition =
+        equipment.ammunition;
+
+
+    if (
+        !ammunition ||
+        !Number.isFinite(
+            ammunition.quantity
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    return Math.max(
+        0,
+        ammunition.quantity
+    );
 
 }
 
@@ -173,7 +249,8 @@ export function findEquipmentSlot(
 export function equipItem(
     equipment,
     item,
-    player = null
+    player = null,
+    quantity = null
 ) {
 
     if (
@@ -192,7 +269,19 @@ export function equipItem(
     }
 
 
+    const isAmmunition =
+        isAmmunitionItem(item);
+
+
+    /*
+     * Ammunition is a special equipment type.
+     *
+     * All other equippable items continue to use
+     * the existing weapon/equipment/armor types.
+     */
+
     if (
+        !isAmmunition &&
         item.type !== "weapon" &&
         item.type !== "equipment" &&
         item.type !== "armor"
@@ -202,6 +291,25 @@ export function equipItem(
 
             success: false,
             reason: "not_equippable"
+
+        };
+
+    }
+
+
+    /*
+     * Ammunition must use the ammunition slot.
+     */
+
+    if (
+        isAmmunition &&
+        item.slot !== "ammunition"
+    ) {
+
+        return {
+
+            success: false,
+            reason: "invalid_ammunition_slot"
 
         };
 
@@ -266,12 +374,87 @@ export function equipItem(
         equipment[slot];
 
 
-    equipment[slot] = {
+    /*
+     * Ammunition is stored as a stack.
+     *
+     * If quantity is explicitly supplied,
+     * use it.
+     *
+     * Otherwise use the item's quantity.
+     *
+     * Otherwise default to 1.
+     */
 
-        id:
-            item.id
+    if (isAmmunition) {
 
-    };
+        let ammunitionQuantity =
+            quantity;
+
+
+        if (
+            !Number.isFinite(
+                ammunitionQuantity
+            )
+        ) {
+
+            ammunitionQuantity =
+                item.quantity;
+
+        }
+
+
+        if (
+            !Number.isFinite(
+                ammunitionQuantity
+            )
+        ) {
+
+            ammunitionQuantity =
+                1;
+
+        }
+
+
+        ammunitionQuantity =
+            Math.floor(
+                ammunitionQuantity
+            );
+
+
+        if (
+            ammunitionQuantity <= 0
+        ) {
+
+            return {
+
+                success: false,
+                reason: "invalid_quantity"
+
+            };
+
+        }
+
+
+        equipment[slot] = {
+
+            id:
+                item.id,
+
+            quantity:
+                ammunitionQuantity
+
+        };
+
+    } else {
+
+        equipment[slot] = {
+
+            id:
+                item.id
+
+        };
+
+    }
 
 
     return {
@@ -282,7 +465,152 @@ export function equipItem(
 
         item,
 
-        previousItem
+        previousItem,
+
+        quantity:
+            isAmmunition
+                ? equipment[slot].quantity
+                : null
+
+    };
+
+}
+
+
+/* =======================================================
+   CONSUME AMMUNITION
+   ======================================================= */
+
+export function consumeAmmunition(
+    equipment,
+    amount = 1
+) {
+
+    if (
+        !isValidEquipment(equipment)
+    ) {
+
+        return {
+
+            success: false,
+            reason: "invalid_equipment",
+            consumed: 0,
+            remaining: 0
+
+        };
+
+    }
+
+
+    if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+    ) {
+
+        return {
+
+            success: false,
+            reason: "invalid_amount",
+            consumed: 0,
+            remaining:
+                getEquippedAmmunitionQuantity(
+                    equipment
+                )
+
+        };
+
+    }
+
+
+    const ammunition =
+        equipment.ammunition;
+
+
+    if (!ammunition) {
+
+        return {
+
+            success: false,
+            reason: "no_ammunition_equipped",
+            consumed: 0,
+            remaining: 0
+
+        };
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            ammunition.quantity
+        ) ||
+        ammunition.quantity <= 0
+    ) {
+
+        equipment.ammunition =
+            null;
+
+        return {
+
+            success: false,
+            reason: "ammunition_empty",
+            consumed: 0,
+            remaining: 0
+
+        };
+
+    }
+
+
+    const requestedAmount =
+        Math.floor(
+            amount
+        );
+
+
+    const consumed =
+        Math.min(
+            requestedAmount,
+            ammunition.quantity
+        );
+
+
+    ammunition.quantity -=
+        consumed;
+
+
+    const remaining =
+        ammunition.quantity;
+
+
+    /*
+     * Automatically clear the slot when
+     * the ammunition stack reaches zero.
+     */
+
+    if (
+        ammunition.quantity <= 0
+    ) {
+
+        equipment.ammunition =
+            null;
+
+    }
+
+
+    return {
+
+        success:
+            consumed === requestedAmount,
+
+        reason:
+            consumed === requestedAmount
+                ? null
+                : "insufficient_ammunition",
+
+        consumed,
+
+        remaining
 
     };
 

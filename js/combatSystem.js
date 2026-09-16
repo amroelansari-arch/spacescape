@@ -33,6 +33,14 @@ import {
     getEffectivePlayerCombatStats
 } from "./equipmentStats.js";
 
+import {
+    getItem
+} from "./items.js";
+
+import {
+    consumeAmmunition
+} from "./equipment.js";
+
 
 const PLAYER_ATTACK_SPEED = 2000;
 
@@ -55,7 +63,7 @@ const COMBAT_DISENGAGEMENT_RANGE = 250;
 
 const COMBAT_XP_PER_DAMAGE = 4;
 
-const VITALITY_XP_PERCENT = 0.25;
+const SECONDARY_COMBAT_XP_PERCENT = 0.25;
 
 
 /* =======================================================
@@ -248,6 +256,500 @@ function getPlayerVitalityLevel(
         player.skills,
         "vitality"
     );
+
+}
+
+
+function getPlayerBallisticsLevel(
+    player
+) {
+
+    return getSkillLevel(
+        player.skills,
+        "ballistics"
+    );
+
+}
+
+
+function getPlayerFluxLevel(
+    player
+) {
+
+    return getSkillLevel(
+        player.skills,
+        "flux"
+    );
+
+}
+
+
+/* =======================================================
+   EQUIPPED WEAPON
+   ======================================================= */
+
+/*
+ * Returns the actual item definition for the
+ * currently equipped weapon.
+ */
+
+function getEquippedWeapon(
+    player
+) {
+
+    if (
+        !player ||
+        !player.equipment
+    ) {
+
+        return null;
+
+    }
+
+
+    const equippedWeapon =
+        player.equipment.weapon;
+
+
+    if (
+        !equippedWeapon ||
+        !equippedWeapon.id
+    ) {
+
+        return null;
+
+    }
+
+
+    return getItem(
+        equippedWeapon.id
+    );
+
+}
+
+
+/* =======================================================
+   COMBAT DISCIPLINE
+   ======================================================= */
+
+/*
+ * Combat disciplines:
+ *
+ * null
+ *     = Melee
+ *
+ * ballistics
+ *     = Ballistics
+ *
+ * flux
+ *     = Flux
+ */
+
+function getPlayerCombatDiscipline(
+    player
+) {
+
+    const weapon =
+        getEquippedWeapon(
+            player
+        );
+
+
+    if (!weapon) {
+
+        return null;
+
+    }
+
+
+    if (
+        weapon.combatDiscipline ===
+        "ballistics"
+    ) {
+
+        return "ballistics";
+
+    }
+
+
+    if (
+        weapon.combatDiscipline ===
+        "flux"
+    ) {
+
+        return "flux";
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =======================================================
+   AMMUNITION / RESOURCE VALIDATION
+   ======================================================= */
+
+/*
+ * Ballistics weapons declare an ammunitionType.
+ *
+ * Example:
+ *
+ * Laser Rifle
+ *     ammunitionType: "laser_charge"
+ */
+
+function hasRequiredAmmunition(
+    player,
+    weapon
+) {
+
+    if (
+        !weapon ||
+        weapon.combatDiscipline !==
+        "ballistics"
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        !weapon.ammunitionType
+    ) {
+
+        return true;
+
+    }
+
+
+    if (
+        !player ||
+        !player.equipment ||
+        !player.equipment.ammunition
+    ) {
+
+        return false;
+
+    }
+
+
+    const equippedAmmunition =
+        player.equipment.ammunition;
+
+
+    if (
+        !equippedAmmunition.id ||
+        equippedAmmunition.id !==
+        weapon.ammunitionType
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
+        !Number.isFinite(
+            equippedAmmunition.quantity
+        ) ||
+        equippedAmmunition.quantity <= 0
+    ) {
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+
+/*
+ * Flux weapons consume Flux Crystals directly
+ * from the player's inventory.
+ */
+
+function getInventoryItemQuantity(
+    player,
+    itemId
+) {
+
+    if (
+        !player ||
+        !player.inventory ||
+        !Array.isArray(
+            player.inventory.items
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    const inventoryItem =
+        player.inventory.items.find(
+            item =>
+                item &&
+                item.id ===
+                itemId
+        );
+
+
+    if (
+        !inventoryItem ||
+        !Number.isFinite(
+            inventoryItem.quantity
+        )
+    ) {
+
+        return 0;
+
+    }
+
+
+    return Math.max(
+        0,
+        inventoryItem.quantity
+    );
+
+}
+
+
+function consumeFluxCrystal(
+    player
+) {
+
+    const quantity =
+        getInventoryItemQuantity(
+            player,
+            "flux_crystal"
+        );
+
+
+    if (
+        quantity <= 0
+    ) {
+
+        return false;
+
+    }
+
+
+    const inventoryItem =
+        player.inventory.items.find(
+            item =>
+                item &&
+                item.id ===
+                "flux_crystal"
+        );
+
+
+    if (!inventoryItem) {
+
+        return false;
+
+    }
+
+
+    inventoryItem.quantity--;
+
+
+    if (
+        inventoryItem.quantity <= 0
+    ) {
+
+        player.inventory.items =
+            player.inventory.items.filter(
+                item =>
+                    item.id !==
+                    "flux_crystal"
+            );
+
+    }
+
+
+    return true;
+
+}
+
+
+/* =======================================================
+   CONSUME COMBAT RESOURCE
+   ======================================================= */
+
+function consumeCombatResource(
+    player,
+    weapon
+) {
+
+    if (!weapon) {
+
+        return {
+
+            success: true,
+            resource: null
+
+        };
+
+    }
+
+
+    /*
+     * Ballistics
+     */
+
+    if (
+        weapon.combatDiscipline ===
+        "ballistics"
+    ) {
+
+        if (
+            !hasRequiredAmmunition(
+                player,
+                weapon
+            )
+        ) {
+
+            console.log(
+                `Cannot fire ${weapon.name}: ` +
+                `required ammunition is not equipped.`
+            );
+
+
+            return {
+
+                success: false,
+                resource: "ammunition"
+
+            };
+
+        }
+
+
+        const result =
+            consumeAmmunition(
+                player.equipment,
+                1
+            );
+
+
+        if (
+            !result.success
+        ) {
+
+            console.log(
+                `Cannot fire ${weapon.name}: ` +
+                `out of ammunition.`
+            );
+
+
+            return {
+
+                success: false,
+                resource: "ammunition"
+
+            };
+
+        }
+
+
+        console.log(
+            `${weapon.name} fired. ` +
+            `Ammunition remaining: ` +
+            `${result.remaining}`
+        );
+
+
+        return {
+
+            success: true,
+            resource: "ammunition",
+
+            consumed:
+                result.consumed,
+
+            remaining:
+                result.remaining
+
+        };
+
+    }
+
+
+    /*
+     * Flux
+     */
+
+    if (
+        weapon.combatDiscipline ===
+        "flux"
+    ) {
+
+        if (
+            !consumeFluxCrystal(
+                player
+            )
+        ) {
+
+            console.log(
+                `Cannot use ${weapon.name}: ` +
+                `no Flux Crystals available.`
+            );
+
+
+            return {
+
+                success: false,
+                resource: "flux_crystal"
+
+            };
+
+        }
+
+
+        console.log(
+            `${weapon.name} consumed 1 Flux Crystal. ` +
+            `Flux Crystals remaining: ` +
+            `${getInventoryItemQuantity(
+                player,
+                "flux_crystal"
+            )}`
+        );
+
+
+        return {
+
+            success: true,
+            resource: "flux_crystal",
+
+            consumed: 1,
+
+            remaining:
+                getInventoryItemQuantity(
+                    player,
+                    "flux_crystal"
+                )
+
+        };
+
+    }
+
+
+    /*
+     * Melee requires no consumable resource.
+     */
+
+    return {
+
+        success: true,
+        resource: null
+
+    };
 
 }
 
@@ -472,6 +974,18 @@ export function startCombat(
         );
 
 
+    const weapon =
+        getEquippedWeapon(
+            player
+        );
+
+
+    const discipline =
+        getPlayerCombatDiscipline(
+            player
+        );
+
+
     console.log(
         `Target selected: ${enemy.name}`
     );
@@ -483,11 +997,35 @@ export function startCombat(
 
 
     console.log(
+        `Combat discipline: ` +
+        `${discipline || "melee"}`
+    );
+
+
+    if (weapon) {
+
+        console.log(
+            `Equipped weapon: ${weapon.name}`
+        );
+
+    } else {
+
+        console.log(
+            "No weapon equipped. Using melee."
+
+        );
+
+    }
+
+
+    console.log(
         `Combat skills: ` +
         `Attack ${combatStats.attack}, ` +
         `Strength ${combatStats.strength}, ` +
         `Defense ${combatStats.defense}, ` +
-        `Vitality ${getPlayerVitalityLevel(player)}`
+        `Vitality ${getPlayerVitalityLevel(player)}, ` +
+        `Ballistics ${getPlayerBallisticsLevel(player)}, ` +
+        `Flux ${getPlayerFluxLevel(player)}`
     );
 
 
@@ -1037,9 +1575,31 @@ function movePlayerTowardTarget(
    AWARD COMBAT XP FOR DAMAGE
    ======================================================= */
 
+/*
+ * XP rules:
+ *
+ * 4 XP per damage dealt.
+ *
+ * Melee:
+ *     Primary style skill = 100%
+ *     Vitality            = 25%
+ *
+ * Ballistics:
+ *     Ballistics          = 25%
+ *     Vitality            = 25%
+ *
+ * Flux:
+ *     Flux                = 25%
+ *     Vitality            = 25%
+ *
+ * This keeps Ballistics and Flux leveling at the
+ * same pace as Vitality, as intended.
+ */
+
 function awardCombatXPForDamage(
     player,
-    damage
+    damage,
+    combatDiscipline
 ) {
 
     if (
@@ -1057,33 +1617,97 @@ function awardCombatXPForDamage(
         getCombatStyle();
 
 
+    const baseCombatXP =
+        damage *
+        COMBAT_XP_PER_DAMAGE;
+
+
+    const secondaryXP =
+        baseCombatXP *
+        SECONDARY_COMBAT_XP_PERCENT;
+
+
     let primarySkill =
         null;
 
 
+    let primaryXP =
+        0;
+
+
+    /*
+     * MELEE
+     */
+
     if (
-        combatStyle ===
-        COMBAT_STYLES.ACCURATE
+        !combatDiscipline
+    ) {
+
+        if (
+            combatStyle ===
+            COMBAT_STYLES.ACCURATE
+        ) {
+
+            primarySkill =
+                "attack";
+
+        } else if (
+            combatStyle ===
+            COMBAT_STYLES.AGGRESSIVE
+        ) {
+
+            primarySkill =
+                "strength";
+
+        } else if (
+            combatStyle ===
+            COMBAT_STYLES.DEFENSIVE
+        ) {
+
+            primarySkill =
+                "defense";
+
+        }
+
+
+        primaryXP =
+            baseCombatXP;
+
+    }
+
+
+    /*
+     * BALLISTICS
+     */
+
+    if (
+        combatDiscipline ===
+        "ballistics"
     ) {
 
         primarySkill =
-            "attack";
+            "ballistics";
 
-    } else if (
-        combatStyle ===
-        COMBAT_STYLES.AGGRESSIVE
+        primaryXP =
+            secondaryXP;
+
+    }
+
+
+    /*
+     * FLUX
+     */
+
+    if (
+        combatDiscipline ===
+        "flux"
     ) {
 
         primarySkill =
-            "strength";
+            "flux";
 
-    } else if (
-        combatStyle ===
-        COMBAT_STYLES.DEFENSIVE
-    ) {
-
-        primarySkill =
-            "defense";
+        primaryXP =
+            secondaryXP;
 
     }
 
@@ -1093,16 +1717,6 @@ function awardCombatXPForDamage(
         return null;
 
     }
-
-
-    const primaryXP =
-        damage *
-        COMBAT_XP_PER_DAMAGE;
-
-
-    const vitalityXP =
-        primaryXP *
-        VITALITY_XP_PERCENT;
 
 
     const previousMaximumHealth =
@@ -1117,11 +1731,16 @@ function awardCombatXPForDamage(
         );
 
 
+    /*
+     * Vitality receives the same secondary
+     * combat XP rate.
+     */
+
     const vitalityResult =
         awardSkillXP(
             player.skills,
             "vitality",
-            vitalityXP
+            secondaryXP
         );
 
 
@@ -1134,7 +1753,7 @@ function awardCombatXPForDamage(
     console.log(
         `Combat XP: ${damage} damage ` +
         `→ ${primaryXP} ${primarySkill} XP + ` +
-        `${vitalityXP} Vitality XP.`
+        `${secondaryXP} Vitality XP.`
     );
 
 
@@ -1166,11 +1785,14 @@ function awardCombatXPForDamage(
 
     return {
 
+        combatDiscipline,
+
         primarySkill,
 
         primaryXP,
 
-        vitalityXP,
+        vitalityXP:
+            secondaryXP,
 
         primaryResult,
 
@@ -1205,18 +1827,45 @@ function processPlayerAttack(
         getCombatStyle();
 
 
+    const combatDiscipline =
+        getPlayerCombatDiscipline(
+            player
+        );
+
+
+    const weapon =
+        getEquippedWeapon(
+            player
+        );
+
+
     /*
-     * Equipment is now incorporated into the
-     * effective combat levels.
-     *
-     * Example:
-     *
-     * Attack 1 + Laser Rifle +5
-     * = effective Attack 6
-     *
-     * Strength 1 + Laser Rifle +2
-     * = effective Strength 3
+     * Check and consume ammunition/resources
+     * before attempting the attack.
      */
+
+    const resourceResult =
+        consumeCombatResource(
+            player,
+            weapon
+        );
+
+
+    if (
+        !resourceResult.success
+    ) {
+
+        /*
+         * No resource means this weapon cannot
+         * continue attacking.
+         */
+
+        stopCombat();
+
+        return;
+
+    }
+
 
     const combatStats =
         getEffectivePlayerCombatStats(
@@ -1224,8 +1873,55 @@ function processPlayerAttack(
         );
 
 
-    const attackLevel =
-        combatStats.attack;
+    /*
+     * For Melee:
+     *
+     * attack = Attack skill
+     * strength = Strength skill
+     *
+     * For Ballistics:
+     *
+     * attack = Ballistics skill
+     * strength = Strength skill
+     *
+     * For Flux:
+     *
+     * attack = Flux skill
+     * strength = Strength skill
+     *
+     * The existing combat engine still handles
+     * the actual hit/damage calculation.
+     */
+
+    let attackLevel;
+
+
+    if (
+        combatDiscipline ===
+        "ballistics"
+    ) {
+
+        attackLevel =
+            getPlayerBallisticsLevel(
+                player
+            );
+
+    } else if (
+        combatDiscipline ===
+        "flux"
+    ) {
+
+        attackLevel =
+            getPlayerFluxLevel(
+                player
+            );
+
+    } else {
+
+        attackLevel =
+            combatStats.attack;
+
+    }
 
 
     const strengthLevel =
@@ -1262,7 +1958,8 @@ function processPlayerAttack(
 
         awardCombatXPForDamage(
             player,
-            result.damage
+            result.damage,
+            combatDiscipline
         );
 
 
@@ -1280,6 +1977,7 @@ function processPlayerAttack(
             `Player hits ${enemy.name} for ${result.damage}. ` +
             `${enemy.health.current}/${enemy.health.maximum} HP remaining. ` +
             `Style: ${combatStyle}. ` +
+            `Discipline: ${combatDiscipline || "melee"}. ` +
             `Attack ${attackLevel}, ` +
             `Strength ${strengthLevel}`
         );
@@ -1300,6 +1998,7 @@ function processPlayerAttack(
             `Player misses ${enemy.name}. ` +
             `No combat XP awarded. ` +
             `Style: ${combatStyle}. ` +
+            `Discipline: ${combatDiscipline || "melee"}. ` +
             `Attack ${attackLevel}`
         );
 
@@ -1561,6 +2260,20 @@ export function updateCombat(
         enemy,
         now
     );
+
+
+    /*
+     * processPlayerAttack() can stop combat if the
+     * player runs out of ammunition or Flux Crystals.
+     */
+
+    if (
+        !combatState.active
+    ) {
+
+        return;
+
+    }
 
 
     if (

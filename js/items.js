@@ -33,10 +33,8 @@ const ITEM_DEFINITIONS = {
         slot: "weapon",
 
         /*
-         * Identifies the combat discipline used
-         * by this weapon.
-         *
-         * Laser weapons are Ballistics weapons.
+         * Laser weapons use the Ballistics
+         * combat discipline.
          */
 
         combatDiscipline: "ballistics",
@@ -111,13 +109,17 @@ const ITEM_DEFINITIONS = {
          * The Flux Conduit is the sci-fi equivalent
          * of a traditional magic weapon.
          *
-         * It does not use ammunition.
-         *
-         * Flux attacks instead consume Flux Crystals
-         * from the player's inventory.
+         * Flux attacks require Flux Crystals
+         * equipped in the ammunition slot.
          */
 
         combatDiscipline: "flux",
+
+        /*
+         * Ammunition required to use this weapon.
+         */
+
+        ammunitionType: "flux_crystal",
 
         stats: {
             attackBonus: 0,
@@ -166,15 +168,22 @@ const ITEM_DEFINITIONS = {
     flux_crystal: {
         id: "flux_crystal",
         name: "Flux Crystal",
-        type: "resource",
-        resourceType: "flux",
+        type: "ammunition",
+        slot: "ammunition",
 
         /*
-         * Flux Crystals are consumed directly from
-         * inventory when using Flux abilities.
-         *
-         * They are intentionally NOT an equipment slot.
+         * Identifies which weapon ammunition system
+         * this ammunition belongs to.
          */
+
+        ammunitionType: "flux_crystal",
+
+        /*
+         * Flux Crystals remain classified as a Flux
+         * resource while also functioning as ammunition.
+         */
+
+        resourceType: "flux",
 
         stackable: true,
 

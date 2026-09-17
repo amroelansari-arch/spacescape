@@ -2219,6 +2219,8 @@ function renderInventoryTab() {
     );
 
 }
+
+
 /* =======================================================
    EQUIPMENT SLOT SYMBOL
    ======================================================= */
@@ -2411,6 +2413,7 @@ function createEquipmentSlot(
 
     itemName.className =
         "skill-next";
+
 
     if (
         definition.slot ===
@@ -2795,6 +2798,13 @@ function equipInventoryItem(
     }
 
 
+    /*
+     * Ammunition is identified generically by either
+     * its type or its ammunition equipment slot.
+     *
+     * This supports both Laser Charges and Flux Crystals.
+     */
+
     const isAmmunition =
         item.type === "ammunition" ||
         item.slot === "ammunition";
@@ -2875,7 +2885,7 @@ function equipInventoryItem(
      * Remove the inventory item first.
      *
      * For ammunition, the entire stack is moved
-     * into the ammunition equipment slot.
+     * into the shared ammunition equipment slot.
      */
 
     const removed =
@@ -3027,6 +3037,11 @@ function createEquipmentInventoryAction(
 
     }
 
+
+    /*
+     * Any item marked as ammunition, including
+     * Flux Crystals, uses the ammunition slot.
+     */
 
     const isAmmunition =
         item.type === "ammunition" ||
@@ -3218,8 +3233,6 @@ function getInventoryPopupActions(
     return actions;
 
 }
-
-
 /* =======================================================
    RENDER EQUIPMENT TAB
    ======================================================= */

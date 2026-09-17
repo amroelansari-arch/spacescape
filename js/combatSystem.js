@@ -70,13 +70,6 @@ const SECONDARY_COMBAT_XP_PERCENT = 0.25;
    VITALITY
    ======================================================= */
 
-/*
- * Vitality 1 = 100 HP.
- *
- * Every Vitality level above 1 grants
- * 5 additional maximum HP.
- */
-
 const BASE_PLAYER_HEALTH = 100;
 
 const HEALTH_PER_VITALITY_LEVEL = 5;
@@ -110,6 +103,135 @@ const combatState = {
 const combatFeedback = [];
 
 let feedbackId = 0;
+
+
+/* =======================================================
+   RESOURCE MESSAGE
+   ======================================================= */
+
+/*
+ * Displays an in-game combat/resource message.
+ *
+ * This is intentionally self-contained so the combat
+ * system does not depend on the console for important
+ * player-facing information.
+ */
+
+let combatMessageTimeout = null;
+
+
+function showCombatResourceMessage(
+    message
+) {
+
+    if (
+        typeof document === "undefined" ||
+        !message
+    ) {
+
+        return;
+
+    }
+
+
+    let messageElement =
+        document.getElementById(
+            "combat-resource-message"
+        );
+
+
+    if (!messageElement) {
+
+        messageElement =
+            document.createElement("div");
+
+        messageElement.id =
+            "combat-resource-message";
+
+        messageElement.style.position =
+            "fixed";
+
+        messageElement.style.left =
+            "50%";
+
+        messageElement.style.bottom =
+            "125px";
+
+        messageElement.style.transform =
+            "translateX(-50%)";
+
+        messageElement.style.zIndex =
+            "1000";
+
+        messageElement.style.padding =
+            "10px 18px";
+
+        messageElement.style.borderRadius =
+            "6px";
+
+        messageElement.style.background =
+            "rgba(0, 0, 0, 0.88)";
+
+        messageElement.style.border =
+            "1px solid rgba(255, 255, 255, 0.25)";
+
+        messageElement.style.color =
+            "#ffffff";
+
+        messageElement.style.fontFamily =
+            "Arial, sans-serif";
+
+        messageElement.style.fontSize =
+            "14px";
+
+        messageElement.style.fontWeight =
+            "600";
+
+        messageElement.style.textAlign =
+            "center";
+
+        messageElement.style.pointerEvents =
+            "none";
+
+        messageElement.style.display =
+            "none";
+
+        document.body.appendChild(
+            messageElement
+        );
+
+    }
+
+
+    messageElement.textContent =
+        message;
+
+
+    messageElement.style.display =
+        "block";
+
+
+    if (combatMessageTimeout) {
+
+        clearTimeout(
+            combatMessageTimeout
+        );
+
+    }
+
+
+    combatMessageTimeout =
+        setTimeout(
+            () => {
+
+                messageElement.style.display =
+                    "none";
+
+            },
+            2500
+        );
+
+}
 
 
 /* =======================================================
@@ -288,11 +410,6 @@ function getPlayerFluxLevel(
    EQUIPPED WEAPON
    ======================================================= */
 
-/*
- * Returns the actual item definition for the
- * currently equipped weapon.
- */
-
 function getEquippedWeapon(
     player
 ) {
@@ -331,19 +448,6 @@ function getEquippedWeapon(
 /* =======================================================
    COMBAT DISCIPLINE
    ======================================================= */
-
-/*
- * Combat disciplines:
- *
- * null
- *     = Melee
- *
- * ballistics
- *     = Ballistics
- *
- * flux
- *     = Flux
- */
 
 function getPlayerCombatDiscipline(
     player
@@ -388,16 +492,23 @@ function getPlayerCombatDiscipline(
 
 
 /* =======================================================
-   AMMUNITION / RESOURCE VALIDATION
+   AMMUNITION VALIDATION
    ======================================================= */
 
 /*
- * Ballistics weapons declare an ammunitionType.
+ * Ballistics and Flux both use the equipment
+ * ammunition slot.
  *
  * Example:
  *
  * Laser Rifle
  *     ammunitionType: "laser_charge"
+ *
+ * Flux Conduit
+ *     ammunitionType: "flux_crystal"
+ *
+ * The weapon cannot attack unless the correct
+ * ammunition is actually equipped.
  */
 
 function hasRequiredAmmunition(
@@ -405,10 +516,18 @@ function hasRequiredAmmunition(
     weapon
 ) {
 
+    if (!weapon) {
+
+        return true;
+
+    }
+
+
     if (
-        !weapon ||
         weapon.combatDiscipline !==
-        "ballistics"
+            "ballistics" &&
+        weapon.combatDiscipline !==
+            "flux"
     ) {
 
         return true;
@@ -441,7 +560,15 @@ function hasRequiredAmmunition(
 
 
     if (
-        !equippedAmmunition.id ||
+        !equippedAmmunition.id
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
         equippedAmmunition.id !==
         weapon.ammunitionType
     ) {
@@ -454,7 +581,15 @@ function hasRequiredAmmunition(
     if (
         !Number.isFinite(
             equippedAmmunition.quantity
-        ) ||
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    if (
         equippedAmmunition.quantity <= 0
     ) {
 
@@ -468,112 +603,61 @@ function hasRequiredAmmunition(
 }
 
 
-/*
- * Flux weapons consume Flux Crystals directly
- * from the player's inventory.
- */
+/* =======================================================
+   AMMUNITION DISPLAY NAME
+   ======================================================= */
 
-function getInventoryItemQuantity(
-    player,
-    itemId
+function getRequiredAmmunitionName(
+    weapon
 ) {
 
     if (
-        !player ||
-        !player.inventory ||
-        !Array.isArray(
-            player.inventory.items
-        )
+        !weapon ||
+        !weapon.ammunitionType
     ) {
 
-        return 0;
+        return "ammunition";
 
     }
 
 
-    const inventoryItem =
-        player.inventory.items.find(
-            item =>
-                item &&
-                item.id ===
-                itemId
+    const ammunitionItem =
+        getItem(
+            weapon.ammunitionType
         );
 
 
     if (
-        !inventoryItem ||
-        !Number.isFinite(
-            inventoryItem.quantity
-        )
+        ammunitionItem &&
+        ammunitionItem.name
     ) {
 
-        return 0;
+        return ammunitionItem.name;
 
     }
-
-
-    return Math.max(
-        0,
-        inventoryItem.quantity
-    );
-
-}
-
-
-function consumeFluxCrystal(
-    player
-) {
-
-    const quantity =
-        getInventoryItemQuantity(
-            player,
-            "flux_crystal"
-        );
 
 
     if (
-        quantity <= 0
+        weapon.ammunitionType ===
+        "laser_charge"
     ) {
 
-        return false;
+        return "Laser Charges";
 
     }
-
-
-    const inventoryItem =
-        player.inventory.items.find(
-            item =>
-                item &&
-                item.id ===
-                "flux_crystal"
-        );
-
-
-    if (!inventoryItem) {
-
-        return false;
-
-    }
-
-
-    inventoryItem.quantity--;
 
 
     if (
-        inventoryItem.quantity <= 0
+        weapon.ammunitionType ===
+        "flux_crystal"
     ) {
 
-        player.inventory.items =
-            player.inventory.items.filter(
-                item =>
-                    item.id !==
-                    "flux_crystal"
-            );
+        return "Flux Crystals";
 
     }
 
 
-    return true;
+    return weapon.ammunitionType;
 
 }
 
@@ -581,6 +665,22 @@ function consumeFluxCrystal(
 /* =======================================================
    CONSUME COMBAT RESOURCE
    ======================================================= */
+
+/*
+ * Melee:
+ *     No ammunition.
+ *
+ * Ballistics:
+ *     Requires equipped ammunition.
+ *     Consumes one equipped ammunition unit.
+ *
+ * Flux:
+ *     Requires equipped Flux Crystals.
+ *     Consumes one equipped Flux Crystal.
+ *
+ * Both systems now use the exact same ammunition
+ * architecture.
+ */
 
 function consumeCombatResource(
     player,
@@ -600,13 +700,26 @@ function consumeCombatResource(
 
 
     /*
-     * Ballistics
+     * Ballistics / Flux
      */
 
     if (
         weapon.combatDiscipline ===
-        "ballistics"
+            "ballistics" ||
+        weapon.combatDiscipline ===
+            "flux"
     ) {
+
+        const requiredAmmunitionName =
+            getRequiredAmmunitionName(
+                weapon
+            );
+
+
+        /*
+         * Verify the correct ammunition is
+         * actually equipped.
+         */
 
         if (
             !hasRequiredAmmunition(
@@ -615,8 +728,13 @@ function consumeCombatResource(
             )
         ) {
 
+            showCombatResourceMessage(
+                `You need ${requiredAmmunitionName} equipped to use the ${weapon.name}.`
+            );
+
+
             console.log(
-                `Cannot fire ${weapon.name}: ` +
+                `Cannot use ${weapon.name}: ` +
                 `required ammunition is not equipped.`
             );
 
@@ -631,6 +749,11 @@ function consumeCombatResource(
         }
 
 
+        /*
+         * Consume one unit from the equipped
+         * ammunition stack.
+         */
+
         const result =
             consumeAmmunition(
                 player.equipment,
@@ -639,11 +762,17 @@ function consumeCombatResource(
 
 
         if (
+            !result ||
             !result.success
         ) {
 
+            showCombatResourceMessage(
+                `You need ${requiredAmmunitionName} equipped to use the ${weapon.name}.`
+            );
+
+
             console.log(
-                `Cannot fire ${weapon.name}: ` +
+                `Cannot use ${weapon.name}: ` +
                 `out of ammunition.`
             );
 
@@ -658,11 +787,41 @@ function consumeCombatResource(
         }
 
 
-        console.log(
-            `${weapon.name} fired. ` +
-            `Ammunition remaining: ` +
-            `${result.remaining}`
-        );
+        /*
+         * Ballistics message.
+         */
+
+        if (
+            weapon.combatDiscipline ===
+            "ballistics"
+        ) {
+
+            console.log(
+                `${weapon.name} fired. ` +
+                `Ammunition remaining: ` +
+                `${result.remaining}`
+            );
+
+        }
+
+
+        /*
+         * Flux message.
+         */
+
+        if (
+            weapon.combatDiscipline ===
+            "flux"
+        ) {
+
+            console.log(
+                `${weapon.name} consumed 1 ` +
+                `${requiredAmmunitionName}. ` +
+                `Ammunition remaining: ` +
+                `${result.remaining}`
+            );
+
+        }
 
 
         return {
@@ -675,65 +834,6 @@ function consumeCombatResource(
 
             remaining:
                 result.remaining
-
-        };
-
-    }
-
-
-    /*
-     * Flux
-     */
-
-    if (
-        weapon.combatDiscipline ===
-        "flux"
-    ) {
-
-        if (
-            !consumeFluxCrystal(
-                player
-            )
-        ) {
-
-            console.log(
-                `Cannot use ${weapon.name}: ` +
-                `no Flux Crystals available.`
-            );
-
-
-            return {
-
-                success: false,
-                resource: "flux_crystal"
-
-            };
-
-        }
-
-
-        console.log(
-            `${weapon.name} consumed 1 Flux Crystal. ` +
-            `Flux Crystals remaining: ` +
-            `${getInventoryItemQuantity(
-                player,
-                "flux_crystal"
-            )}`
-        );
-
-
-        return {
-
-            success: true,
-            resource: "flux_crystal",
-
-            consumed: 1,
-
-            remaining:
-                getInventoryItemQuantity(
-                    player,
-                    "flux_crystal"
-                )
 
         };
 
@@ -782,13 +882,6 @@ function calculatePlayerMaximumHealth(
 
 }
 
-
-/*
- * Synchronize maximum HP with Vitality.
- *
- * If Vitality levels up while the player is alive,
- * the new maximum HP is added to current HP as well.
- */
 
 function syncPlayerVitalityHealth(
     player,
@@ -1012,7 +1105,6 @@ export function startCombat(
 
         console.log(
             "No weapon equipped. Using melee."
-
         );
 
     }
@@ -1575,27 +1667,6 @@ function movePlayerTowardTarget(
    AWARD COMBAT XP FOR DAMAGE
    ======================================================= */
 
-/*
- * XP rules:
- *
- * 4 XP per damage dealt.
- *
- * Melee:
- *     Primary style skill = 100%
- *     Vitality            = 25%
- *
- * Ballistics:
- *     Ballistics          = 25%
- *     Vitality            = 25%
- *
- * Flux:
- *     Flux                = 25%
- *     Vitality            = 25%
- *
- * This keeps Ballistics and Flux leveling at the
- * same pace as Vitality, as intended.
- */
-
 function awardCombatXPForDamage(
     player,
     damage,
@@ -1731,11 +1802,6 @@ function awardCombatXPForDamage(
         );
 
 
-    /*
-     * Vitality receives the same secondary
-     * combat XP rate.
-     */
-
     const vitalityResult =
         awardSkillXP(
             player.skills,
@@ -1840,8 +1906,8 @@ function processPlayerAttack(
 
 
     /*
-     * Check and consume ammunition/resources
-     * before attempting the attack.
+     * Check and consume ammunition before
+     * attempting the attack.
      */
 
     const resourceResult =
@@ -1855,11 +1921,6 @@ function processPlayerAttack(
         !resourceResult.success
     ) {
 
-        /*
-         * No resource means this weapon cannot
-         * continue attacking.
-         */
-
         stopCombat();
 
         return;
@@ -1872,26 +1933,6 @@ function processPlayerAttack(
             player
         );
 
-
-    /*
-     * For Melee:
-     *
-     * attack = Attack skill
-     * strength = Strength skill
-     *
-     * For Ballistics:
-     *
-     * attack = Ballistics skill
-     * strength = Strength skill
-     *
-     * For Flux:
-     *
-     * attack = Flux skill
-     * strength = Strength skill
-     *
-     * The existing combat engine still handles
-     * the actual hit/damage calculation.
-     */
 
     let attackLevel;
 
@@ -2128,11 +2169,6 @@ export function updateCombat(
     }
 
 
-    /*
-     * Keep HP synchronized with Vitality even when
-     * combat is not responsible for the level change.
-     */
-
     syncPlayerVitalityHealth(
         player
     );
@@ -2261,11 +2297,6 @@ export function updateCombat(
         now
     );
 
-
-    /*
-     * processPlayerAttack() can stop combat if the
-     * player runs out of ammunition or Flux Crystals.
-     */
 
     if (
         !combatState.active

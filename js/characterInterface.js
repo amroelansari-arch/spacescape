@@ -4036,17 +4036,19 @@ window.addEventListener(
    ======================================================= */
 
 subscribeToSkillChanges(
-    skills => {
+    () => {
 
-        if (
-            skills !==
-            player.skills
-        ) {
-
-            return;
-
-        }
-
+        /*
+         * Do not require the callback's skills object
+         * to be the exact same object reference as
+         * player.skills.
+         *
+         * The skill system may notify subscribers with
+         * an updated/reference-equivalent skills state.
+         * The Character Interface only needs to know
+         * that a skill changed and then re-render the
+         * currently visible Skills tab.
+         */
 
         if (
             !characterState.isOpen

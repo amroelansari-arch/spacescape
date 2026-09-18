@@ -15,6 +15,10 @@ import {
 } from "./player.js";
 
 import {
+    getCombatLevel
+} from "./combatLevel.js";
+
+import {
     updateCamera,
     WORLD_WIDTH,
     WORLD_HEIGHT
@@ -625,7 +629,9 @@ function handleRespawn() {
 
     drawPlayer();
 
-    updatePlayerHUD();
+    updatePlayerHUD(
+        getCombatLevel(player)
+    );
 
     updateGame();
 }
@@ -1408,8 +1414,6 @@ function updateMiningAction() {
     );
 
 }
-
-
 /* =======================================================
    SALVAGING ACTION UPDATE
    ======================================================= */
@@ -1593,6 +1597,8 @@ function updateSalvagingAction() {
     );
 
 }
+
+
 /* =======================================================
    RESOURCE NODE TARGET
    ======================================================= */
@@ -1923,11 +1929,11 @@ function updateInteractionCursor(event) {
                     worldObject.position.x,
                     2
                 ) +
-                Math.pow(
-                    mouseY -
-                    worldObject.position.y,
-                    2
-                )
+                    Math.pow(
+                        mouseY -
+                        worldObject.position.y,
+                        2
+                    )
             );
 
         if (distance <= 60) {
@@ -2854,7 +2860,9 @@ function updateGame() {
         world
     );
 
-    updatePlayerHUD();
+    updatePlayerHUD(
+        getCombatLevel(player)
+    );
 
     updateInteraction();
 

@@ -109,14 +109,6 @@ let feedbackId = 0;
    RESOURCE MESSAGE
    ======================================================= */
 
-/*
- * Displays an in-game combat/resource message.
- *
- * This is intentionally self-contained so the combat
- * system does not depend on the console for important
- * player-facing information.
- */
-
 let combatMessageTimeout = null;
 
 
@@ -495,22 +487,6 @@ function getPlayerCombatDiscipline(
    AMMUNITION VALIDATION
    ======================================================= */
 
-/*
- * Ballistics and Flux both use the equipment
- * ammunition slot.
- *
- * Example:
- *
- * Laser Rifle
- *     ammunitionType: "laser_charge"
- *
- * Flux Conduit
- *     ammunitionType: "flux_crystal"
- *
- * The weapon cannot attack unless the correct
- * ammunition is actually equipped.
- */
-
 function hasRequiredAmmunition(
     player,
     weapon
@@ -666,22 +642,6 @@ function getRequiredAmmunitionName(
    CONSUME COMBAT RESOURCE
    ======================================================= */
 
-/*
- * Melee:
- *     No ammunition.
- *
- * Ballistics:
- *     Requires equipped ammunition.
- *     Consumes one equipped ammunition unit.
- *
- * Flux:
- *     Requires equipped Flux Crystals.
- *     Consumes one equipped Flux Crystal.
- *
- * Both systems now use the exact same ammunition
- * architecture.
- */
-
 function consumeCombatResource(
     player,
     weapon
@@ -716,11 +676,6 @@ function consumeCombatResource(
             );
 
 
-        /*
-         * Verify the correct ammunition is
-         * actually equipped.
-         */
-
         if (
             !hasRequiredAmmunition(
                 player,
@@ -748,11 +703,6 @@ function consumeCombatResource(
 
         }
 
-
-        /*
-         * Consume one unit from the equipped
-         * ammunition stack.
-         */
 
         const result =
             consumeAmmunition(
@@ -787,10 +737,6 @@ function consumeCombatResource(
         }
 
 
-        /*
-         * Ballistics message.
-         */
-
         if (
             weapon.combatDiscipline ===
             "ballistics"
@@ -804,10 +750,6 @@ function consumeCombatResource(
 
         }
 
-
-        /*
-         * Flux message.
-         */
 
         if (
             weapon.combatDiscipline ===
@@ -1116,16 +1058,19 @@ export function startCombat(
         `Strength ${combatStats.strength}, ` +
         `Defense ${combatStats.defense}, ` +
         `Vitality ${getPlayerVitalityLevel(player)}, ` +
-        `Ballistics ${getPlayerBallisticsLevel(player)}, ` +
-        `Flux ${getPlayerFluxLevel(player)}`
+        `Ballistics ${combatStats.ballistics}, ` +
+        `Flux ${combatStats.flux}`
     );
 
 
     console.log(
         `Equipment bonuses: ` +
-        `Attack +${combatStats.attack - getPlayerAttackLevel(player)}, ` +
-        `Strength +${combatStats.strength - getPlayerStrengthLevel(player)}, ` +
-        `Defense +${combatStats.defense - getPlayerDefenseLevel(player)}`
+        `Attack +${combatStats.attackBonus}, ` +
+        `Strength +${combatStats.strengthBonus}, ` +
+        `Defense +${combatStats.defenseBonus}, ` +
+        `Accuracy +${combatStats.accuracyBonus}, ` +
+        `Damage +${combatStats.damageBonus}, ` +
+        `Weapon Damage +${combatStats.weaponDamage}`
     );
 
 
@@ -1937,33 +1882,71 @@ function processPlayerAttack(
     let attackLevel;
 
 
+    /*
+     * BALLISTICS
+     *
+     * IMPORTANT:
+     *
+     * Use the effective Ballistics value from
+     * equipmentStats.js.
+     *
+     * This includes:
+     *
+     *     Ballistics skill level
+     *     + equipment attackBonus
+     *
+     * The old system used the raw Ballistics skill
+     * here and therefore bypassed equipment attackBonus.
+     */
+
     if (
         combatDiscipline ===
         "ballistics"
     ) {
 
         attackLevel =
-            getPlayerBallisticsLevel(
-                player
-            );
+            combatStats.ballistics;
 
-    } else if (
+    }
+
+
+    /*
+     * FLUX
+     *
+     * Same integration as Ballistics.
+     */
+
+    else if (
         combatDiscipline ===
         "flux"
     ) {
 
         attackLevel =
-            getPlayerFluxLevel(
-                player
-            );
+            combatStats.flux;
 
-    } else {
+    }
+
+
+    /*
+     * MELEE
+     *
+     * Already uses the effective Attack value.
+     */
+
+    else {
 
         attackLevel =
             combatStats.attack;
 
     }
 
+
+    /*
+     * Strength remains the damage-power value.
+     *
+     * Equipment strength bonuses are already
+     * included in combatStats.strength.
+     */
 
     const strengthLevel =
         combatStats.strength;

@@ -248,6 +248,29 @@ export function getEquipmentStats(
    EFFECTIVE PLAYER COMBAT STATS
    ======================================================= */
 
+/*
+ * Returns the combat values after equipment bonuses
+ * have been applied.
+ *
+ * Melee:
+ *
+ *     Attack    -> Attack skill + attackBonus
+ *     Strength  -> Strength skill + strengthBonus
+ *     Defense   -> Defense skill + defenseBonus
+ *
+ * Ballistics:
+ *
+ *     Ballistics -> Ballistics skill + attackBonus
+ *
+ * Flux:
+ *
+ *     Flux -> Flux skill + attackBonus
+ *
+ * General accuracy/damage/weapon bonuses are returned
+ * separately because combat.js applies those during the
+ * actual attack calculation.
+ */
+
 export function getEffectivePlayerCombatStats(
     player
 ) {
@@ -285,6 +308,28 @@ export function getEffectivePlayerCombatStats(
             : 1;
 
 
+    const baseBallistics =
+        player &&
+        player.skills &&
+        player.skills.ballistics &&
+        Number.isFinite(
+            player.skills.ballistics.level
+        )
+            ? player.skills.ballistics.level
+            : 1;
+
+
+    const baseFlux =
+        player &&
+        player.skills &&
+        player.skills.flux &&
+        Number.isFinite(
+            player.skills.flux.level
+        )
+            ? player.skills.flux.level
+            : 1;
+
+
     const equipmentStats =
         getEquipmentStats(
             player
@@ -294,6 +339,10 @@ export function getEffectivePlayerCombatStats(
 
 
     return {
+
+        /*
+         * MELEE
+         */
 
         attack:
             Math.max(
@@ -316,6 +365,46 @@ export function getEffectivePlayerCombatStats(
                 equipmentStats.defenseBonus
             ),
 
+
+        /*
+         * BALLISTICS
+         *
+         * Uses the Ballistics skill as its
+         * base attack level and receives the
+         * general equipment attack bonus.
+         */
+
+        ballistics:
+            Math.max(
+                1,
+                baseBallistics +
+                equipmentStats.attackBonus
+            ),
+
+
+        /*
+         * FLUX
+         *
+         * Uses the Flux skill as its base
+         * attack level and receives the general
+         * equipment attack bonus.
+         */
+
+        flux:
+            Math.max(
+                1,
+                baseFlux +
+                equipmentStats.attackBonus
+            ),
+
+
+        /*
+         * SECONDARY COMBAT BONUSES
+         *
+         * These remain separate because combat.js
+         * applies them during the attack itself.
+         */
+
         accuracyBonus:
             equipmentStats.accuracyBonus,
 
@@ -323,7 +412,25 @@ export function getEffectivePlayerCombatStats(
             equipmentStats.damageBonus,
 
         weaponDamage:
-            equipmentStats.weaponDamage
+            equipmentStats.weaponDamage,
+
+
+        /*
+         * Expose the raw equipment bonuses too.
+         *
+         * This is useful for combat debugging and
+         * future systems without requiring another
+         * equipment-stat calculation.
+         */
+
+        attackBonus:
+            equipmentStats.attackBonus,
+
+        strengthBonus:
+            equipmentStats.strengthBonus,
+
+        defenseBonus:
+            equipmentStats.defenseBonus
 
     };
 
@@ -412,6 +519,11 @@ export function meetsEquipmentRequirements(
                 skillName
             ];
 
+
+        /*
+         * Ignore malformed requirement values
+         * rather than accidentally blocking equipment.
+         */
 
         if (
             !Number.isFinite(

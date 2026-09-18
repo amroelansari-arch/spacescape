@@ -41,11 +41,9 @@ export function createEquipment() {
         accessory: null,
 
         /*
-         * Ammunition is an equipment slot because
-         * the currently equipped ammunition must be
-         * directly available to the combat system.
+         * Ammunition is a dedicated equipment slot.
          *
-         * Ammunition is stored as:
+         * Stored as:
          *
          * {
          *     id: "laser_charge",
@@ -68,8 +66,13 @@ export function isValidEquipment(
     equipment
 ) {
 
-    if (!equipment) {
+    if (
+        !equipment ||
+        typeof equipment !== "object"
+    ) {
+
         return false;
+
     }
 
     return EQUIPMENT_SLOTS.every(
@@ -102,8 +105,13 @@ export function isAmmunitionItem(
     item
 ) {
 
-    if (!item) {
+    if (
+        !item ||
+        typeof item !== "object"
+    ) {
+
         return false;
+
     }
 
     return (
@@ -256,6 +264,7 @@ export function equipItem(
     if (
         !isValidEquipment(equipment) ||
         !item ||
+        typeof item !== "object" ||
         !item.id
     ) {
 
@@ -274,7 +283,7 @@ export function equipItem(
 
 
     /*
-     * Ammunition is a special equipment type.
+     * Ammunition is a valid equipment type.
      *
      * All other equippable items continue to use
      * the existing weapon/equipment/armor types.
@@ -316,6 +325,11 @@ export function equipItem(
     }
 
 
+    /*
+     * Non-ammunition items must use a normal
+     * equipment slot.
+     */
+
     if (
         !isValidEquipmentSlot(
             item.slot
@@ -333,11 +347,31 @@ export function equipItem(
 
 
     /*
-     * Requirements are only enforced when
-     * a player object is supplied.
+     * Prevent non-ammunition items from being
+     * placed in the ammunition slot.
+     */
+
+    if (
+        !isAmmunition &&
+        item.slot === "ammunition"
+    ) {
+
+        return {
+
+            success: false,
+            reason: "invalid_equipment_slot"
+
+        };
+
+    }
+
+
+    /*
+     * Requirements are enforced when a player
+     * object is supplied.
      *
-     * This preserves compatibility with
-     * existing direct equipment tests.
+     * This allows direct equipment-system tests
+     * without requiring a player object.
      */
 
     if (
@@ -376,13 +410,6 @@ export function equipItem(
 
     /*
      * Ammunition is stored as a stack.
-     *
-     * If quantity is explicitly supplied,
-     * use it.
-     *
-     * Otherwise use the item's quantity.
-     *
-     * Otherwise default to 1.
      */
 
     if (isAmmunition) {

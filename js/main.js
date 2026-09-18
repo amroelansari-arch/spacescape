@@ -15,7 +15,7 @@ import {
 } from "./player.js";
 
 import {
-    getCombatLevel
+    getPlayerCombatLevel
 } from "./combatLevel.js";
 
 import {
@@ -630,7 +630,7 @@ function handleRespawn() {
     drawPlayer();
 
     updatePlayerHUD(
-        getCombatLevel(player)
+        getPlayerCombatLevel(player)
     );
 
     updateGame();
@@ -1414,6 +1414,8 @@ function updateMiningAction() {
     );
 
 }
+
+
 /* =======================================================
    SALVAGING ACTION UPDATE
    ======================================================= */
@@ -1597,8 +1599,6 @@ function updateSalvagingAction() {
     );
 
 }
-
-
 /* =======================================================
    RESOURCE NODE TARGET
    ======================================================= */
@@ -2861,7 +2861,7 @@ function updateGame() {
     );
 
     updatePlayerHUD(
-        getCombatLevel(player)
+        getPlayerCombatLevel(player)
     );
 
     updateInteraction();

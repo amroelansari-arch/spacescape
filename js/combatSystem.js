@@ -2,7 +2,11 @@ import {
     performAttack,
     isTargetAlive,
     COMBAT_STYLES,
-    COMBAT_STYLE_MODIFIERS
+    COMBAT_DISCIPLINES,
+    getCombatStyleDefinition,
+    getCombatStylesForDiscipline,
+    isCombatStyleValidForDiscipline,
+    getCombatStyleAttackSpeedMultiplier
 } from "./combat.js";
 
 import {
@@ -42,9 +46,18 @@ import {
 } from "./equipment.js";
 
 
+/* =======================================================
+   BASE COMBAT TIMING
+   ======================================================= */
+
 const PLAYER_ATTACK_SPEED = 2000;
 
 const ENEMY_ATTACK_SPEED = 2500;
+
+
+/* =======================================================
+   COMBAT RANGE
+   ======================================================= */
 
 const COMBAT_RANGE = 100;
 
@@ -441,7 +454,16 @@ function getEquippedWeapon(
    COMBAT DISCIPLINE
    ======================================================= */
 
-function getPlayerCombatDiscipline(
+/*
+ * No weapon = Unarmed Melee.
+ *
+ * Weapons explicitly define their discipline.
+ *
+ * Future weapons can therefore introduce new
+ * weapons without rewriting the combat system.
+ */
+
+export function getPlayerCombatDiscipline(
     player
 ) {
 
@@ -453,32 +475,163 @@ function getPlayerCombatDiscipline(
 
     if (!weapon) {
 
-        return null;
+        return COMBAT_DISCIPLINES.MELEE;
 
     }
 
 
     if (
         weapon.combatDiscipline ===
-        "ballistics"
+        COMBAT_DISCIPLINES.BALLISTICS
     ) {
 
-        return "ballistics";
+        return COMBAT_DISCIPLINES.BALLISTICS;
 
     }
 
 
     if (
         weapon.combatDiscipline ===
-        "flux"
+        COMBAT_DISCIPLINES.FLUX
     ) {
 
-        return "flux";
+        return COMBAT_DISCIPLINES.FLUX;
 
     }
 
 
-    return null;
+    return COMBAT_DISCIPLINES.MELEE;
+
+}
+
+
+/* =======================================================
+   COMBAT STYLE VALIDATION
+   ======================================================= */
+
+/*
+ * The currently selected style belongs to the player,
+ * but the equipped weapon determines which styles are
+ * legal.
+ *
+ * If the player switches weapons and the old style is
+ * no longer valid, Accurate becomes the safe default.
+ */
+
+function getValidCombatStyle(
+    player
+) {
+
+    const discipline =
+        getPlayerCombatDiscipline(
+            player
+        );
+
+
+    const currentStyle =
+        getCombatStyle();
+
+
+    if (
+        isCombatStyleValidForDiscipline(
+            currentStyle,
+            discipline
+        )
+    ) {
+
+        return currentStyle;
+
+    }
+
+
+    const availableStyles =
+        getCombatStylesForDiscipline(
+            discipline
+        );
+
+
+    if (
+        availableStyles.includes(
+            COMBAT_STYLES.ACCURATE
+        )
+    ) {
+
+        return COMBAT_STYLES.ACCURATE;
+
+    }
+
+
+    if (
+        availableStyles.length > 0
+    ) {
+
+        return availableStyles[0];
+
+    }
+
+
+    return COMBAT_STYLES.ACCURATE;
+
+}
+
+
+/* =======================================================
+   COMBAT STYLE INFORMATION
+   ======================================================= */
+
+export function getAvailableCombatStyles(
+    player
+) {
+
+    const discipline =
+        getPlayerCombatDiscipline(
+            player
+        );
+
+
+    return getCombatStylesForDiscipline(
+        discipline
+    );
+
+}
+
+
+export function getPlayerCombatStyleInfo(
+    player
+) {
+
+    const discipline =
+        getPlayerCombatDiscipline(
+            player
+        );
+
+
+    const combatStyle =
+        getValidCombatStyle(
+            player
+        );
+
+
+    const definition =
+        getCombatStyleDefinition(
+            combatStyle
+        );
+
+
+    return {
+
+        discipline,
+
+        combatStyle,
+
+        definition,
+
+        availableStyles:
+            getCombatStylesForDiscipline(
+                discipline
+            )
+
+    };
 
 }
 
@@ -501,9 +654,9 @@ function hasRequiredAmmunition(
 
     if (
         weapon.combatDiscipline !==
-            "ballistics" &&
+            COMBAT_DISCIPLINES.BALLISTICS &&
         weapon.combatDiscipline !==
-            "flux"
+            COMBAT_DISCIPLINES.FLUX
     ) {
 
         return true;
@@ -652,6 +805,7 @@ function consumeCombatResource(
         return {
 
             success: true,
+
             resource: null
 
         };
@@ -659,15 +813,11 @@ function consumeCombatResource(
     }
 
 
-    /*
-     * Ballistics / Flux
-     */
-
     if (
         weapon.combatDiscipline ===
-            "ballistics" ||
+            COMBAT_DISCIPLINES.BALLISTICS ||
         weapon.combatDiscipline ===
-            "flux"
+            COMBAT_DISCIPLINES.FLUX
     ) {
 
         const requiredAmmunitionName =
@@ -697,6 +847,7 @@ function consumeCombatResource(
             return {
 
                 success: false,
+
                 resource: "ammunition"
 
             };
@@ -730,6 +881,7 @@ function consumeCombatResource(
             return {
 
                 success: false,
+
                 resource: "ammunition"
 
             };
@@ -737,38 +889,18 @@ function consumeCombatResource(
         }
 
 
-        if (
-            weapon.combatDiscipline ===
-            "ballistics"
-        ) {
-
-            console.log(
-                `${weapon.name} fired. ` +
-                `Ammunition remaining: ` +
-                `${result.remaining}`
-            );
-
-        }
-
-
-        if (
-            weapon.combatDiscipline ===
-            "flux"
-        ) {
-
-            console.log(
-                `${weapon.name} consumed 1 ` +
-                `${requiredAmmunitionName}. ` +
-                `Ammunition remaining: ` +
-                `${result.remaining}`
-            );
-
-        }
+        console.log(
+            `${weapon.name} used 1 ` +
+            `${requiredAmmunitionName}. ` +
+            `Ammunition remaining: ` +
+            `${result.remaining}`
+        );
 
 
         return {
 
             success: true,
+
             resource: "ammunition",
 
             consumed:
@@ -782,13 +914,10 @@ function consumeCombatResource(
     }
 
 
-    /*
-     * Melee requires no consumable resource.
-     */
-
     return {
 
         success: true,
+
         resource: null
 
     };
@@ -909,7 +1038,15 @@ function getEffectivePlayerDefense(
 
 
     const combatStyle =
-        getCombatStyle();
+        getValidCombatStyle(
+            player
+        );
+
+
+    const combatStyleDefinition =
+        getCombatStyleDefinition(
+            combatStyle
+        );
 
 
     let defenseMultiplier =
@@ -917,15 +1054,14 @@ function getEffectivePlayerDefense(
 
 
     if (
-        COMBAT_STYLE_MODIFIERS[
-            combatStyle
-        ]
+        combatStyleDefinition &&
+        Number.isFinite(
+            combatStyleDefinition.defenseMultiplier
+        )
     ) {
 
         defenseMultiplier =
-            COMBAT_STYLE_MODIFIERS[
-                combatStyle
-            ].defenseMultiplier;
+            combatStyleDefinition.defenseMultiplier;
 
     }
 
@@ -1021,19 +1157,24 @@ export function startCombat(
         );
 
 
+    const combatStyle =
+        getValidCombatStyle(
+            player
+        );
+
+
     console.log(
         `Target selected: ${enemy.name}`
     );
 
 
     console.log(
-        `Combat style: ${getCombatStyle()}`
+        `Combat style: ${combatStyle}`
     );
 
 
     console.log(
-        `Combat discipline: ` +
-        `${discipline || "melee"}`
+        `Combat discipline: ${discipline}`
     );
 
 
@@ -1046,10 +1187,18 @@ export function startCombat(
     } else {
 
         console.log(
-            "No weapon equipped. Using melee."
+            "Equipped weapon: Unarmed"
         );
 
     }
+
+
+    console.log(
+        `Available styles: ` +
+        `${getCombatStylesForDiscipline(
+            discipline
+        ).join(", ")}`
+    );
 
 
     console.log(
@@ -1612,6 +1761,58 @@ function movePlayerTowardTarget(
    AWARD COMBAT XP FOR DAMAGE
    ======================================================= */
 
+/*
+ * Damage XP:
+ *
+ *     4 XP per damage
+ *
+ * Vitality:
+ *
+ *     25% of base combat XP
+ *
+ * MELEE
+ *
+ * Accurate:
+ *     100% Attack
+ *
+ * Aggressive:
+ *     100% Strength
+ *
+ * Defensive:
+ *     100% Defense
+ *
+ * Controlled:
+ *     1/3 Attack
+ *     1/3 Strength
+ *     1/3 Defense
+ *
+ * BALLISTICS
+ *
+ * Accurate:
+ *     25% Ballistics
+ *
+ * Rapid:
+ *     25% Ballistics
+ *
+ * Defensive:
+ *     12.5% Ballistics
+ *     12.5% Defense
+ *
+ * FLUX
+ *
+ * Accurate:
+ *     25% Flux
+ *
+ * Defensive:
+ *     12.5% Flux
+ *     12.5% Defense
+ *
+ * This preserves the existing rule that Ballistics
+ * and Flux receive combat XP at the 25% discipline
+ * rate while allowing Defensive to split that
+ * discipline XP with Defense.
+ */
+
 function awardCombatXPForDamage(
     player,
     damage,
@@ -1630,7 +1831,9 @@ function awardCombatXPForDamage(
 
 
     const combatStyle =
-        getCombatStyle();
+        getValidCombatStyle(
+            player
+        );
 
 
     const baseCombatXP =
@@ -1638,25 +1841,29 @@ function awardCombatXPForDamage(
         COMBAT_XP_PER_DAMAGE;
 
 
-    const secondaryXP =
+    const vitalityXP =
         baseCombatXP *
         SECONDARY_COMBAT_XP_PERCENT;
 
 
-    let primarySkill =
-        null;
+    let attackXP = 0;
+
+    let strengthXP = 0;
+
+    let defenseXP = 0;
+
+    let ballisticsXP = 0;
+
+    let fluxXP = 0;
 
 
-    let primaryXP =
-        0;
-
-
-    /*
-     * MELEE
-     */
+    /* ===================================================
+       MELEE
+       =================================================== */
 
     if (
-        !combatDiscipline
+        combatDiscipline ===
+        COMBAT_DISCIPLINES.MELEE
     ) {
 
         if (
@@ -1664,73 +1871,133 @@ function awardCombatXPForDamage(
             COMBAT_STYLES.ACCURATE
         ) {
 
-            primarySkill =
-                "attack";
-
-        } else if (
-            combatStyle ===
-            COMBAT_STYLES.AGGRESSIVE
-        ) {
-
-            primarySkill =
-                "strength";
-
-        } else if (
-            combatStyle ===
-            COMBAT_STYLES.DEFENSIVE
-        ) {
-
-            primarySkill =
-                "defense";
+            attackXP =
+                baseCombatXP;
 
         }
 
 
-        primaryXP =
-            baseCombatXP;
+        else if (
+            combatStyle ===
+            COMBAT_STYLES.AGGRESSIVE
+        ) {
+
+            strengthXP =
+                baseCombatXP;
+
+        }
+
+
+        else if (
+            combatStyle ===
+            COMBAT_STYLES.DEFENSIVE
+        ) {
+
+            defenseXP =
+                baseCombatXP;
+
+        }
+
+
+        else if (
+            combatStyle ===
+            COMBAT_STYLES.CONTROLLED
+        ) {
+
+            attackXP =
+                baseCombatXP / 3;
+
+            strengthXP =
+                baseCombatXP / 3;
+
+            defenseXP =
+                baseCombatXP / 3;
+
+        }
 
     }
 
 
-    /*
-     * BALLISTICS
-     */
+    /* ===================================================
+       BALLISTICS
+       =================================================== */
 
-    if (
+    else if (
         combatDiscipline ===
-        "ballistics"
+        COMBAT_DISCIPLINES.BALLISTICS
     ) {
 
-        primarySkill =
-            "ballistics";
+        const ballisticsBaseXP =
+            baseCombatXP *
+            SECONDARY_COMBAT_XP_PERCENT;
 
-        primaryXP =
-            secondaryXP;
+
+        if (
+            combatStyle ===
+                COMBAT_STYLES.ACCURATE ||
+            combatStyle ===
+                COMBAT_STYLES.RAPID
+        ) {
+
+            ballisticsXP =
+                ballisticsBaseXP;
+
+        }
+
+
+        else if (
+            combatStyle ===
+            COMBAT_STYLES.DEFENSIVE
+        ) {
+
+            ballisticsXP =
+                ballisticsBaseXP / 2;
+
+            defenseXP =
+                ballisticsBaseXP / 2;
+
+        }
 
     }
 
 
-    /*
-     * FLUX
-     */
+    /* ===================================================
+       FLUX
+       =================================================== */
 
-    if (
+    else if (
         combatDiscipline ===
-        "flux"
+        COMBAT_DISCIPLINES.FLUX
     ) {
 
-        primarySkill =
-            "flux";
-
-        primaryXP =
-            secondaryXP;
-
-    }
+        const fluxBaseXP =
+            baseCombatXP *
+            SECONDARY_COMBAT_XP_PERCENT;
 
 
-    if (!primarySkill) {
+        if (
+            combatStyle ===
+            COMBAT_STYLES.ACCURATE
+        ) {
 
-        return null;
+            fluxXP =
+                fluxBaseXP;
+
+        }
+
+
+        else if (
+            combatStyle ===
+            COMBAT_STYLES.DEFENSIVE
+        ) {
+
+            fluxXP =
+                fluxBaseXP / 2;
+
+            defenseXP =
+                fluxBaseXP / 2;
+
+        }
 
     }
 
@@ -1739,19 +2006,84 @@ function awardCombatXPForDamage(
         player.health.maximum;
 
 
-    const primaryResult =
-        awardSkillXP(
-            player.skills,
-            primarySkill,
-            primaryXP
-        );
+    const results = {};
+
+
+    if (
+        attackXP > 0
+    ) {
+
+        results.attack =
+            awardSkillXP(
+                player.skills,
+                "attack",
+                attackXP
+            );
+
+    }
+
+
+    if (
+        strengthXP > 0
+    ) {
+
+        results.strength =
+            awardSkillXP(
+                player.skills,
+                "strength",
+                strengthXP
+            );
+
+    }
+
+
+    if (
+        defenseXP > 0
+    ) {
+
+        results.defense =
+            awardSkillXP(
+                player.skills,
+                "defense",
+                defenseXP
+            );
+
+    }
+
+
+    if (
+        ballisticsXP > 0
+    ) {
+
+        results.ballistics =
+            awardSkillXP(
+                player.skills,
+                "ballistics",
+                ballisticsXP
+            );
+
+    }
+
+
+    if (
+        fluxXP > 0
+    ) {
+
+        results.flux =
+            awardSkillXP(
+                player.skills,
+                "flux",
+                fluxXP
+            );
+
+    }
 
 
     const vitalityResult =
         awardSkillXP(
             player.skills,
             "vitality",
-            secondaryXP
+            vitalityXP
         );
 
 
@@ -1761,55 +2093,199 @@ function awardCombatXPForDamage(
     );
 
 
-    console.log(
-        `Combat XP: ${damage} damage ` +
-        `→ ${primaryXP} ${primarySkill} XP + ` +
-        `${secondaryXP} Vitality XP.`
+    const xpSummary = [];
+
+
+    if (
+        attackXP > 0
+    ) {
+
+        xpSummary.push(
+            `${attackXP} Attack`
+        );
+
+    }
+
+
+    if (
+        strengthXP > 0
+    ) {
+
+        xpSummary.push(
+            `${strengthXP} Strength`
+        );
+
+    }
+
+
+    if (
+        defenseXP > 0
+    ) {
+
+        xpSummary.push(
+            `${defenseXP} Defense`
+        );
+
+    }
+
+
+    if (
+        ballisticsXP > 0
+    ) {
+
+        xpSummary.push(
+            `${ballisticsXP} Ballistics`
+        );
+
+    }
+
+
+    if (
+        fluxXP > 0
+    ) {
+
+        xpSummary.push(
+            `${fluxXP} Flux`
+        );
+
+    }
+
+
+    xpSummary.push(
+        `${vitalityXP} Vitality`
     );
 
 
-    if (
-        primaryResult.levelsGained > 0
-    ) {
-
-        console.log(
-            `${primarySkill} reached level ` +
-            `${primaryResult.currentLevel}.`
-        );
-
-    }
-
-
-    if (
-        vitalityResult.levelsGained > 0
-    ) {
-
-        console.log(
-            `Vitality reached level ` +
-            `${vitalityResult.currentLevel}. ` +
-            `Maximum HP is now ` +
-            `${player.health.maximum}.`
-        );
-
-    }
+    console.log(
+        `Combat XP: ${damage} damage → ` +
+        `${xpSummary.join(" + ")} XP.`
+    );
 
 
     return {
 
         combatDiscipline,
 
-        primarySkill,
+        combatStyle,
 
-        primaryXP,
+        attackXP,
 
-        vitalityXP:
-            secondaryXP,
+        strengthXP,
 
-        primaryResult,
+        defenseXP,
+
+        ballisticsXP,
+
+        fluxXP,
+
+        vitalityXP,
+
+        results,
 
         vitalityResult
 
     };
+
+}
+
+
+/* =======================================================
+   GET PLAYER OFFENSIVE POWER
+   ======================================================= */
+
+/*
+ * Each combat discipline uses its own skill.
+ *
+ * MELEE:
+ *     Attack controls accuracy.
+ *     Strength controls damage.
+ *
+ * BALLISTICS:
+ *     Ballistics controls both accuracy and damage.
+ *
+ * FLUX:
+ *     Flux controls both accuracy and damage.
+ */
+
+function getPlayerOffensivePower(
+    combatStats,
+    combatDiscipline
+) {
+
+    if (
+        combatDiscipline ===
+        COMBAT_DISCIPLINES.BALLISTICS
+    ) {
+
+        return {
+
+            attackPower:
+                combatStats.ballistics,
+
+            damagePower:
+                combatStats.ballistics
+
+        };
+
+    }
+
+
+    if (
+        combatDiscipline ===
+        COMBAT_DISCIPLINES.FLUX
+    ) {
+
+        return {
+
+            attackPower:
+                combatStats.flux,
+
+            damagePower:
+                combatStats.flux
+
+        };
+
+    }
+
+
+    return {
+
+        attackPower:
+            combatStats.attack,
+
+        damagePower:
+            combatStats.strength
+
+    };
+
+}
+
+
+/* =======================================================
+   PLAYER ATTACK SPEED
+   ======================================================= */
+
+function getPlayerAttackInterval(
+    player
+) {
+
+    const combatStyle =
+        getValidCombatStyle(
+            player
+        );
+
+
+    const styleMultiplier =
+        getCombatStyleAttackSpeedMultiplier(
+            combatStyle
+        );
+
+
+    return Math.max(
+        250,
+        PLAYER_ATTACK_SPEED *
+        styleMultiplier
+    );
 
 }
 
@@ -1834,12 +2310,14 @@ function processPlayerAttack(
     }
 
 
-    const combatStyle =
-        getCombatStyle();
-
-
     const combatDiscipline =
         getPlayerCombatDiscipline(
+            player
+        );
+
+
+    const combatStyle =
+        getValidCombatStyle(
             player
         );
 
@@ -1879,92 +2357,28 @@ function processPlayerAttack(
         );
 
 
-    let attackLevel;
-
-
-    /*
-     * BALLISTICS
-     *
-     * IMPORTANT:
-     *
-     * Use the effective Ballistics value from
-     * equipmentStats.js.
-     *
-     * This includes:
-     *
-     *     Ballistics skill level
-     *     + equipment attackBonus
-     *
-     * The old system used the raw Ballistics skill
-     * here and therefore bypassed equipment attackBonus.
-     */
-
-    if (
-        combatDiscipline ===
-        "ballistics"
-    ) {
-
-        attackLevel =
-            combatStats.ballistics;
-
-    }
-
-
-    /*
-     * FLUX
-     *
-     * Same integration as Ballistics.
-     */
-
-    else if (
-        combatDiscipline ===
-        "flux"
-    ) {
-
-        attackLevel =
-            combatStats.flux;
-
-    }
-
-
-    /*
-     * MELEE
-     *
-     * Already uses the effective Attack value.
-     */
-
-    else {
-
-        attackLevel =
-            combatStats.attack;
-
-    }
-
-
-    /*
-     * Strength remains the damage-power value.
-     *
-     * Equipment strength bonuses are already
-     * included in combatStats.strength.
-     */
-
-    const strengthLevel =
-        combatStats.strength;
+    const offensivePower =
+        getPlayerOffensivePower(
+            combatStats,
+            combatDiscipline
+        );
 
 
     const result =
         performAttack(
             player,
             enemy,
-            attackLevel,
+            offensivePower.attackPower,
             combatStyle,
-            strengthLevel
+            offensivePower.damagePower
         );
 
 
     combatState.playerNextAttackTime =
         now +
-        PLAYER_ATTACK_SPEED;
+        getPlayerAttackInterval(
+            player
+        );
 
 
     if (
@@ -2001,9 +2415,10 @@ function processPlayerAttack(
             `Player hits ${enemy.name} for ${result.damage}. ` +
             `${enemy.health.current}/${enemy.health.maximum} HP remaining. ` +
             `Style: ${combatStyle}. ` +
-            `Discipline: ${combatDiscipline || "melee"}. ` +
-            `Attack ${attackLevel}, ` +
-            `Strength ${strengthLevel}`
+            `Discipline: ${combatDiscipline}. ` +
+            `Attack Power ${offensivePower.attackPower}. ` +
+            `Damage Power ${offensivePower.damagePower}. ` +
+            `Attack Speed ${getPlayerAttackInterval(player)}ms`
         );
 
     } else {
@@ -2022,8 +2437,7 @@ function processPlayerAttack(
             `Player misses ${enemy.name}. ` +
             `No combat XP awarded. ` +
             `Style: ${combatStyle}. ` +
-            `Discipline: ${combatDiscipline || "melee"}. ` +
-            `Attack ${attackLevel}`
+            `Discipline: ${combatDiscipline}.`
         );
 
     }

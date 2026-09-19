@@ -67,6 +67,21 @@ export const CHARACTER_TABS = {
 
 
 /* =======================================================
+   COMBAT DISCIPLINES
+   ======================================================= */
+
+export const CHARACTER_COMBAT_DISCIPLINES = {
+
+    MELEE: "melee",
+
+    BALLISTICS: "ballistics",
+
+    FLUX: "flux"
+
+};
+
+
+/* =======================================================
    COMBAT STYLES
    ======================================================= */
 
@@ -76,7 +91,11 @@ export const CHARACTER_COMBAT_STYLES = {
 
     AGGRESSIVE: "aggressive",
 
-    DEFENSIVE: "defensive"
+    DEFENSIVE: "defensive",
+
+    CONTROLLED: "controlled",
+
+    RAPID: "rapid"
 
 };
 
@@ -95,7 +114,7 @@ const COMBAT_STYLE_DEFINITIONS = [
             "Accurate",
 
         description:
-            "Prioritizes accuracy and grants Attack XP."
+            "Prioritizes accuracy and grants primary combat XP."
 
     },
 
@@ -120,6 +139,105 @@ const COMBAT_STYLE_DEFINITIONS = [
 
         description:
             "Prioritizes defense and grants Defense XP."
+
+    },
+
+    {
+        style:
+            CHARACTER_COMBAT_STYLES.CONTROLLED,
+
+        label:
+            "Controlled",
+
+        description:
+            "Balances offense and grants Attack, Strength, and Defense XP."
+
+    },
+
+    {
+        style:
+            CHARACTER_COMBAT_STYLES.RAPID,
+
+        label:
+            "Rapid",
+
+        description:
+            "Attacks faster with slightly reduced accuracy and grants Ballistics XP."
+
+    }
+
+];
+
+
+/* =======================================================
+   DISCIPLINE DEFINITIONS
+   ======================================================= */
+
+const COMBAT_DISCIPLINE_DEFINITIONS = [
+
+    {
+        discipline:
+            CHARACTER_COMBAT_DISCIPLINES.MELEE,
+
+        label:
+            "Melee",
+
+        defaultWeapon:
+            "Unarmed",
+
+        styles: [
+
+            CHARACTER_COMBAT_STYLES.ACCURATE,
+
+            CHARACTER_COMBAT_STYLES.AGGRESSIVE,
+
+            CHARACTER_COMBAT_STYLES.DEFENSIVE,
+
+            CHARACTER_COMBAT_STYLES.CONTROLLED
+
+        ]
+
+    },
+
+    {
+        discipline:
+            CHARACTER_COMBAT_DISCIPLINES.BALLISTICS,
+
+        label:
+            "Ballistics",
+
+        defaultWeapon:
+            "Unarmed",
+
+        styles: [
+
+            CHARACTER_COMBAT_STYLES.ACCURATE,
+
+            CHARACTER_COMBAT_STYLES.RAPID,
+
+            CHARACTER_COMBAT_STYLES.DEFENSIVE
+
+        ]
+
+    },
+
+    {
+        discipline:
+            CHARACTER_COMBAT_DISCIPLINES.FLUX,
+
+        label:
+            "Flux",
+
+        defaultWeapon:
+            "Unarmed",
+
+        styles: [
+
+            CHARACTER_COMBAT_STYLES.ACCURATE,
+
+            CHARACTER_COMBAT_STYLES.DEFENSIVE
+
+        ]
 
     }
 
@@ -252,7 +370,216 @@ let characterContent = null;
 
 
 /* =======================================================
-   COMBAT STYLE HELPERS
+   COMBAT DISCIPLINE HELPERS
+   ======================================================= */
+
+/*
+ * Determines the active combat discipline from
+ * the currently equipped weapon.
+ *
+ * No weapon = Melee / Unarmed.
+ *
+ * This keeps the Character Interface aligned
+ * with the same weapon-driven architecture
+ * used by the combat system.
+ */
+
+function getCharacterCombatDiscipline() {
+
+    const equippedWeapon =
+        getEquippedItem(
+            player.equipment,
+            "weapon"
+        );
+
+
+    if (!equippedWeapon) {
+
+        return CHARACTER_COMBAT_DISCIPLINES.MELEE;
+
+    }
+
+
+    const weapon =
+        getItem(
+            equippedWeapon.id
+        );
+
+
+    if (!weapon) {
+
+        return CHARACTER_COMBAT_DISCIPLINES.MELEE;
+
+    }
+
+
+    if (
+        weapon.combatDiscipline ===
+        CHARACTER_COMBAT_DISCIPLINES.BALLISTICS
+    ) {
+
+        return CHARACTER_COMBAT_DISCIPLINES.BALLISTICS;
+
+    }
+
+
+    if (
+        weapon.combatDiscipline ===
+        CHARACTER_COMBAT_DISCIPLINES.FLUX
+    ) {
+
+        return CHARACTER_COMBAT_DISCIPLINES.FLUX;
+
+    }
+
+
+    return CHARACTER_COMBAT_DISCIPLINES.MELEE;
+
+}
+
+
+/* =======================================================
+   GET DISCIPLINE DISPLAY NAME
+   ======================================================= */
+
+function getCombatDisciplineDisplayName(
+    discipline
+) {
+
+    const definition =
+        COMBAT_DISCIPLINE_DEFINITIONS.find(
+            entry =>
+                entry.discipline ===
+                discipline
+        );
+
+
+    if (definition) {
+
+        return definition.label;
+
+    }
+
+
+    return "Melee";
+
+}
+
+
+/* =======================================================
+   GET DISCIPLINE DEFINITION
+   ======================================================= */
+
+function getCombatDisciplineDefinition(
+    discipline
+) {
+
+    return (
+        COMBAT_DISCIPLINE_DEFINITIONS.find(
+            entry =>
+                entry.discipline ===
+                discipline
+        ) ||
+        COMBAT_DISCIPLINE_DEFINITIONS[0]
+    );
+
+}
+
+
+/* =======================================================
+   GET EQUIPPED WEAPON
+   ======================================================= */
+
+function getCharacterEquippedWeapon() {
+
+    const equippedWeapon =
+        getEquippedItem(
+            player.equipment,
+            "weapon"
+        );
+
+
+    if (!equippedWeapon) {
+
+        return null;
+
+    }
+
+
+    const weapon =
+        getItem(
+            equippedWeapon.id
+        );
+
+
+    return weapon || null;
+
+}
+
+
+/* =======================================================
+   GET CHARACTER WEAPON DISPLAY NAME
+   ======================================================= */
+
+function getCharacterWeaponDisplayName() {
+
+    const weapon =
+        getCharacterEquippedWeapon();
+
+
+    if (!weapon) {
+
+        return "Unarmed";
+
+    }
+
+
+    return weapon.name || "Unarmed";
+
+}
+
+
+/* =======================================================
+   GET VALID COMBAT STYLES
+   ======================================================= */
+
+export function getCharacterAvailableCombatStyles() {
+
+    const discipline =
+        getCharacterCombatDiscipline();
+
+
+    const definition =
+        getCombatDisciplineDefinition(
+            discipline
+        );
+
+
+    return [
+        ...definition.styles
+    ];
+
+}
+
+
+/* =======================================================
+   CHECK VALID COMBAT STYLE
+   ======================================================= */
+
+function isCharacterCombatStyleValid(
+    style
+) {
+
+    return getCharacterAvailableCombatStyles()
+        .includes(
+            style
+        );
+
+}
+
+
+/* =======================================================
+   NORMALIZE COMBAT STYLE
    ======================================================= */
 
 function normalizeCombatStyle(
@@ -260,16 +587,42 @@ function normalizeCombatStyle(
 ) {
 
     if (
-        Object.values(
-            CHARACTER_COMBAT_STYLES
-        ).includes(style)
+        isCharacterCombatStyleValid(
+            style
+        )
     ) {
 
         return style;
 
     }
 
-    return CHARACTER_COMBAT_STYLES.ACCURATE;
+
+    /*
+     * If the currently selected style is
+     * invalid for the equipped weapon,
+     * automatically fall back to Accurate
+     * whenever the discipline supports it.
+     */
+
+    const availableStyles =
+        getCharacterAvailableCombatStyles();
+
+
+    if (
+        availableStyles.includes(
+            CHARACTER_COMBAT_STYLES.ACCURATE
+        )
+    ) {
+
+        return CHARACTER_COMBAT_STYLES.ACCURATE;
+
+    }
+
+
+    return (
+        availableStyles[0] ||
+        CHARACTER_COMBAT_STYLES.ACCURATE
+    );
 
 }
 
@@ -287,6 +640,7 @@ function getCombatStyleDisplayName(
             style
         );
 
+
     const definition =
         COMBAT_STYLE_DEFINITIONS.find(
             entry =>
@@ -294,11 +648,13 @@ function getCombatStyleDisplayName(
                 normalizedStyle
         );
 
+
     if (definition) {
 
         return definition.label;
 
     }
+
 
     return "Accurate";
 
@@ -311,9 +667,35 @@ function getCombatStyleDisplayName(
 
 export function getCharacterCombatStyle() {
 
-    return normalizeCombatStyle(
-        getCombatStyle()
-    );
+    const currentStyle =
+        getCombatStyle();
+
+
+    const normalizedStyle =
+        normalizeCombatStyle(
+            currentStyle
+        );
+
+
+    /*
+     * If an old style is no longer valid after
+     * switching weapons, synchronize the player's
+     * combat style to the valid fallback.
+     */
+
+    if (
+        currentStyle !==
+        normalizedStyle
+    ) {
+
+        setCombatStyle(
+            normalizedStyle
+        );
+
+    }
+
+
+    return normalizedStyle;
 
 }
 
@@ -326,15 +708,26 @@ export function setCharacterCombatStyle(
     style
 ) {
 
-    const normalizedStyle =
-        normalizeCombatStyle(
+    /*
+     * Never allow a style that does not belong
+     * to the currently equipped weapon's
+     * combat discipline.
+     */
+
+    if (
+        !isCharacterCombatStyleValid(
             style
-        );
+        )
+    ) {
+
+        return getCharacterCombatStyle();
+
+    }
 
 
     const changed =
         setCombatStyle(
-            normalizedStyle
+            style
         );
 
 
@@ -535,10 +928,34 @@ function createCombatStyleSelector() {
         "combat-style-options";
 
 
+    /*
+     * Only render styles supported by the
+     * currently equipped weapon/discipline.
+     */
+
+    const availableStyles =
+        getCharacterAvailableCombatStyles();
+
+
     for (
-        const definition
-        of COMBAT_STYLE_DEFINITIONS
+        const style
+        of availableStyles
     ) {
+
+        const definition =
+            COMBAT_STYLE_DEFINITIONS.find(
+                entry =>
+                    entry.style ===
+                    style
+            );
+
+
+        if (!definition) {
+
+            continue;
+
+        }
+
 
         buttonContainer.appendChild(
             createCombatStyleButton(
@@ -744,6 +1161,57 @@ export function getCharacterCombatSummary(
     currentPlayer = player
 ) {
 
+    const equippedWeapon =
+        getEquippedItem(
+            currentPlayer.equipment,
+            "weapon"
+        );
+
+
+    const weapon =
+        equippedWeapon
+            ? getItem(
+                equippedWeapon.id
+            )
+            : null;
+
+
+    let discipline =
+        CHARACTER_COMBAT_DISCIPLINES.MELEE;
+
+
+    if (
+        weapon &&
+        weapon.combatDiscipline
+    ) {
+
+        if (
+            weapon.combatDiscipline ===
+            CHARACTER_COMBAT_DISCIPLINES.BALLISTICS
+        ) {
+
+            discipline =
+                CHARACTER_COMBAT_DISCIPLINES.BALLISTICS;
+
+        } else if (
+            weapon.combatDiscipline ===
+            CHARACTER_COMBAT_DISCIPLINES.FLUX
+        ) {
+
+            discipline =
+                CHARACTER_COMBAT_DISCIPLINES.FLUX;
+
+        }
+
+    }
+
+
+    const availableStyles =
+        getCombatDisciplineDefinition(
+            discipline
+        ).styles;
+
+
     return {
 
         combatLevel:
@@ -769,7 +1237,37 @@ export function getCharacterCombatSummary(
         vitality:
             getPlayerVitalityLevel(
                 currentPlayer
-            )
+            ),
+
+        ballistics:
+            getSkillLevel(
+                currentPlayer.skills,
+                "ballistics"
+            ),
+
+        flux:
+            getSkillLevel(
+                currentPlayer.skills,
+                "flux"
+            ),
+
+        weapon:
+            weapon
+                ? weapon.name
+                : "Unarmed",
+
+        discipline:
+            discipline,
+
+        disciplineDisplayName:
+            getCombatDisciplineDisplayName(
+                discipline
+            ),
+
+        availableStyles:
+            [
+                ...availableStyles
+            ]
 
     };
 
@@ -1278,8 +1776,6 @@ function createCombatSkillCard(
     return card;
 
 }
-
-
 /* =======================================================
    RENDER COMBAT TAB
    ======================================================= */
@@ -1295,6 +1791,10 @@ function renderCombatTab() {
             player
         );
 
+
+    /* ===================================================
+       COMBAT LEVEL
+       =================================================== */
 
     const combatLevelPanel =
         document.createElement(
@@ -1343,6 +1843,151 @@ function renderCombatTab() {
     );
 
 
+    /* ===================================================
+       WEAPON / DISCIPLINE PANEL
+       =================================================== */
+
+    const loadoutTitle =
+        document.createElement(
+            "div"
+        );
+
+    loadoutTitle.className =
+        "character-section-title";
+
+    loadoutTitle.textContent =
+        "CURRENT LOADOUT";
+
+
+    characterContent.appendChild(
+        loadoutTitle
+    );
+
+
+    const loadout =
+        document.createElement(
+            "div"
+        );
+
+    loadout.className =
+        "character-status-grid";
+
+
+    const loadoutRows = [
+
+        [
+            "Weapon",
+            summary.weapon
+        ],
+
+        [
+            "Discipline",
+            summary.disciplineDisplayName
+        ]
+
+    ];
+
+
+    /*
+     * Only Ballistics and Flux require
+     * ammunition. Unarmed and melee weapons
+     * do not display an ammunition requirement.
+     */
+
+    if (
+        summary.discipline ===
+            CHARACTER_COMBAT_DISCIPLINES.BALLISTICS ||
+        summary.discipline ===
+            CHARACTER_COMBAT_DISCIPLINES.FLUX
+    ) {
+
+        const equippedAmmunition =
+            getEquippedItem(
+                player.equipment,
+                "ammunition"
+            );
+
+
+        const ammunition =
+            equippedAmmunition
+                ? getItem(
+                    equippedAmmunition.id
+                )
+                : null;
+
+
+        loadoutRows.push(
+            [
+                "Ammunition",
+                ammunition
+                    ? `${ammunition.name} ×${getEquippedAmmunitionQuantity(player.equipment)}`
+                    : "None"
+            ]
+        );
+
+    }
+
+
+    for (
+        const [
+            label,
+            value
+        ]
+        of loadoutRows
+    ) {
+
+        const row =
+            document.createElement(
+                "div"
+            );
+
+        row.className =
+            "character-status-row";
+
+
+        const labelElement =
+            document.createElement(
+                "span"
+            );
+
+        labelElement.textContent =
+            label;
+
+
+        const valueElement =
+            document.createElement(
+                "strong"
+            );
+
+        valueElement.textContent =
+            value;
+
+
+        row.appendChild(
+            labelElement
+        );
+
+        row.appendChild(
+            valueElement
+        );
+
+
+        loadout.appendChild(
+            row
+        );
+
+    }
+
+
+    characterContent.appendChild(
+        loadout
+    );
+
+
+    /* ===================================================
+       COMBAT SKILLS
+       =================================================== */
+
     const skillsTitle =
         document.createElement(
             "div"
@@ -1374,32 +2019,106 @@ function renderCombatTab() {
         [
             "Attack",
             summary.attack,
-            getPlayerAttackXP(),
-            getPlayerAttackXPToNextLevel()
+            getPlayerAttackXP(
+                player
+            ),
+            getPlayerAttackXPToNextLevel(
+                player
+            )
         ],
 
         [
             "Strength",
             summary.strength,
-            getPlayerStrengthXP(),
-            getPlayerStrengthXPToNextLevel()
+            getPlayerStrengthXP(
+                player
+            ),
+            getPlayerStrengthXPToNextLevel(
+                player
+            )
         ],
 
         [
             "Defense",
             summary.defense,
-            getPlayerDefenseXP(),
-            getPlayerDefenseXPToNextLevel()
+            getPlayerDefenseXP(
+                player
+            ),
+            getPlayerDefenseXPToNextLevel(
+                player
+            )
         ],
 
         [
             "Vitality",
             summary.vitality,
-            getPlayerVitalityXP(),
-            getPlayerVitalityXPToNextLevel()
+            getPlayerVitalityXP(
+                player
+            ),
+            getPlayerVitalityXPToNextLevel(
+                player
+            )
         ]
 
     ];
+
+
+    /*
+     * Ballistics and Flux are displayed when
+     * relevant to the current combat discipline.
+     *
+     * This keeps the Combat tab useful without
+     * replacing the full Skills tab.
+     */
+
+    if (
+        summary.discipline ===
+        CHARACTER_COMBAT_DISCIPLINES.BALLISTICS
+    ) {
+
+        combatSkills.push(
+
+            [
+                "Ballistics",
+                summary.ballistics,
+                getCurrentSkillXP(
+                    player.skills,
+                    "ballistics"
+                ),
+                getSkillXPToNextLevel(
+                    player.skills,
+                    "ballistics"
+                )
+            ]
+
+        );
+
+    }
+
+
+    if (
+        summary.discipline ===
+        CHARACTER_COMBAT_DISCIPLINES.FLUX
+    ) {
+
+        combatSkills.push(
+
+            [
+                "Flux",
+                summary.flux,
+                getCurrentSkillXP(
+                    player.skills,
+                    "flux"
+                ),
+                getSkillXPToNextLevel(
+                    player.skills,
+                    "flux"
+                )
+            ]
+
+        );
+
+    }
 
 
     for (
@@ -1429,10 +2148,18 @@ function renderCombatTab() {
     );
 
 
+    /* ===================================================
+       COMBAT STYLE
+       =================================================== */
+
     characterContent.appendChild(
         createCombatStyleSelector()
     );
 
+
+    /* ===================================================
+       CURRENT STATUS
+       =================================================== */
 
     const statusTitle =
         document.createElement(
@@ -1464,36 +2191,6 @@ function renderCombatTab() {
         getCharacterCombatStyle();
 
 
-    const equippedWeapon =
-        getEquippedItem(
-            player.equipment,
-            "weapon"
-        );
-
-
-    const equippedAmmunition =
-        getEquippedItem(
-            player.equipment,
-            "ammunition"
-        );
-
-
-    const weapon =
-        equippedWeapon
-            ? getItem(
-                equippedWeapon.id
-            )
-            : null;
-
-
-    const ammunition =
-        equippedAmmunition
-            ? getItem(
-                equippedAmmunition.id
-            )
-            : null;
-
-
     const statusRows = [
 
         [
@@ -1515,16 +2212,12 @@ function renderCombatTab() {
 
         [
             "Weapon",
-            weapon
-                ? weapon.name
-                : "None"
+            summary.weapon
         ],
 
         [
-            "Ammunition",
-            ammunition
-                ? `${ammunition.name} ×${getEquippedAmmunitionQuantity(player.equipment)}`
-                : "None"
+            "Discipline",
+            summary.disciplineDisplayName
         ]
 
     ];
@@ -2798,13 +3491,6 @@ function equipInventoryItem(
     }
 
 
-    /*
-     * Ammunition is identified generically by either
-     * its type or its ammunition equipment slot.
-     *
-     * This supports both Laser Charges and Flux Crystals.
-     */
-
     const isAmmunition =
         item.type === "ammunition" ||
         item.slot === "ammunition";
@@ -2883,9 +3569,6 @@ function equipInventoryItem(
 
     /*
      * Remove the inventory item first.
-     *
-     * For ammunition, the entire stack is moved
-     * into the shared ammunition equipment slot.
      */
 
     const removed =
@@ -2968,21 +3651,12 @@ function equipInventoryItem(
             );
 
 
-            /*
-             * Restore the newly selected
-             * inventory stack.
-             */
-
             addItem(
                 player.inventory,
                 itemId,
                 quantityToEquip
             );
 
-
-            /*
-             * Restore the previous equipment.
-             */
 
             const previousItem =
                 getItem(
@@ -3018,13 +3692,39 @@ function equipInventoryItem(
     removeInventoryItemPopup();
 
 
+    /*
+     * Weapon changes can change the combat
+     * discipline and therefore the available
+     * combat styles.
+     *
+     * Refreshing here makes that change
+     * immediately visible.
+     */
+
+    if (
+        characterState.isOpen &&
+        characterState.activeTab ===
+            CHARACTER_TABS.COMBAT
+    ) {
+
+        /*
+         * getCharacterCombatStyle()
+         * automatically validates the current
+         * style against the newly equipped weapon.
+         */
+
+        getCharacterCombatStyle();
+
+    }
+
+
     return true;
 
 }
 
 
 /* =======================================================
-   CREATE EQUIPMENT ACTION FROM INVENTORY
+   CREATE EQUIPMENT INVENTORY ACTION
    ======================================================= */
 
 function createEquipmentInventoryAction(
@@ -3037,11 +3737,6 @@ function createEquipmentInventoryAction(
 
     }
 
-
-    /*
-     * Any item marked as ammunition, including
-     * Flux Crystals, uses the ammunition slot.
-     */
 
     const isAmmunition =
         item.type === "ammunition" ||
@@ -3233,6 +3928,8 @@ function getInventoryPopupActions(
     return actions;
 
 }
+
+
 /* =======================================================
    RENDER EQUIPMENT TAB
    ======================================================= */
@@ -4039,17 +4736,12 @@ subscribeToSkillChanges(
     () => {
 
         /*
-         * The Character Interface should refresh
-         * whenever a skill changes while the
-         * interface is open.
+         * Refresh every open Character tab when
+         * a skill changes.
          *
-         * This intentionally does NOT restrict
-         * refreshing to the Skills tab.
-         *
-         * The Combat tab also displays live skill
-         * levels, skill XP, and the calculated
-         * Combat Level, so it must refresh from
-         * the current player state as well.
+         * This is important because the Combat tab
+         * now displays the discipline-specific skill
+         * as well as the core combat skills.
          */
 
         if (

@@ -3,13 +3,313 @@ import {
 } from "./equipmentStats.js";
 
 
+/* =======================================================
+   COMBAT DISCIPLINES
+   ======================================================= */
+
+export const COMBAT_DISCIPLINES = {
+
+    MELEE: "melee",
+
+    BALLISTICS: "ballistics",
+
+    FLUX: "flux"
+
+};
+
+
+/* =======================================================
+   COMBAT STYLES
+   ======================================================= */
+
 export const COMBAT_STYLES = {
 
     ACCURATE: "accurate",
 
     AGGRESSIVE: "aggressive",
 
-    DEFENSIVE: "defensive"
+    DEFENSIVE: "defensive",
+
+    CONTROLLED: "controlled",
+
+    RAPID: "rapid"
+
+};
+
+
+/* =======================================================
+   COMBAT STYLE DEFINITIONS
+   ======================================================= */
+
+/*
+ * Each style has:
+ *
+ * - discipline
+ * - displayName
+ * - accuracyMultiplier
+ * - damageMultiplier
+ * - defenseMultiplier
+ * - attackSpeedMultiplier
+ * - xpDistribution
+ *
+ * xpDistribution values are percentages.
+ *
+ * Example:
+ *
+ * accurate melee:
+ * Attack 100%
+ *
+ * controlled melee:
+ * Attack 33.33%
+ * Strength 33.33%
+ * Defense 33.34%
+ *
+ * Ballistics defensive:
+ * Ballistics 50%
+ * Defense 50%
+ *
+ * Flux defensive:
+ * Flux 50%
+ * Defense 50%
+ *
+ * Vitality is NOT included here.
+ *
+ * Vitality receives its separate secondary combat XP
+ * allocation inside combatSystem.js.
+ */
+
+export const COMBAT_STYLE_DEFINITIONS = {
+
+    accurate: {
+
+        style: COMBAT_STYLES.ACCURATE,
+
+        displayName: "Accurate",
+
+        disciplines: [
+
+            COMBAT_DISCIPLINES.MELEE,
+
+            COMBAT_DISCIPLINES.BALLISTICS,
+
+            COMBAT_DISCIPLINES.FLUX
+
+        ],
+
+        accuracyMultiplier: 1.15,
+
+        damageMultiplier: 0.90,
+
+        defenseMultiplier: 1.00,
+
+        attackSpeedMultiplier: 1.00,
+
+        xpDistribution: {
+
+            attack: 1.00,
+
+            strength: 0.00,
+
+            defense: 0.00,
+
+            ballistics: 1.00,
+
+            flux: 1.00
+
+        }
+
+    },
+
+
+    aggressive: {
+
+        style: COMBAT_STYLES.AGGRESSIVE,
+
+        displayName: "Aggressive",
+
+        disciplines: [
+
+            COMBAT_DISCIPLINES.MELEE
+
+        ],
+
+        accuracyMultiplier: 0.90,
+
+        damageMultiplier: 1.20,
+
+        defenseMultiplier: 0.90,
+
+        attackSpeedMultiplier: 1.00,
+
+        xpDistribution: {
+
+            attack: 0.00,
+
+            strength: 1.00,
+
+            defense: 0.00,
+
+            ballistics: 0.00,
+
+            flux: 0.00
+
+        }
+
+    },
+
+
+    defensive: {
+
+        style: COMBAT_STYLES.DEFENSIVE,
+
+        displayName: "Defensive",
+
+        disciplines: [
+
+            COMBAT_DISCIPLINES.MELEE,
+
+            COMBAT_DISCIPLINES.BALLISTICS,
+
+            COMBAT_DISCIPLINES.FLUX
+
+        ],
+
+        accuracyMultiplier: 0.80,
+
+        damageMultiplier: 0.85,
+
+        defenseMultiplier: 1.20,
+
+        attackSpeedMultiplier: 1.00,
+
+        xpDistribution: {
+
+            attack: 0.00,
+
+            strength: 0.00,
+
+            defense: 0.00,
+
+            ballistics: 0.00,
+
+            flux: 0.00
+
+        }
+
+    },
+
+
+    controlled: {
+
+        style: COMBAT_STYLES.CONTROLLED,
+
+        displayName: "Controlled",
+
+        disciplines: [
+
+            COMBAT_DISCIPLINES.MELEE
+
+        ],
+
+        accuracyMultiplier: 1.00,
+
+        damageMultiplier: 1.00,
+
+        defenseMultiplier: 1.00,
+
+        attackSpeedMultiplier: 1.00,
+
+        xpDistribution: {
+
+            attack: 1 / 3,
+
+            strength: 1 / 3,
+
+            defense: 1 / 3,
+
+            ballistics: 0.00,
+
+            flux: 0.00
+
+        }
+
+    },
+
+
+    rapid: {
+
+        style: COMBAT_STYLES.RAPID,
+
+        displayName: "Rapid",
+
+        disciplines: [
+
+            COMBAT_DISCIPLINES.BALLISTICS
+
+        ],
+
+        accuracyMultiplier: 0.95,
+
+        damageMultiplier: 1.00,
+
+        defenseMultiplier: 1.00,
+
+        attackSpeedMultiplier: 0.75,
+
+        xpDistribution: {
+
+            attack: 0.00,
+
+            strength: 0.00,
+
+            defense: 0.00,
+
+            ballistics: 1.00,
+
+            flux: 0.00
+
+        }
+
+    }
+
+};
+
+
+/* =======================================================
+   DEFAULT STYLES BY DISCIPLINE
+   ======================================================= */
+
+export const DEFAULT_COMBAT_STYLES = {
+
+    [COMBAT_DISCIPLINES.MELEE]: [
+
+        COMBAT_STYLES.ACCURATE,
+
+        COMBAT_STYLES.AGGRESSIVE,
+
+        COMBAT_STYLES.DEFENSIVE,
+
+        COMBAT_STYLES.CONTROLLED
+
+    ],
+
+    [COMBAT_DISCIPLINES.BALLISTICS]: [
+
+        COMBAT_STYLES.ACCURATE,
+
+        COMBAT_STYLES.RAPID,
+
+        COMBAT_STYLES.DEFENSIVE
+
+    ],
+
+    [COMBAT_DISCIPLINES.FLUX]: [
+
+        COMBAT_STYLES.ACCURATE,
+
+        COMBAT_STYLES.DEFENSIVE
+
+    ]
 
 };
 
@@ -26,7 +326,9 @@ export const COMBAT_STYLE_MODIFIERS = {
 
         damageMultiplier: 0.90,
 
-        defenseMultiplier: 1.00
+        defenseMultiplier: 1.00,
+
+        attackSpeedMultiplier: 1.00
 
     },
 
@@ -36,7 +338,9 @@ export const COMBAT_STYLE_MODIFIERS = {
 
         damageMultiplier: 1.20,
 
-        defenseMultiplier: 0.90
+        defenseMultiplier: 0.90,
+
+        attackSpeedMultiplier: 1.00
 
     },
 
@@ -46,7 +350,33 @@ export const COMBAT_STYLE_MODIFIERS = {
 
         damageMultiplier: 0.85,
 
-        defenseMultiplier: 1.20
+        defenseMultiplier: 1.20,
+
+        attackSpeedMultiplier: 1.00
+
+    },
+
+    controlled: {
+
+        accuracyMultiplier: 1.00,
+
+        damageMultiplier: 1.00,
+
+        defenseMultiplier: 1.00,
+
+        attackSpeedMultiplier: 1.00
+
+    },
+
+    rapid: {
+
+        accuracyMultiplier: 0.95,
+
+        damageMultiplier: 1.00,
+
+        defenseMultiplier: 1.00,
+
+        attackSpeedMultiplier: 0.75
 
     }
 
@@ -54,23 +384,241 @@ export const COMBAT_STYLE_MODIFIERS = {
 
 
 /* =======================================================
-   COMBAT STYLE VALIDATION
+   COMBAT STYLE HELPERS
    ======================================================= */
+
+export function getCombatStyleDefinition(
+    combatStyle
+) {
+
+    if (
+        !combatStyle ||
+        !COMBAT_STYLE_DEFINITIONS[
+            combatStyle
+        ]
+    ) {
+
+        return null;
+
+    }
+
+
+    return COMBAT_STYLE_DEFINITIONS[
+        combatStyle
+    ];
+
+}
+
+
+export function getCombatStyleDisplayName(
+    combatStyle
+) {
+
+    const definition =
+        getCombatStyleDefinition(
+            combatStyle
+        );
+
+
+    if (!definition) {
+
+        return "Unknown";
+
+    }
+
+
+    return definition.displayName;
+
+}
+
 
 export function isValidCombatStyle(
     combatStyle
 ) {
 
-    return (
-        combatStyle ===
-            COMBAT_STYLES.ACCURATE ||
-
-        combatStyle ===
-            COMBAT_STYLES.AGGRESSIVE ||
-
-        combatStyle ===
-            COMBAT_STYLES.DEFENSIVE
+    return Boolean(
+        getCombatStyleDefinition(
+            combatStyle
+        )
     );
+
+}
+
+
+export function isCombatStyleValidForDiscipline(
+    combatStyle,
+    discipline
+) {
+
+    const definition =
+        getCombatStyleDefinition(
+            combatStyle
+        );
+
+
+    if (!definition || !discipline) {
+
+        return false;
+
+    }
+
+
+    return definition.disciplines.includes(
+        discipline
+    );
+
+}
+
+
+export function getCombatStylesForDiscipline(
+    discipline
+) {
+
+    if (!discipline) {
+
+        return [];
+
+    }
+
+
+    const styles =
+        Object.values(
+            COMBAT_STYLE_DEFINITIONS
+        );
+
+
+    return styles
+        .filter(
+            definition =>
+                definition.disciplines.includes(
+                    discipline
+                )
+        )
+        .map(
+            definition =>
+                definition.style
+        );
+
+}
+
+
+/* =======================================================
+   XP DISTRIBUTION
+   ======================================================= */
+
+export function getCombatStyleXPDistribution(
+    combatStyle
+) {
+
+    const definition =
+        getCombatStyleDefinition(
+            combatStyle
+        );
+
+
+    if (!definition) {
+
+        return {
+
+            attack: 0,
+
+            strength: 0,
+
+            defense: 0,
+
+            ballistics: 0,
+
+            flux: 0
+
+        };
+
+    }
+
+
+    return {
+
+        attack:
+            definition.xpDistribution.attack || 0,
+
+        strength:
+            definition.xpDistribution.strength || 0,
+
+        defense:
+            definition.xpDistribution.defense || 0,
+
+        ballistics:
+            definition.xpDistribution.ballistics || 0,
+
+        flux:
+            definition.xpDistribution.flux || 0
+
+    };
+
+}
+
+
+/* =======================================================
+   ATTACK SPEED
+   ======================================================= */
+
+export function getCombatStyleAttackSpeedMultiplier(
+    combatStyle
+) {
+
+    const definition =
+        getCombatStyleDefinition(
+            combatStyle
+        );
+
+
+    if (!definition) {
+
+        return 1.00;
+
+    }
+
+
+    return Number.isFinite(
+        definition.attackSpeedMultiplier
+    )
+        ? definition.attackSpeedMultiplier
+        : 1.00;
+
+}
+
+
+/* =======================================================
+   STYLE MODIFIER
+   ======================================================= */
+
+export function getCombatStyleModifier(
+    combatStyle
+) {
+
+    if (
+        !isValidCombatStyle(
+            combatStyle
+        )
+    ) {
+
+        return {
+
+            accuracyMultiplier: 1.00,
+
+            damageMultiplier: 1.00,
+
+            defenseMultiplier: 1.00,
+
+            attackSpeedMultiplier: 1.00
+
+        };
+
+    }
+
+
+    return COMBAT_STYLE_MODIFIERS[
+        combatStyle
+    ];
 
 }
 
@@ -523,6 +1071,9 @@ function getEquipmentCombatBonuses(
  *
  * Strength skill + equipment strengthBonus are supplied
  * through damagePower by combatSystem.js.
+ *
+ * Ballistics and Flux are supplied through attackPower
+ * by combatSystem.js when those disciplines are active.
  *
  * Equipment accuracyBonus is added to attackPower
  * for the actual hit calculation.

@@ -340,6 +340,189 @@ function stopSalvaging() {
 
 
 /* =======================================================
+   WORLD AMMO RESPAWN STATE
+   ======================================================= */
+
+/*
+ * Ammunition pickups are temporary world items.
+ *
+ * When a player successfully picks up a supported
+ * ammunition pickup, the pickup is removed and a new
+ * pickup is scheduled at the same location.
+ *
+ * The respawn timer begins only after the successful
+ * pickup.
+ */
+
+const WORLD_AMMO_RESPAWN_DELAY =
+    30000;
+
+const worldAmmoRespawns = [];
+
+
+function isRespawningWorldAmmo(
+    itemId,
+    x,
+    y
+) {
+
+    return worldAmmoRespawns.some(
+        respawn =>
+            respawn.itemId === itemId &&
+            respawn.x === x &&
+            respawn.y === y
+    );
+
+}
+
+
+function scheduleWorldAmmoRespawn(
+    worldItem
+) {
+
+    if (
+        !worldItem ||
+        !worldItem.itemId ||
+        !worldItem.position
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        worldItem.itemId !==
+            "laser_charge" &&
+        worldItem.itemId !==
+            "flux_crystal"
+    ) {
+
+        return;
+
+    }
+
+
+    const x =
+        worldItem.position.x;
+
+    const y =
+        worldItem.position.y;
+
+
+    if (
+        !Number.isFinite(x) ||
+        !Number.isFinite(y)
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        isRespawningWorldAmmo(
+            worldItem.itemId,
+            x,
+            y
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    worldAmmoRespawns.push({
+
+        itemId:
+            worldItem.itemId,
+
+        x,
+
+        y,
+
+        quantity: 100,
+
+        respawnAt:
+            performance.now() +
+            WORLD_AMMO_RESPAWN_DELAY
+
+    });
+
+
+    console.log(
+        `${worldItem.itemId} will respawn in 30 seconds.`
+    );
+
+}
+
+
+function updateWorldAmmoRespawns() {
+
+    if (
+        worldAmmoRespawns.length === 0
+    ) {
+
+        return;
+
+    }
+
+
+    const now =
+        performance.now();
+
+
+    for (
+        let index =
+            worldAmmoRespawns.length - 1;
+        index >= 0;
+        index--
+    ) {
+
+        const respawn =
+            worldAmmoRespawns[index];
+
+
+        if (
+            now <
+            respawn.respawnAt
+        ) {
+
+            continue;
+
+        }
+
+
+        const existingItems =
+            findWorldItemById;
+
+
+        createWorldItem(
+            respawn.itemId,
+            respawn.x,
+            respawn.y,
+            respawn.quantity
+        );
+
+
+        console.log(
+            `${respawn.itemId} respawned with ` +
+            `${respawn.quantity} ammunition.`
+        );
+
+
+        worldAmmoRespawns.splice(
+            index,
+            1
+        );
+
+    }
+
+}
+
+
+/* =======================================================
    DIALOGUE
    ======================================================= */
 
@@ -732,19 +915,15 @@ function initializeWorldItems() {
         "laser_charge",
         700,
         1500,
-        25
+        100
     );
 
-
-    /* ===================================================
-       FLUX RESOURCE
-       =================================================== */
 
     createWorldItem(
         "flux_crystal",
         800,
         1500,
-        25
+        100
     );
 
 
@@ -1929,11 +2108,11 @@ function updateInteractionCursor(event) {
                     worldObject.position.x,
                     2
                 ) +
-                    Math.pow(
-                        mouseY -
-                        worldObject.position.y,
-                        2
-                    )
+                Math.pow(
+                    mouseY -
+                    worldObject.position.y,
+                    2
+                )
             );
 
         if (distance <= 60) {
@@ -2064,6 +2243,18 @@ function attemptWorldItemPickup(worldItem) {
     }
 
     refreshCharacterInterface();
+
+    /*
+     * Schedule respawn before removing the world item.
+     *
+     * Only Laser Charges and Flux Crystals respawn.
+     * Weapons, armor, and other world items remain
+     * one-time pickups for now.
+     */
+
+    scheduleWorldAmmoRespawn(
+        worldItem
+    );
 
     removeWorldItem(
         worldItem
@@ -2845,6 +3036,8 @@ function updateGame() {
     updateEnemyRespawns();
 
     updateResourceNodeRespawns();
+
+    updateWorldAmmoRespawns();
 
     drawPlayer();
 

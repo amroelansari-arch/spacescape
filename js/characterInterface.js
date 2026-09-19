@@ -4039,29 +4039,21 @@ subscribeToSkillChanges(
     () => {
 
         /*
-         * Do not require the callback's skills object
-         * to be the exact same object reference as
-         * player.skills.
+         * The Character Interface should refresh
+         * whenever a skill changes while the
+         * interface is open.
          *
-         * The skill system may notify subscribers with
-         * an updated/reference-equivalent skills state.
-         * The Character Interface only needs to know
-         * that a skill changed and then re-render the
-         * currently visible Skills tab.
+         * This intentionally does NOT restrict
+         * refreshing to the Skills tab.
+         *
+         * The Combat tab also displays live skill
+         * levels, skill XP, and the calculated
+         * Combat Level, so it must refresh from
+         * the current player state as well.
          */
 
         if (
             !characterState.isOpen
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            characterState.activeTab !==
-            CHARACTER_TABS.SKILLS
         ) {
 
             return;

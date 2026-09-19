@@ -25,6 +25,10 @@ import {
     isValidCombatStyle
 } from "./combat.js";
 
+import {
+    getPlayerCombatLevel
+} from "./combatLevel.js";
+
 
 /* =======================================================
    PLAYER
@@ -291,6 +295,19 @@ export function getPlayerVitalityLevel() {
     return getSkillLevel(
         player.skills,
         "vitality"
+    );
+
+}
+
+
+/* =======================================================
+   COMBAT LEVEL
+   ======================================================= */
+
+export function getPlayerCombatLevelValue() {
+
+    return getPlayerCombatLevel(
+        player
     );
 
 }
@@ -962,8 +979,6 @@ export function drawPlayer() {
             : "1";
 
 }
-
-
 /* =======================================================
    PLAYER HUD
    ======================================================= */
@@ -1001,6 +1016,37 @@ export function updatePlayerHUD() {
         );
 
 
+    /*
+     * The top-left HUD Level is the
+     * player's overall Combat Level.
+     *
+     * It is NOT the Attack level.
+     *
+     * Combat Level is calculated from:
+     *
+     * Attack
+     * Strength
+     * Defense
+     * Vitality
+     *
+     * through combatLevel.js.
+     */
+
+    const combatLevel =
+        getPlayerCombatLevel(
+            player
+        );
+
+
+    /*
+     * Keep the existing XP display tied
+     * to Attack XP for now.
+     *
+     * This can be changed later if we
+     * decide the HUD should display
+     * overall Combat XP instead.
+     */
+
     const attackLevel =
         getPlayerAttackLevel();
 
@@ -1012,7 +1058,7 @@ export function updatePlayerHUD() {
     if (levelElement) {
 
         levelElement.textContent =
-            attackLevel;
+            combatLevel;
 
     }
 

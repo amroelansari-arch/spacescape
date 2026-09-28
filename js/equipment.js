@@ -408,15 +408,20 @@ export function equipItem(
         equipment[slot];
 
 
-    /*
-     * Ammunition is stored as a stack.
-     */
+    /* ===================================================
+       AMMUNITION STACKING
+       =================================================== */
 
     if (isAmmunition) {
 
         let ammunitionQuantity =
             quantity;
 
+
+        /*
+         * If no explicit quantity was supplied,
+         * use the quantity carried by the item.
+         */
 
         if (
             !Number.isFinite(
@@ -429,6 +434,11 @@ export function equipItem(
 
         }
 
+
+        /*
+         * If the item does not specify a quantity,
+         * treat it as one unit.
+         */
 
         if (
             !Number.isFinite(
@@ -462,6 +472,109 @@ export function equipItem(
         }
 
 
+        /*
+         * -------------------------------------------------
+         * SAME AMMUNITION TYPE:
+         *
+         * Stack the new ammunition onto the existing
+         * ammunition stack instead of replacing it.
+         *
+         * Example:
+         *
+         * Existing: 91 Laser Charges
+         * New:      100 Laser Charges
+         *
+         * Result:   191 Laser Charges
+         *
+         * The existing stack does NOT get returned to
+         * inventory.
+         * -------------------------------------------------
+         */
+
+        if (
+            previousItem &&
+            previousItem.id === item.id
+        ) {
+
+            const previousQuantity =
+                Number.isFinite(
+                    previousItem.quantity
+                )
+                    ? Math.max(
+                        0,
+                        Math.floor(
+                            previousItem.quantity
+                        )
+                    )
+                    : 0;
+
+
+            const newQuantity =
+                previousQuantity +
+                ammunitionQuantity;
+
+
+            equipment[slot] = {
+
+                id:
+                    previousItem.id,
+
+                quantity:
+                    newQuantity
+
+            };
+
+
+            return {
+
+                success: true,
+
+                slot,
+
+                item,
+
+                /*
+                 * Nothing was displaced.
+                 *
+                 * This is important because callers
+                 * that handle inventory rollback must
+                 * NOT put the old ammunition stack back
+                 * into inventory.
+                 */
+
+                previousItem: null,
+
+                stacked: true,
+
+                addedQuantity:
+                    ammunitionQuantity,
+
+                quantity:
+                    newQuantity
+
+            };
+
+        }
+
+
+        /*
+         * -------------------------------------------------
+         * DIFFERENT AMMUNITION TYPE:
+         *
+         * Preserve normal equipment-slot replacement
+         * behavior.
+         *
+         * Example:
+         *
+         * Laser Charges equipped
+         * Player equips Flux Crystals
+         *
+         * Laser Charges are returned as previousItem
+         * so the calling inventory system can put them
+         * back into inventory.
+         * -------------------------------------------------
+         */
+
         equipment[slot] = {
 
             id:
@@ -472,16 +585,40 @@ export function equipItem(
 
         };
 
-    } else {
 
-        equipment[slot] = {
+        return {
 
-            id:
-                item.id
+            success: true,
+
+            slot,
+
+            item,
+
+            previousItem,
+
+            stacked: false,
+
+            addedQuantity:
+                ammunitionQuantity,
+
+            quantity:
+                ammunitionQuantity
 
         };
 
     }
+
+
+    /* ===================================================
+       NORMAL EQUIPMENT
+       =================================================== */
+
+    equipment[slot] = {
+
+        id:
+            item.id
+
+    };
 
 
     return {
@@ -494,10 +631,9 @@ export function equipItem(
 
         previousItem,
 
-        quantity:
-            isAmmunition
-                ? equipment[slot].quantity
-                : null
+        stacked: false,
+
+        quantity: null
 
     };
 
@@ -642,8 +778,6 @@ export function consumeAmmunition(
     };
 
 }
-
-
 /* =======================================================
    UNEQUIP ITEM
    ======================================================= */

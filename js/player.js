@@ -979,6 +979,8 @@ export function drawPlayer() {
             : "1";
 
 }
+
+
 /* =======================================================
    PLAYER HUD
    ======================================================= */
@@ -988,11 +990,6 @@ export function updatePlayerHUD() {
     const levelElement =
         document.getElementById(
             "level"
-        );
-
-    const xpElement =
-        document.getElementById(
-            "xp"
         );
 
     const healthElement =
@@ -1020,9 +1017,7 @@ export function updatePlayerHUD() {
      * The top-left HUD Level is the
      * player's overall Combat Level.
      *
-     * It is NOT the Attack level.
-     *
-     * Combat Level is calculated from:
+     * It is calculated from:
      *
      * Attack
      * Strength
@@ -1030,6 +1025,10 @@ export function updatePlayerHUD() {
      * Vitality
      *
      * through combatLevel.js.
+     *
+     * The top-left HUD does NOT display
+     * a generic XP value. SpaceScape uses
+     * individual skill XP instead.
      */
 
     const combatLevel =
@@ -1038,38 +1037,10 @@ export function updatePlayerHUD() {
         );
 
 
-    /*
-     * Keep the existing XP display tied
-     * to Attack XP for now.
-     *
-     * This can be changed later if we
-     * decide the HUD should display
-     * overall Combat XP instead.
-     */
-
-    const attackLevel =
-        getPlayerAttackLevel();
-
-
-    const attackXP =
-        getPlayerAttackXP();
-
-
     if (levelElement) {
 
         levelElement.textContent =
             combatLevel;
-
-    }
-
-
-    if (xpElement) {
-
-        xpElement.textContent =
-            attackXP;
-
-        xpElement.title =
-            `${getPlayerAttackXPToNextLevel()} XP to Attack level ${attackLevel + 1}`;
 
     }
 

@@ -373,17 +373,6 @@ let characterContent = null;
    COMBAT DISCIPLINE HELPERS
    ======================================================= */
 
-/*
- * Determines the active combat discipline from
- * the currently equipped weapon.
- *
- * No weapon = Melee / Unarmed.
- *
- * This keeps the Character Interface aligned
- * with the same weapon-driven architecture
- * used by the combat system.
- */
-
 function getCharacterCombatDiscipline() {
 
     const equippedWeapon =
@@ -597,13 +586,6 @@ function normalizeCombatStyle(
     }
 
 
-    /*
-     * If the currently selected style is
-     * invalid for the equipped weapon,
-     * automatically fall back to Accurate
-     * whenever the discipline supports it.
-     */
-
     const availableStyles =
         getCharacterAvailableCombatStyles();
 
@@ -677,12 +659,6 @@ export function getCharacterCombatStyle() {
         );
 
 
-    /*
-     * If an old style is no longer valid after
-     * switching weapons, synchronize the player's
-     * combat style to the valid fallback.
-     */
-
     if (
         currentStyle !==
         normalizedStyle
@@ -707,12 +683,6 @@ export function getCharacterCombatStyle() {
 export function setCharacterCombatStyle(
     style
 ) {
-
-    /*
-     * Never allow a style that does not belong
-     * to the currently equipped weapon's
-     * combat discipline.
-     */
 
     if (
         !isCharacterCombatStyleValid(
@@ -927,11 +897,6 @@ function createCombatStyleSelector() {
     buttonContainer.className =
         "combat-style-options";
 
-
-    /*
-     * Only render styles supported by the
-     * currently equipped weapon/discipline.
-     */
 
     const availableStyles =
         getCharacterAvailableCombatStyles();
@@ -1890,12 +1855,6 @@ function renderCombatTab() {
     ];
 
 
-    /*
-     * Only Ballistics and Flux require
-     * ammunition. Unarmed and melee weapons
-     * do not display an ammunition requirement.
-     */
-
     if (
         summary.discipline ===
             CHARACTER_COMBAT_DISCIPLINES.BALLISTICS ||
@@ -1958,7 +1917,7 @@ function renderCombatTab() {
 
         const valueElement =
             document.createElement(
-                "strong"
+            "strong"
             );
 
         valueElement.textContent =
@@ -2064,14 +2023,6 @@ function renderCombatTab() {
 
     ];
 
-
-    /*
-     * Ballistics and Flux are displayed when
-     * relevant to the current combat discipline.
-     *
-     * This keeps the Combat tab useful without
-     * replacing the full Skills tab.
-     */
 
     if (
         summary.discipline ===
@@ -2914,8 +2865,6 @@ function renderInventoryTab() {
     );
 
 }
-
-
 /* =======================================================
    EQUIPMENT SLOT SYMBOL
    ======================================================= */
@@ -3390,12 +3339,6 @@ function createEquipmentItemPopup(
                 }
 
 
-                /*
-                 * Add the item back to inventory FIRST.
-                 * If inventory is full, the item remains
-                 * equipped and nothing is lost.
-                 */
-
                 const added =
                     addItem(
                         player.inventory,
@@ -3570,6 +3513,31 @@ function equipInventoryItem(
 
 
     /*
+     * Determine whether this is an ammunition
+     * stack operation BEFORE changing anything.
+     *
+     * Same ammunition ID:
+     *
+     *     Equipped: 91
+     *     Inventory: 100
+     *     Result: 191
+     *
+     * Different ammunition ID:
+     *
+     *     Equipped: 91 Laser Charges
+     *     Inventory: 100 Flux Crystals
+     *     Result: 100 Flux Crystals equipped
+     *     91 Laser Charges returned to inventory
+     */
+
+    const isAmmunitionStack =
+        isAmmunition &&
+        currentEquippedItem &&
+        currentEquippedItem.id ===
+            itemId;
+
+
+    /*
      * Remove the inventory item first.
      */
 
@@ -3613,7 +3581,69 @@ function equipInventoryItem(
 
 
     /*
-     * Return the previously equipped item
+     * ===================================================
+     * AMMUNITION STACKED
+     * ===================================================
+     *
+     * The ammunition system has already combined the
+     * inventory stack with the equipped stack.
+     *
+     * Example:
+     *
+     * Existing equipment:
+     *     Laser Charges ×91
+     *
+     * Inventory:
+     *     Laser Charges ×100
+     *
+     * After equipItem():
+     *     Laser Charges ×191
+     *
+     * The original 91 is NOT a displaced item.
+     *
+     * Therefore it must NOT be returned to inventory.
+     */
+
+    if (
+        isAmmunitionStack &&
+        result.stacked === true
+    ) {
+
+        characterState.selectedInventoryItem =
+            null;
+
+        removeInventoryItemPopup();
+
+
+        if (
+            characterState.isOpen &&
+            characterState.activeTab ===
+                CHARACTER_TABS.COMBAT
+        ) {
+
+            getCharacterCombatStyle();
+
+        }
+
+
+        return true;
+
+    }
+
+
+    /*
+     * ===================================================
+     * NORMAL EQUIPMENT SWAP
+     * ===================================================
+     *
+     * This applies to:
+     *
+     * - weapons
+     * - armor
+     * - equipment
+     * - different ammunition types
+     *
+     * The previous equipped item must be returned
      * to inventory.
      */
 
@@ -3698,9 +3728,6 @@ function equipInventoryItem(
      * Weapon changes can change the combat
      * discipline and therefore the available
      * combat styles.
-     *
-     * Refreshing here makes that change
-     * immediately visible.
      */
 
     if (
@@ -3708,12 +3735,6 @@ function equipInventoryItem(
         characterState.activeTab ===
             CHARACTER_TABS.COMBAT
     ) {
-
-        /*
-         * getCharacterCombatStyle()
-         * automatically validates the current
-         * style against the newly equipped weapon.
-         */
 
         getCharacterCombatStyle();
 
@@ -3930,6 +3951,8 @@ function getInventoryPopupActions(
     return actions;
 
 }
+
+
 /* =======================================================
    RENDER EQUIPMENT TAB
    ======================================================= */
@@ -4734,15 +4757,6 @@ window.addEventListener(
 
 subscribeToSkillChanges(
     () => {
-
-        /*
-         * Refresh every open Character tab when
-         * a skill changes.
-         *
-         * This is important because the Combat tab
-         * now displays the discipline-specific skill
-         * as well as the core combat skills.
-         */
 
         if (
             !characterState.isOpen

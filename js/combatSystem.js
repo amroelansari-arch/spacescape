@@ -459,8 +459,8 @@ function getEquippedWeapon(
  *
  * Weapons explicitly define their discipline.
  *
- * Future weapons can therefore introduce new
- * weapons without rewriting the combat system.
+ * Weapons without an explicit combatDiscipline
+ * default to Melee.
  */
 
 export function getPlayerCombatDiscipline(
@@ -510,12 +510,12 @@ export function getPlayerCombatDiscipline(
    ======================================================= */
 
 /*
- * The currently selected style belongs to the player,
- * but the equipped weapon determines which styles are
- * legal.
+ * The equipped weapon determines the legal combat
+ * styles.
  *
- * If the player switches weapons and the old style is
- * no longer valid, Accurate becomes the safe default.
+ * If the player changes weapons and the previously
+ * selected style is no longer valid, Accurate is used
+ * as the safe default.
  */
 
 function getValidCombatStyle(
@@ -1050,7 +1050,7 @@ function getEffectivePlayerDefense(
 
 
     let defenseMultiplier =
-        1;
+        1.00;
 
 
     if (
@@ -1762,55 +1762,32 @@ function movePlayerTowardTarget(
    ======================================================= */
 
 /*
- * Damage XP:
+ * Base combat XP:
  *
- *     4 XP per damage
+ *     4 XP per damage dealt.
  *
  * Vitality:
  *
- *     25% of base combat XP
+ *     25% of base combat XP.
  *
- * MELEE
+ * Ballistics and Flux:
  *
- * Accurate:
- *     100% Attack
+ *     Their primary discipline receives 25% of the
+ *     base combat XP.
  *
- * Aggressive:
- *     100% Strength
+ * This means that a 10-damage Ballistics hit gives:
  *
- * Defensive:
- *     100% Defense
+ *     40 base XP
+ *     10 Ballistics XP
+ *     10 Vitality XP
  *
- * Controlled:
- *     1/3 Attack
- *     1/3 Strength
- *     1/3 Defense
+ * Defensive Ballistics splits that 10 primary XP:
  *
- * BALLISTICS
+ *     5 Ballistics
+ *     5 Defense
+ *     10 Vitality
  *
- * Accurate:
- *     25% Ballistics
- *
- * Rapid:
- *     25% Ballistics
- *
- * Defensive:
- *     12.5% Ballistics
- *     12.5% Defense
- *
- * FLUX
- *
- * Accurate:
- *     25% Flux
- *
- * Defensive:
- *     12.5% Flux
- *     12.5% Defense
- *
- * This preserves the existing rule that Ballistics
- * and Flux receive combat XP at the 25% discipline
- * rate while allowing Defensive to split that
- * discipline XP with Defense.
+ * Flux follows the same structure.
  */
 
 function awardCombatXPForDamage(
@@ -1927,7 +1904,7 @@ function awardCombatXPForDamage(
         COMBAT_DISCIPLINES.BALLISTICS
     ) {
 
-        const ballisticsBaseXP =
+        const primaryXP =
             baseCombatXP *
             SECONDARY_COMBAT_XP_PERCENT;
 
@@ -1940,7 +1917,7 @@ function awardCombatXPForDamage(
         ) {
 
             ballisticsXP =
-                ballisticsBaseXP;
+                primaryXP;
 
         }
 
@@ -1951,10 +1928,10 @@ function awardCombatXPForDamage(
         ) {
 
             ballisticsXP =
-                ballisticsBaseXP / 2;
+                primaryXP / 2;
 
             defenseXP =
-                ballisticsBaseXP / 2;
+                primaryXP / 2;
 
         }
 
@@ -1970,7 +1947,7 @@ function awardCombatXPForDamage(
         COMBAT_DISCIPLINES.FLUX
     ) {
 
-        const fluxBaseXP =
+        const primaryXP =
             baseCombatXP *
             SECONDARY_COMBAT_XP_PERCENT;
 
@@ -1981,7 +1958,7 @@ function awardCombatXPForDamage(
         ) {
 
             fluxXP =
-                fluxBaseXP;
+                primaryXP;
 
         }
 
@@ -1992,10 +1969,10 @@ function awardCombatXPForDamage(
         ) {
 
             fluxXP =
-                fluxBaseXP / 2;
+                primaryXP / 2;
 
             defenseXP =
-                fluxBaseXP / 2;
+                primaryXP / 2;
 
         }
 
@@ -2194,17 +2171,22 @@ function awardCombatXPForDamage(
    ======================================================= */
 
 /*
- * Each combat discipline uses its own skill.
- *
  * MELEE:
- *     Attack controls accuracy.
- *     Strength controls damage.
+ *
+ *     Attack = accuracy
+ *     Strength = damage
  *
  * BALLISTICS:
- *     Ballistics controls both accuracy and damage.
+ *
+ *     Ballistics = accuracy
+ *     Ballistics = damage
  *
  * FLUX:
- *     Flux controls both accuracy and damage.
+ *
+ *     Flux = accuracy
+ *     Flux = damage
+ *
+ * Equipment bonuses are added later by performAttack().
  */
 
 function getPlayerOffensivePower(
@@ -2329,8 +2311,8 @@ function processPlayerAttack(
 
 
     /*
-     * Check and consume ammunition before
-     * attempting the attack.
+     * Ballistics and Flux require their
+     * appropriate ammunition.
      */
 
     const resourceResult =
@@ -2418,7 +2400,7 @@ function processPlayerAttack(
             `Discipline: ${combatDiscipline}. ` +
             `Attack Power ${offensivePower.attackPower}. ` +
             `Damage Power ${offensivePower.damagePower}. ` +
-            `Attack Speed ${getPlayerAttackInterval(player)}ms`
+            `Attack Interval ${getPlayerAttackInterval(player)}ms`
         );
 
     } else {

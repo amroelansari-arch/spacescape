@@ -42,49 +42,58 @@ export const COMBAT_STYLES = {
    ======================================================= */
 
 /*
- * Each style has:
+ * Each combat style defines:
  *
- * - discipline
+ * - style
  * - displayName
+ * - disciplines
  * - accuracyMultiplier
  * - damageMultiplier
  * - defenseMultiplier
  * - attackSpeedMultiplier
  * - xpDistribution
  *
- * xpDistribution values are percentages.
- *
- * Example:
- *
- * accurate melee:
- * Attack 100%
- *
- * controlled melee:
- * Attack 33.33%
- * Strength 33.33%
- * Defense 33.34%
- *
- * Ballistics defensive:
- * Ballistics 50%
- * Defense 50%
- *
- * Flux defensive:
- * Flux 50%
- * Defense 50%
+ * XP distribution determines the PRIMARY combat XP
+ * allocation for the selected combat style.
  *
  * Vitality is NOT included here.
  *
  * Vitality receives its separate secondary combat XP
  * allocation inside combatSystem.js.
+ *
+ * IMPORTANT:
+ *
+ * The equipped weapon determines the combat discipline.
+ *
+ * Melee:
+ *   Accurate   -> Attack XP
+ *   Aggressive -> Strength XP
+ *   Defensive  -> Defense XP
+ *   Controlled -> Attack + Strength + Defense XP
+ *
+ * Ballistics:
+ *   Accurate   -> Ballistics XP
+ *   Rapid      -> Ballistics XP
+ *   Defensive  -> Ballistics + Defense XP
+ *
+ * Flux:
+ *   Accurate   -> Flux XP
+ *   Defensive  -> Flux + Defense XP
  */
 
 export const COMBAT_STYLE_DEFINITIONS = {
 
+    /* ===================================================
+       ACCURATE
+       =================================================== */
+
     accurate: {
 
-        style: COMBAT_STYLES.ACCURATE,
+        style:
+            COMBAT_STYLES.ACCURATE,
 
-        displayName: "Accurate",
+        displayName:
+            "Accurate",
 
         disciplines: [
 
@@ -96,36 +105,51 @@ export const COMBAT_STYLE_DEFINITIONS = {
 
         ],
 
-        accuracyMultiplier: 1.15,
+        accuracyMultiplier:
+            1.15,
 
-        damageMultiplier: 0.90,
+        damageMultiplier:
+            0.90,
 
-        defenseMultiplier: 1.00,
+        defenseMultiplier:
+            1.00,
 
-        attackSpeedMultiplier: 1.00,
+        attackSpeedMultiplier:
+            1.00,
 
         xpDistribution: {
 
-            attack: 1.00,
+            attack:
+                1.00,
 
-            strength: 0.00,
+            strength:
+                0.00,
 
-            defense: 0.00,
+            defense:
+                0.00,
 
-            ballistics: 1.00,
+            ballistics:
+                1.00,
 
-            flux: 1.00
+            flux:
+                1.00
 
         }
 
     },
 
+
+    /* ===================================================
+       AGGRESSIVE
+       =================================================== */
 
     aggressive: {
 
-        style: COMBAT_STYLES.AGGRESSIVE,
+        style:
+            COMBAT_STYLES.AGGRESSIVE,
 
-        displayName: "Aggressive",
+        displayName:
+            "Aggressive",
 
         disciplines: [
 
@@ -133,36 +157,51 @@ export const COMBAT_STYLE_DEFINITIONS = {
 
         ],
 
-        accuracyMultiplier: 0.90,
+        accuracyMultiplier:
+            0.90,
 
-        damageMultiplier: 1.20,
+        damageMultiplier:
+            1.20,
 
-        defenseMultiplier: 0.90,
+        defenseMultiplier:
+            0.90,
 
-        attackSpeedMultiplier: 1.00,
+        attackSpeedMultiplier:
+            1.00,
 
         xpDistribution: {
 
-            attack: 0.00,
+            attack:
+                0.00,
 
-            strength: 1.00,
+            strength:
+                1.00,
 
-            defense: 0.00,
+            defense:
+                0.00,
 
-            ballistics: 0.00,
+            ballistics:
+                0.00,
 
-            flux: 0.00
+            flux:
+                0.00
 
         }
 
     },
 
 
+    /* ===================================================
+       DEFENSIVE
+       =================================================== */
+
     defensive: {
 
-        style: COMBAT_STYLES.DEFENSIVE,
+        style:
+            COMBAT_STYLES.DEFENSIVE,
 
-        displayName: "Defensive",
+        displayName:
+            "Defensive",
 
         disciplines: [
 
@@ -174,36 +213,70 @@ export const COMBAT_STYLE_DEFINITIONS = {
 
         ],
 
-        accuracyMultiplier: 0.80,
+        accuracyMultiplier:
+            0.80,
 
-        damageMultiplier: 0.85,
+        damageMultiplier:
+            0.85,
 
-        defenseMultiplier: 1.20,
+        defenseMultiplier:
+            1.20,
 
-        attackSpeedMultiplier: 1.00,
+        attackSpeedMultiplier:
+            1.00,
+
+        /*
+         * Defensive XP is interpreted according to
+         * the active discipline.
+         *
+         * Melee:
+         *   Defense 100%
+         *
+         * Ballistics:
+         *   Ballistics 50%
+         *   Defense 50%
+         *
+         * Flux:
+         *   Flux 50%
+         *   Defense 50%
+         *
+         * combatSystem.js determines the applicable
+         * distribution based on the active discipline.
+         */
 
         xpDistribution: {
 
-            attack: 0.00,
+            attack:
+                0.00,
 
-            strength: 0.00,
+            strength:
+                0.00,
 
-            defense: 0.00,
+            defense:
+                1.00,
 
-            ballistics: 0.00,
+            ballistics:
+                0.50,
 
-            flux: 0.00
+            flux:
+                0.50
 
         }
 
     },
 
 
+    /* ===================================================
+       CONTROLLED
+       =================================================== */
+
     controlled: {
 
-        style: COMBAT_STYLES.CONTROLLED,
+        style:
+            COMBAT_STYLES.CONTROLLED,
 
-        displayName: "Controlled",
+        displayName:
+            "Controlled",
 
         disciplines: [
 
@@ -211,36 +284,59 @@ export const COMBAT_STYLE_DEFINITIONS = {
 
         ],
 
-        accuracyMultiplier: 1.00,
+        accuracyMultiplier:
+            1.00,
 
-        damageMultiplier: 1.00,
+        damageMultiplier:
+            1.00,
 
-        defenseMultiplier: 1.00,
+        defenseMultiplier:
+            1.00,
 
-        attackSpeedMultiplier: 1.00,
+        attackSpeedMultiplier:
+            1.00,
 
         xpDistribution: {
 
-            attack: 1 / 3,
+            /*
+             * Three-way split.
+             *
+             * The third component is represented with
+             * 1 / 3 so the distribution remains mathematically
+             * consistent.
+             */
 
-            strength: 1 / 3,
+            attack:
+                1 / 3,
 
-            defense: 1 / 3,
+            strength:
+                1 / 3,
 
-            ballistics: 0.00,
+            defense:
+                1 / 3,
 
-            flux: 0.00
+            ballistics:
+                0.00,
+
+            flux:
+                0.00
 
         }
 
     },
 
 
+    /* ===================================================
+       RAPID
+       =================================================== */
+
     rapid: {
 
-        style: COMBAT_STYLES.RAPID,
+        style:
+            COMBAT_STYLES.RAPID,
 
-        displayName: "Rapid",
+        displayName:
+            "Rapid",
 
         disciplines: [
 
@@ -248,25 +344,44 @@ export const COMBAT_STYLE_DEFINITIONS = {
 
         ],
 
-        accuracyMultiplier: 0.95,
+        /*
+         * Rapid attacks are slightly less accurate than
+         * Accurate attacks but occur more quickly.
+         */
 
-        damageMultiplier: 1.00,
+        accuracyMultiplier:
+            0.95,
 
-        defenseMultiplier: 1.00,
+        damageMultiplier:
+            1.00,
 
-        attackSpeedMultiplier: 0.75,
+        defenseMultiplier:
+            1.00,
+
+        /*
+         * 0.75 means the normal attack interval is reduced
+         * to 75% of its normal duration.
+         */
+
+        attackSpeedMultiplier:
+            0.75,
 
         xpDistribution: {
 
-            attack: 0.00,
+            attack:
+                0.00,
 
-            strength: 0.00,
+            strength:
+                0.00,
 
-            defense: 0.00,
+            defense:
+                0.00,
 
-            ballistics: 1.00,
+            ballistics:
+                1.00,
 
-            flux: 0.00
+            flux:
+                0.00
 
         }
 
@@ -310,75 +425,6 @@ export const DEFAULT_COMBAT_STYLES = {
         COMBAT_STYLES.DEFENSIVE
 
     ]
-
-};
-
-
-/* =======================================================
-   COMBAT STYLE MODIFIERS
-   ======================================================= */
-
-export const COMBAT_STYLE_MODIFIERS = {
-
-    accurate: {
-
-        accuracyMultiplier: 1.15,
-
-        damageMultiplier: 0.90,
-
-        defenseMultiplier: 1.00,
-
-        attackSpeedMultiplier: 1.00
-
-    },
-
-    aggressive: {
-
-        accuracyMultiplier: 0.90,
-
-        damageMultiplier: 1.20,
-
-        defenseMultiplier: 0.90,
-
-        attackSpeedMultiplier: 1.00
-
-    },
-
-    defensive: {
-
-        accuracyMultiplier: 0.80,
-
-        damageMultiplier: 0.85,
-
-        defenseMultiplier: 1.20,
-
-        attackSpeedMultiplier: 1.00
-
-    },
-
-    controlled: {
-
-        accuracyMultiplier: 1.00,
-
-        damageMultiplier: 1.00,
-
-        defenseMultiplier: 1.00,
-
-        attackSpeedMultiplier: 1.00
-
-    },
-
-    rapid: {
-
-        accuracyMultiplier: 0.95,
-
-        damageMultiplier: 1.00,
-
-        defenseMultiplier: 1.00,
-
-        attackSpeedMultiplier: 0.75
-
-    }
 
 };
 
@@ -456,7 +502,10 @@ export function isCombatStyleValidForDiscipline(
         );
 
 
-    if (!definition || !discipline) {
+    if (
+        !definition ||
+        !discipline
+    ) {
 
         return false;
 
@@ -507,7 +556,8 @@ export function getCombatStylesForDiscipline(
    ======================================================= */
 
 export function getCombatStyleXPDistribution(
-    combatStyle
+    combatStyle,
+    discipline = null
 ) {
 
     const definition =
@@ -525,6 +575,232 @@ export function getCombatStyleXPDistribution(
             strength: 0,
 
             defense: 0,
+
+            ballistics: 0,
+
+            flux: 0
+
+        };
+
+    }
+
+
+    /*
+     * Defensive is discipline-dependent.
+     *
+     * Melee Defensive:
+     *   Defense 100%
+     *
+     * Ballistics Defensive:
+     *   Ballistics 50%
+     *   Defense 50%
+     *
+     * Flux Defensive:
+     *   Flux 50%
+     *   Defense 50%
+     */
+
+    if (
+        combatStyle ===
+        COMBAT_STYLES.DEFENSIVE
+    ) {
+
+        if (
+            discipline ===
+            COMBAT_DISCIPLINES.MELEE
+        ) {
+
+            return {
+
+                attack: 0,
+
+                strength: 0,
+
+                defense: 1.00,
+
+                ballistics: 0,
+
+                flux: 0
+
+            };
+
+        }
+
+
+        if (
+            discipline ===
+            COMBAT_DISCIPLINES.BALLISTICS
+        ) {
+
+            return {
+
+                attack: 0,
+
+                strength: 0,
+
+                defense: 0.50,
+
+                ballistics: 0.50,
+
+                flux: 0
+
+            };
+
+        }
+
+
+        if (
+            discipline ===
+            COMBAT_DISCIPLINES.FLUX
+        ) {
+
+            return {
+
+                attack: 0,
+
+                strength: 0,
+
+                defense: 0.50,
+
+                ballistics: 0,
+
+                flux: 0.50
+
+            };
+
+        }
+
+    }
+
+
+    /*
+     * Accurate is also discipline-dependent.
+     *
+     * Accurate Melee:
+     *   Attack 100%
+     *
+     * Accurate Ballistics:
+     *   Ballistics 100%
+     *
+     * Accurate Flux:
+     *   Flux 100%
+     */
+
+    if (
+        combatStyle ===
+        COMBAT_STYLES.ACCURATE
+    ) {
+
+        if (
+            discipline ===
+            COMBAT_DISCIPLINES.MELEE
+        ) {
+
+            return {
+
+                attack: 1.00,
+
+                strength: 0,
+
+                defense: 0,
+
+                ballistics: 0,
+
+                flux: 0
+
+            };
+
+        }
+
+
+        if (
+            discipline ===
+            COMBAT_DISCIPLINES.BALLISTICS
+        ) {
+
+            return {
+
+                attack: 0,
+
+                strength: 0,
+
+                defense: 0,
+
+                ballistics: 1.00,
+
+                flux: 0
+
+            };
+
+        }
+
+
+        if (
+            discipline ===
+            COMBAT_DISCIPLINES.FLUX
+        ) {
+
+            return {
+
+                attack: 0,
+
+                strength: 0,
+
+                defense: 0,
+
+                ballistics: 0,
+
+                flux: 1.00
+
+            };
+
+        }
+
+    }
+
+
+    /*
+     * Rapid is Ballistics only.
+     */
+
+    if (
+        combatStyle ===
+        COMBAT_STYLES.RAPID
+    ) {
+
+        return {
+
+            attack: 0,
+
+            strength: 0,
+
+            defense: 0,
+
+            ballistics: 1.00,
+
+            flux: 0
+
+        };
+
+    }
+
+
+    /*
+     * Controlled is Melee only.
+     */
+
+    if (
+        combatStyle ===
+        COMBAT_STYLES.CONTROLLED
+    ) {
+
+        return {
+
+            attack: 1 / 3,
+
+            strength: 1 / 3,
+
+            defense: 1 / 3,
 
             ballistics: 0,
 
@@ -595,11 +871,13 @@ export function getCombatStyleModifier(
     combatStyle
 ) {
 
-    if (
-        !isValidCombatStyle(
+    const definition =
+        getCombatStyleDefinition(
             combatStyle
-        )
-    ) {
+        );
+
+
+    if (!definition) {
 
         return {
 
@@ -616,9 +894,37 @@ export function getCombatStyleModifier(
     }
 
 
-    return COMBAT_STYLE_MODIFIERS[
-        combatStyle
-    ];
+    return {
+
+        accuracyMultiplier:
+            Number.isFinite(
+                definition.accuracyMultiplier
+            )
+                ? definition.accuracyMultiplier
+                : 1.00,
+
+        damageMultiplier:
+            Number.isFinite(
+                definition.damageMultiplier
+            )
+                ? definition.damageMultiplier
+                : 1.00,
+
+        defenseMultiplier:
+            Number.isFinite(
+                definition.defenseMultiplier
+            )
+                ? definition.defenseMultiplier
+                : 1.00,
+
+        attackSpeedMultiplier:
+            Number.isFinite(
+                definition.attackSpeedMultiplier
+            )
+                ? definition.attackSpeedMultiplier
+                : 1.00
+
+    };
 
 }
 
@@ -798,9 +1104,9 @@ export function calculateStyledDamage(
 
 
     const modifier =
-        COMBAT_STYLE_MODIFIERS[
+        getCombatStyleModifier(
             combatStyle
-        ];
+        );
 
 
     return Math.max(
@@ -895,9 +1201,9 @@ export function calculateStyledHitChance(
 
 
     const modifier =
-        COMBAT_STYLE_MODIFIERS[
+        getCombatStyleModifier(
             combatStyle
-        ];
+        );
 
 
     return Math.max(
@@ -1066,20 +1372,34 @@ function getEquipmentCombatBonuses(
  * a calculated defense value instead of relying on
  * target.defense.
  *
- * Attack skill + equipment attackBonus are supplied
- * through attackPower by combatSystem.js.
+ * MELEE:
  *
- * Strength skill + equipment strengthBonus are supplied
- * through damagePower by combatSystem.js.
+ *   Attack skill + equipment attackBonus
+ *   -> attackPower
  *
- * Ballistics and Flux are supplied through attackPower
- * by combatSystem.js when those disciplines are active.
+ *   Strength skill + equipment strengthBonus
+ *   -> damagePower
  *
- * Equipment accuracyBonus is added to attackPower
- * for the actual hit calculation.
+ * BALLISTICS:
  *
- * Equipment damageBonus and weaponDamage are added
- * to damagePower for the actual damage calculation.
+ *   Ballistics skill + equipment attackBonus
+ *   -> attackPower
+ *
+ *   Ballistics skill + equipment damageBonus
+ *   -> damagePower
+ *
+ * FLUX:
+ *
+ *   Flux skill + equipment attackBonus
+ *   -> attackPower
+ *
+ *   Flux skill + equipment damageBonus
+ *   -> damagePower
+ *
+ * Equipment accuracyBonus is then added to attackPower.
+ *
+ * Equipment damageBonus and weaponDamage are then
+ * added to damagePower.
  */
 
 export function performAttack(
@@ -1202,6 +1522,11 @@ export function performAttack(
         );
 
 
+    /*
+     * Equipment accuracy bonuses improve
+     * the effective accuracy power.
+     */
+
     const effectiveAttackPower =
         Math.max(
             1,
@@ -1209,6 +1534,11 @@ export function performAttack(
             equipmentBonuses.accuracyBonus
         );
 
+
+    /*
+     * Equipment damage bonuses and weapon
+     * damage improve the effective damage power.
+     */
 
     const effectiveDamagePower =
         Math.max(

@@ -40,16 +40,21 @@ export const QUESTS = {
         objectives: [
 
             {
-                id: "investigate_xenium_fields",
+
+                id:
+                    "investigate_xenium_fields",
 
                 description:
                     "Investigate the Xenium fields.",
 
-                current: 0,
+                current:
+                    0,
 
-                required: 1,
+                required:
+                    1,
 
-                completed: false
+                completed:
+                    false
 
             }
 
@@ -57,9 +62,11 @@ export const QUESTS = {
 
         rewards: {
 
-            credits: 100,
+            credits:
+                100,
 
-            experience: 250
+            experience:
+                250
 
         }
 
@@ -69,24 +76,30 @@ export const QUESTS = {
 
 
 /* =======================================================
-   PLAYER QUEST STATE
+   GLOBAL QUEST STATE
    ======================================================= */
 
-const questState = {};
+/*
+ * Store the quest state on globalThis.
+ *
+ * This guarantees that every module using the quest
+ * system references the same state object.
+ */
+
+const QUEST_STATE_KEY =
+    "__SPACESCAPE_QUEST_STATE__";
 
 
-/* =======================================================
-   INITIALIZE QUESTS
-   ======================================================= */
+function createInitialQuestState() {
 
-function initializeQuestState() {
+    const state = {};
 
     for (
         const questId
         of Object.keys(QUESTS)
     ) {
 
-        questState[questId] = {
+        state[questId] = {
 
             status:
                 QUEST_STATUS.NOT_STARTED,
@@ -114,6 +127,126 @@ function initializeQuestState() {
 
     }
 
+    return state;
+
+}
+
+
+/* =======================================================
+   LOAD SAVED QUEST STATE
+   ======================================================= */
+
+function loadQuestState() {
+
+    /*
+     * First check the global application state.
+     */
+
+    if (
+        globalThis[QUEST_STATE_KEY]
+    ) {
+
+        return globalThis[
+            QUEST_STATE_KEY
+        ];
+
+    }
+
+
+    /*
+     * Then attempt to restore the state
+     * from localStorage.
+     */
+
+    try {
+
+        const savedState =
+            localStorage.getItem(
+                QUEST_STATE_KEY
+            );
+
+
+        if (savedState) {
+
+            const parsedState =
+                JSON.parse(
+                    savedState
+                );
+
+
+            if (parsedState) {
+
+                globalThis[
+                    QUEST_STATE_KEY
+                ] = parsedState;
+
+
+                return parsedState;
+
+            }
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Unable to load saved quest state.",
+            error
+        );
+
+    }
+
+
+    /*
+     * Nothing exists yet.
+     * Create a fresh quest state.
+     */
+
+    const initialState =
+        createInitialQuestState();
+
+
+    globalThis[
+        QUEST_STATE_KEY
+    ] = initialState;
+
+
+    return initialState;
+
+}
+
+
+const questState =
+    loadQuestState();
+
+
+/* =======================================================
+   SAVE QUEST STATE
+   ======================================================= */
+
+function saveQuestState() {
+
+    try {
+
+        localStorage.setItem(
+
+            QUEST_STATE_KEY,
+
+            JSON.stringify(
+                questState
+            )
+
+        );
+
+    } catch (error) {
+
+        console.warn(
+            "Unable to save quest state.",
+            error
+        );
+
+    }
+
 }
 
 
@@ -127,6 +260,7 @@ export function startQuest(
 
     const quest =
         QUESTS[questId];
+
 
     if (!quest) {
 
@@ -142,7 +276,12 @@ export function startQuest(
     const state =
         questState[questId];
 
+
     if (!state) {
+
+        console.warn(
+            `No quest state found: ${questId}`
+        );
 
         return false;
 
@@ -163,6 +302,9 @@ export function startQuest(
         QUEST_STATUS.IN_PROGRESS;
 
 
+    saveQuestState();
+
+
     console.log(
         `Quest started: ${quest.name}`
     );
@@ -181,7 +323,10 @@ export function getQuest(
     questId
 ) {
 
-    return QUESTS[questId] || null;
+    return (
+        QUESTS[questId] ||
+        null
+    );
 
 }
 
@@ -194,7 +339,10 @@ export function getQuestState(
     questId
 ) {
 
-    return questState[questId] || null;
+    return (
+        questState[questId] ||
+        null
+    );
 
 }
 
@@ -211,7 +359,7 @@ export function getAllQuestStates() {
 
 
 /* =======================================================
-   IS QUEST ACTIVE
+   IS QUEST IN PROGRESS
    ======================================================= */
 
 export function isQuestInProgress(
@@ -219,8 +367,10 @@ export function isQuestInProgress(
 ) {
 
     return (
+
         questState[questId]?.status ===
         QUEST_STATUS.IN_PROGRESS
+
     );
 
 }
@@ -235,8 +385,10 @@ export function isQuestCompleted(
 ) {
 
     return (
+
         questState[questId]?.status ===
         QUEST_STATUS.COMPLETED
+
     );
 
 }
@@ -254,8 +406,10 @@ export function completeQuestObjective(
     const quest =
         QUESTS[questId];
 
+
     const state =
         questState[questId];
+
 
     if (
         !quest ||
@@ -279,10 +433,14 @@ export function completeQuestObjective(
 
     const objective =
         state.objectives.find(
+
             currentObjective =>
+
                 currentObjective.id ===
                 objectiveId
+
         );
+
 
     if (!objective) {
 
@@ -294,8 +452,12 @@ export function completeQuestObjective(
     objective.current =
         objective.required;
 
+
     objective.completed =
         true;
+
+
+    saveQuestState();
 
 
     checkQuestCompletion(
@@ -324,6 +486,7 @@ function checkQuestCompletion(
     const state =
         questState[questId];
 
+
     if (!state) {
 
         return false;
@@ -333,8 +496,10 @@ function checkQuestCompletion(
 
     const allObjectivesCompleted =
         state.objectives.every(
+
             objective =>
                 objective.completed
+
         );
 
 
@@ -347,6 +512,9 @@ function checkQuestCompletion(
 
     state.status =
         QUEST_STATUS.COMPLETED;
+
+
+    saveQuestState();
 
 
     const quest =
@@ -374,6 +542,7 @@ export function getQuestObjectives(
     const state =
         questState[questId];
 
+
     if (!state) {
 
         return [];
@@ -387,7 +556,7 @@ export function getQuestObjectives(
 
 
 /* =======================================================
-   QUEST GIVER CHECK
+   GET AVAILABLE QUEST FOR NPC
    ======================================================= */
 
 export function getAvailableQuestForNPC(
@@ -402,8 +571,10 @@ export function getAvailableQuestForNPC(
         const quest =
             QUESTS[questId];
 
+
         const state =
             questState[questId];
+
 
         if (
             quest.giverId !==
@@ -433,7 +604,7 @@ export function getAvailableQuestForNPC(
 
 
 /* =======================================================
-   QUEST COMPLETION CHECK FOR NPC
+   GET COMPLETABLE QUEST FOR NPC
    ======================================================= */
 
 export function getCompletableQuestForNPC(
@@ -448,8 +619,10 @@ export function getCompletableQuestForNPC(
         const quest =
             QUESTS[questId];
 
+
         const state =
             questState[questId];
+
 
         if (
             quest.giverId !==
@@ -479,7 +652,64 @@ export function getCompletableQuestForNPC(
 
 
 /* =======================================================
-   INITIALIZE
+   DEBUG
    ======================================================= */
 
-initializeQuestState();
+export function resetQuestState(
+    questId
+) {
+
+    if (
+        !QUESTS[questId]
+    ) {
+
+        return false;
+
+    }
+
+
+    questState[questId] = {
+
+        status:
+            QUEST_STATUS.NOT_STARTED,
+
+        objectives:
+            QUESTS[questId].objectives.map(
+                objective => ({
+
+                    id:
+                        objective.id,
+
+                    current:
+                        0,
+
+                    required:
+                        objective.required,
+
+                    completed:
+                        false
+
+                })
+            )
+
+    };
+
+
+    saveQuestState();
+
+
+    console.log(
+        `Quest reset: ${QUESTS[questId].name}`
+    );
+
+
+    return true;
+
+}
+
+
+/* =======================================================
+   INITIAL SAVE
+   ======================================================= */
+
+saveQuestState();

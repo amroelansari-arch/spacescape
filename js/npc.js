@@ -1,5 +1,4 @@
 import {
-    getQuest,
     getQuestState,
     startQuest,
     isQuestInProgress,
@@ -20,11 +19,8 @@ export const commanderKaelData = {
     name: "Commander Kael",
 
     position: {
-
         x: 1050,
-
         y: 650
-
     },
 
     interactionDistance: 85
@@ -41,13 +37,8 @@ const MISSING_MINERS_QUEST_ID =
 
 
 /* =======================================================
-   KAEL DIALOGUE
+   KAE​​L DIALOGUE
    ======================================================= */
-
-/*
- * Kael's dialogue changes depending on the
- * current state of The Missing Miners quest.
- */
 
 const kaelDialogueNotStarted = [
 
@@ -87,7 +78,7 @@ const kaelDialogueCompleted = [
 
 
 /* =======================================================
-   GET CURRENT KAEL DIALOGUE
+   GET CURRENT KAE​​L DIALOGUE
    ======================================================= */
 
 function getCurrentKaelDialogue() {
@@ -377,12 +368,68 @@ export function createDialogueController(
 
 
         /*
-         * Determine which dialogue branch
-         * Kael should use.
+         * Determine the current quest state
+         * before opening the conversation.
          */
 
-        currentDialogue =
-            getCurrentKaelDialogue();
+        const questState =
+            getQuestState(
+                MISSING_MINERS_QUEST_ID
+            );
+
+
+        /*
+         * First conversation:
+         *
+         * Start the quest immediately when
+         * the player begins talking to Kael.
+         *
+         * This makes quest progression independent
+         * of how the dialogue window is closed.
+         */
+
+        if (
+            questState &&
+            questState.status ===
+                "not_started"
+        ) {
+
+            const started =
+                startQuest(
+                    MISSING_MINERS_QUEST_ID
+                );
+
+
+            if (started) {
+
+                console.log(
+                    "The Missing Miners quest started."
+                );
+
+            }
+
+
+            /*
+             * Keep the introductory dialogue
+             * for this first conversation.
+             */
+
+            currentDialogue =
+                kaelDialogueNotStarted;
+
+        } else {
+
+            /*
+             * Existing quest:
+             *
+             * Select the appropriate dialogue
+             * based on the current quest state.
+             */
+
+            currentDialogue =
+                getCurrentKaelDialogue();
+
+        }
 
 
         currentDialogueIndex =
@@ -424,43 +471,6 @@ export function createDialogueController(
             updateDialogue();
 
             return;
-
-        }
-
-
-        /*
-         * The player has reached the end
-         * of Kael's initial assignment dialogue.
-         *
-         * Start the quest when the player
-         * finishes the conversation.
-         */
-
-        const questState =
-            getQuestState(
-                MISSING_MINERS_QUEST_ID
-            );
-
-
-        if (
-            questState &&
-            questState.status ===
-                "not_started"
-        ) {
-
-            const started =
-                startQuest(
-                    MISSING_MINERS_QUEST_ID
-                );
-
-
-            if (started) {
-
-                console.log(
-                    "The Missing Miners quest started."
-                );
-
-            }
 
         }
 

@@ -2633,9 +2633,31 @@ function createQuestCard(
 
 
     for (
-        const objective
+        const objectiveState
         of state.objectives
     ) {
+
+        const objectiveDefinition =
+            quest.objectives.find(
+                objective =>
+                    objective.id ===
+                    objectiveState.id
+            );
+
+
+        const objective =
+            objectiveDefinition
+                ? {
+                    ...objectiveDefinition,
+                    current:
+                        objectiveState.current,
+                    completed:
+                        objectiveState.completed,
+                    required:
+                        objectiveState.required
+                }
+                : objectiveState;
+
 
         objectives.appendChild(
             createQuestObjective(
@@ -2910,8 +2932,6 @@ function renderQuestsTab() {
     );
 
 }
-
-
 /* =======================================================
    INVENTORY ITEM SYMBOL
    ======================================================= */
@@ -5112,8 +5132,8 @@ function createCharacterInterface() {
 
         const icon =
             document.createElement(
-                "span"
-            );
+            "span"
+        );
 
         icon.className =
             "character-interface-tab-icon";

@@ -1724,7 +1724,7 @@ function updateMiningAction() {
      */
 
     if (
-        resourceNode.id ===
+        resourceNode.resourceId ===
         "xenium_ore"
     ) {
 

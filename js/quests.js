@@ -56,6 +56,25 @@ export const QUESTS = {
                 completed:
                     false
 
+            },
+
+            {
+
+                id:
+                    "return_to_kael",
+
+                description:
+                    "Return to Commander Kael.",
+
+                current:
+                    0,
+
+                required:
+                    1,
+
+                completed:
+                    false
+
             }
 
         ],
@@ -175,6 +194,121 @@ function loadQuestState() {
 
 
             if (parsedState) {
+
+                /*
+                 * Make sure the saved quest has
+                 * all objectives currently defined
+                 * by the game.
+                 *
+                 * This allows us to safely update
+                 * quest definitions during development
+                 * without breaking an older saved state.
+                 */
+
+                for (
+                    const questId
+                    of Object.keys(QUESTS)
+                ) {
+
+                    const quest =
+                        QUESTS[questId];
+
+
+                    if (
+                        !parsedState[questId]
+                    ) {
+
+                        parsedState[questId] = {
+
+                            status:
+                                QUEST_STATUS.NOT_STARTED,
+
+                            objectives:
+                                quest.objectives.map(
+                                    objective => ({
+
+                                        id:
+                                            objective.id,
+
+                                        current:
+                                            0,
+
+                                        required:
+                                            objective.required,
+
+                                        completed:
+                                            false
+
+                                    })
+                                )
+
+                        };
+
+                        continue;
+
+                    }
+
+
+                    const savedQuest =
+                        parsedState[questId];
+
+
+                    if (
+                        !Array.isArray(
+                            savedQuest.objectives
+                        )
+                    ) {
+
+                        savedQuest.objectives =
+                            [];
+
+                    }
+
+
+                    for (
+                        const objective
+                        of quest.objectives
+                    ) {
+
+                        const existingObjective =
+                            savedQuest.objectives.find(
+                                currentObjective =>
+                                    currentObjective.id ===
+                                    objective.id
+                            );
+
+
+                        if (
+                            !existingObjective
+                        ) {
+
+                            savedQuest.objectives.push({
+
+                                id:
+                                    objective.id,
+
+                                current:
+                                    0,
+
+                                required:
+                                    objective.required,
+
+                                completed:
+                                    false
+
+                            });
+
+                        } else {
+
+                            existingObjective.required =
+                                objective.required;
+
+                        }
+
+                    }
+
+                }
+
 
                 globalThis[
                     QUEST_STATE_KEY
@@ -443,6 +577,20 @@ export function completeQuestObjective(
 
 
     if (!objective) {
+
+        return false;
+
+    }
+
+
+    /*
+     * Do nothing if this objective has
+     * already been completed.
+     */
+
+    if (
+        objective.completed
+    ) {
 
         return false;
 

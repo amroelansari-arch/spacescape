@@ -44,6 +44,12 @@ import {
     unequipItem
 } from "./equipment.js";
 
+import {
+    QUESTS,
+    QUEST_STATUS,
+    getQuestState
+} from "./quests.js";
+
 
 /* =======================================================
    CHARACTER TABS
@@ -1759,10 +1765,6 @@ function renderCombatTab() {
         );
 
 
-    /* ===================================================
-       COMBAT LEVEL
-       =================================================== */
-
     const combatLevelPanel =
         document.createElement(
             "div"
@@ -1809,10 +1811,6 @@ function renderCombatTab() {
         combatLevelPanel
     );
 
-
-    /* ===================================================
-       WEAPON / DISCIPLINE PANEL
-       =================================================== */
 
     const loadoutTitle =
         document.createElement(
@@ -1917,7 +1915,7 @@ function renderCombatTab() {
 
         const valueElement =
             document.createElement(
-            "strong"
+                "strong"
             );
 
         valueElement.textContent =
@@ -1944,10 +1942,6 @@ function renderCombatTab() {
         loadout
     );
 
-
-    /* ===================================================
-       COMBAT SKILLS
-       =================================================== */
 
     const skillsTitle =
         document.createElement(
@@ -2101,18 +2095,10 @@ function renderCombatTab() {
     );
 
 
-    /* ===================================================
-       COMBAT STYLE
-       =================================================== */
-
     characterContent.appendChild(
         createCombatStyleSelector()
     );
 
-
-    /* ===================================================
-       CURRENT STATUS
-       =================================================== */
 
     const statusTitle =
         document.createElement(
@@ -2323,6 +2309,604 @@ function renderSkillsTab() {
                 "navigation"
             ]
         )
+    );
+
+}
+
+
+/* =======================================================
+   CREATE QUEST OBJECTIVE
+   ======================================================= */
+
+function createQuestObjective(
+    objective
+) {
+
+    const row =
+        document.createElement(
+            "div"
+        );
+
+    row.className =
+        "quest-objective";
+
+
+    if (
+        objective.completed
+    ) {
+
+        row.classList.add(
+            "quest-objective-completed"
+        );
+
+    }
+
+
+    const checkbox =
+        document.createElement(
+            "span"
+        );
+
+    checkbox.className =
+        "quest-objective-checkbox";
+
+    checkbox.textContent =
+        objective.completed
+            ? "☑"
+            : "☐";
+
+
+    const description =
+        document.createElement(
+            "span"
+        );
+
+    description.className =
+        "quest-objective-description";
+
+    description.textContent =
+        objective.description;
+
+
+    row.appendChild(
+        checkbox
+    );
+
+    row.appendChild(
+        description
+    );
+
+
+    if (
+        Number.isFinite(
+            objective.required
+        ) &&
+        objective.required > 1
+    ) {
+
+        const progress =
+            document.createElement(
+                "span"
+            );
+
+        progress.className =
+            "quest-objective-progress";
+
+        progress.textContent =
+            `${objective.current} / ${objective.required}`;
+
+
+        row.appendChild(
+            progress
+        );
+
+    }
+
+
+    return row;
+
+}
+
+
+/* =======================================================
+   CREATE QUEST REWARD
+   ======================================================= */
+
+function createQuestReward(
+    label,
+    value
+) {
+
+    const reward =
+        document.createElement(
+            "div"
+        );
+
+    reward.className =
+        "quest-reward";
+
+
+    const rewardLabel =
+        document.createElement(
+            "span"
+        );
+
+    rewardLabel.className =
+        "quest-reward-label";
+
+    rewardLabel.textContent =
+        label;
+
+
+    const rewardValue =
+        document.createElement(
+            "strong"
+        );
+
+    rewardValue.className =
+        "quest-reward-value";
+
+    rewardValue.textContent =
+        value;
+
+
+    reward.appendChild(
+        rewardLabel
+    );
+
+    reward.appendChild(
+        rewardValue
+    );
+
+
+    return reward;
+
+}
+
+
+/* =======================================================
+   CREATE QUEST CARD
+   ======================================================= */
+
+function createQuestCard(
+    quest,
+    state
+) {
+
+    const card =
+        document.createElement(
+            "div"
+        );
+
+    card.className =
+        "quest-card";
+
+
+    if (
+        state.status ===
+        QUEST_STATUS.COMPLETED
+    ) {
+
+        card.classList.add(
+            "quest-card-completed"
+        );
+
+    }
+
+
+    if (
+        state.status ===
+        QUEST_STATUS.IN_PROGRESS
+    ) {
+
+        card.classList.add(
+            "quest-card-active"
+        );
+
+    }
+
+
+    /* ===================================================
+       QUEST HEADER
+       =================================================== */
+
+    const header =
+        document.createElement(
+            "div"
+        );
+
+    header.className =
+        "quest-card-header";
+
+
+    const name =
+        document.createElement(
+            "div"
+        );
+
+    name.className =
+        "quest-card-name";
+
+    name.textContent =
+        quest.name;
+
+
+    const status =
+        document.createElement(
+            "div"
+        );
+
+    status.className =
+        "quest-card-status";
+
+
+    if (
+        state.status ===
+        QUEST_STATUS.COMPLETED
+    ) {
+
+        status.textContent =
+            "COMPLETED";
+
+    } else if (
+        state.status ===
+        QUEST_STATUS.IN_PROGRESS
+    ) {
+
+        status.textContent =
+            "IN PROGRESS";
+
+    } else {
+
+        status.textContent =
+            "NOT STARTED";
+
+    }
+
+
+    header.appendChild(
+        name
+    );
+
+    header.appendChild(
+        status
+    );
+
+
+    /* ===================================================
+       QUEST GIVER
+       =================================================== */
+
+    const giver =
+        document.createElement(
+            "div"
+        );
+
+    giver.className =
+        "quest-card-giver";
+
+    giver.textContent =
+        `Quest Giver: ${quest.giverId === "commander_kael"
+            ? "Commander Kael"
+            : quest.giverId}`;
+
+
+    /* ===================================================
+       DESCRIPTION
+       =================================================== */
+
+    const description =
+        document.createElement(
+            "div"
+        );
+
+    description.className =
+        "quest-card-description";
+
+    description.textContent =
+        quest.description;
+
+
+    /* ===================================================
+       OBJECTIVES
+       =================================================== */
+
+    const objectivesTitle =
+        document.createElement(
+            "div"
+        );
+
+    objectivesTitle.className =
+        "quest-card-section-title";
+
+    objectivesTitle.textContent =
+        "OBJECTIVES";
+
+
+    const objectives =
+        document.createElement(
+            "div"
+        );
+
+    objectives.className =
+        "quest-objectives";
+
+
+    for (
+        const objective
+        of state.objectives
+    ) {
+
+        objectives.appendChild(
+            createQuestObjective(
+                objective
+            )
+        );
+
+    }
+
+
+    /* ===================================================
+       REWARDS
+       =================================================== */
+
+    const rewardsTitle =
+        document.createElement(
+            "div"
+        );
+
+    rewardsTitle.className =
+        "quest-card-section-title";
+
+    rewardsTitle.textContent =
+        "REWARDS";
+
+
+    const rewards =
+        document.createElement(
+            "div"
+        );
+
+    rewards.className =
+        "quest-rewards";
+
+
+    if (
+        quest.rewards &&
+        Number.isFinite(
+            quest.rewards.credits
+        )
+    ) {
+
+        rewards.appendChild(
+            createQuestReward(
+                "Credits",
+                quest.rewards.credits
+            )
+        );
+
+    }
+
+
+    if (
+        quest.rewards &&
+        Number.isFinite(
+            quest.rewards.experience
+        )
+    ) {
+
+        rewards.appendChild(
+            createQuestReward(
+                "Experience",
+                quest.rewards.experience
+            )
+        );
+
+    }
+
+
+    /* ===================================================
+       ASSEMBLE CARD
+       =================================================== */
+
+    card.appendChild(
+        header
+    );
+
+    card.appendChild(
+        giver
+    );
+
+    card.appendChild(
+        description
+    );
+
+    card.appendChild(
+        objectivesTitle
+    );
+
+    card.appendChild(
+        objectives
+    );
+
+    card.appendChild(
+        rewardsTitle
+    );
+
+    card.appendChild(
+        rewards
+    );
+
+
+    return card;
+
+}
+
+
+/* =======================================================
+   RENDER QUESTS TAB
+   ======================================================= */
+
+function renderQuestsTab() {
+
+    characterContent.innerHTML =
+        "";
+
+
+    const heading =
+        document.createElement(
+            "div"
+        );
+
+    heading.className =
+        "character-skills-heading";
+
+    heading.textContent =
+        "QUESTS";
+
+
+    const description =
+        document.createElement(
+            "div"
+        );
+
+    description.className =
+        "character-skills-description";
+
+    description.textContent =
+        "Track your assignments, objectives, and rewards.";
+
+
+    characterContent.appendChild(
+        heading
+    );
+
+    characterContent.appendChild(
+        description
+    );
+
+
+    const questContainer =
+        document.createElement(
+            "div"
+        );
+
+    questContainer.className =
+        "quests-container";
+
+
+    let questsDisplayed =
+        0;
+
+
+    for (
+        const questId
+        of Object.keys(QUESTS)
+    ) {
+
+        const quest =
+            QUESTS[questId];
+
+
+        const state =
+            getQuestState(
+                questId
+            );
+
+
+        if (!state) {
+
+            continue;
+
+        }
+
+
+        /*
+         * Show quests that have been started or
+         * completed.
+         *
+         * Unstarted quests remain hidden until
+         * the player discovers them.
+         */
+
+        if (
+            state.status ===
+            QUEST_STATUS.NOT_STARTED
+        ) {
+
+            continue;
+
+        }
+
+
+        questContainer.appendChild(
+            createQuestCard(
+                quest,
+                state
+            )
+        );
+
+
+        questsDisplayed++;
+
+    }
+
+
+    if (
+        questsDisplayed === 0
+    ) {
+
+        const empty =
+            document.createElement(
+                "div"
+            );
+
+        empty.className =
+            "character-coming-soon";
+
+
+        const emptyTitle =
+            document.createElement(
+                "div"
+            );
+
+        emptyTitle.className =
+            "character-coming-soon-title";
+
+        emptyTitle.textContent =
+            "NO ACTIVE QUESTS";
+
+
+        const emptyText =
+            document.createElement(
+                "div"
+            );
+
+        emptyText.className =
+            "character-coming-soon-text";
+
+        emptyText.textContent =
+            "Speak with the inhabitants of Aurelia Colony to discover new assignments.";
+
+
+        empty.appendChild(
+            emptyTitle
+        );
+
+        empty.appendChild(
+            emptyText
+        );
+
+
+        questContainer.appendChild(
+            empty
+        );
+
+    }
+
+
+    characterContent.appendChild(
+        questContainer
     );
 
 }
@@ -2865,6 +3449,8 @@ function renderInventoryTab() {
     );
 
 }
+
+
 /* =======================================================
    EQUIPMENT SLOT SYMBOL
    ======================================================= */
@@ -3512,34 +4098,12 @@ function equipInventoryItem(
             : 0;
 
 
-    /*
-     * Determine whether this is an ammunition
-     * stack operation BEFORE changing anything.
-     *
-     * Same ammunition ID:
-     *
-     *     Equipped: 91
-     *     Inventory: 100
-     *     Result: 191
-     *
-     * Different ammunition ID:
-     *
-     *     Equipped: 91 Laser Charges
-     *     Inventory: 100 Flux Crystals
-     *     Result: 100 Flux Crystals equipped
-     *     91 Laser Charges returned to inventory
-     */
-
     const isAmmunitionStack =
         isAmmunition &&
         currentEquippedItem &&
         currentEquippedItem.id ===
             itemId;
 
-
-    /*
-     * Remove the inventory item first.
-     */
 
     const removed =
         removeItem(
@@ -3580,30 +4144,6 @@ function equipInventoryItem(
     }
 
 
-    /*
-     * ===================================================
-     * AMMUNITION STACKED
-     * ===================================================
-     *
-     * The ammunition system has already combined the
-     * inventory stack with the equipped stack.
-     *
-     * Example:
-     *
-     * Existing equipment:
-     *     Laser Charges ×91
-     *
-     * Inventory:
-     *     Laser Charges ×100
-     *
-     * After equipItem():
-     *     Laser Charges ×191
-     *
-     * The original 91 is NOT a displaced item.
-     *
-     * Therefore it must NOT be returned to inventory.
-     */
-
     if (
         isAmmunitionStack &&
         result.stacked === true
@@ -3631,22 +4171,6 @@ function equipInventoryItem(
     }
 
 
-    /*
-     * ===================================================
-     * NORMAL EQUIPMENT SWAP
-     * ===================================================
-     *
-     * This applies to:
-     *
-     * - weapons
-     * - armor
-     * - equipment
-     * - different ammunition types
-     *
-     * The previous equipped item must be returned
-     * to inventory.
-     */
-
     if (
         currentEquippedItem &&
         currentEquippedItem.id
@@ -3672,10 +4196,6 @@ function equipInventoryItem(
 
 
         if (!returned) {
-
-            /*
-             * Roll back the newly equipped item.
-             */
 
             unequipItem(
                 player.equipment,
@@ -3723,12 +4243,6 @@ function equipInventoryItem(
 
     removeInventoryItemPopup();
 
-
-    /*
-     * Weapon changes can change the combat
-     * discipline and therefore the available
-     * combat styles.
-     */
 
     if (
         characterState.isOpen &&
@@ -4486,9 +5000,7 @@ function updateCharacterInterface() {
 
         case CHARACTER_TABS.QUESTS:
 
-            renderComingSoonTab(
-                "QUESTS"
-            );
+            renderQuestsTab();
 
             break;
 

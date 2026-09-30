@@ -1,0 +1,492 @@
+/* =======================================================
+   QUEST SYSTEM
+   ======================================================= */
+
+export const QUEST_STATUS = {
+    NOT_STARTED: "not_started",
+    IN_PROGRESS: "in_progress",
+    COMPLETED: "completed"
+};
+
+export const QUESTS = {
+    MISSING_MINERS: {
+        id: "missing_miners",
+
+        name: "The Missing Miners",
+
+        giverId: "commander_kael",
+
+        description:
+            "Three miners disappeared near the Xenium fields. " +
+            "Their transport returned to Aurelia Colony empty. " +
+            "Find out what happened to them.",
+
+        objectives: [
+            {
+                id: "investigate_xenium_fields",
+                description: "Investigate the Xenium fields.",
+                required: 1
+            },
+
+            {
+                id: "return_to_kael",
+                description: "Return to Commander Kael.",
+                required: 1
+            }
+        ],
+
+        rewards: {
+            credits: 100,
+            experience: 250
+        }
+    }
+};
+
+
+/* =======================================================
+   QUEST STATE
+   ======================================================= */
+
+const QUEST_STATE_VERSION = 2;
+
+const QUEST_STORAGE_KEY =
+    "spacescape_quest_state";
+
+let questState = loadQuestState();
+
+
+/* =======================================================
+   INITIALIZE STATE
+   ======================================================= */
+
+function createInitialQuestState(quest) {
+
+    return {
+        version: QUEST_STATE_VERSION,
+
+        status: QUEST_STATUS.NOT_STARTED,
+
+        objectives: quest.objectives.map((objective, index) => ({
+            id: objective.id,
+
+            description: objective.description,
+
+            current: 0,
+
+            required: objective.required,
+
+            completed: false,
+
+            available: index === 0
+        }))
+    };
+}
+
+
+/* =======================================================
+   LOAD STATE
+   ======================================================= */
+
+function loadQuestState() {
+
+    const savedState =
+        localStorage.getItem(QUEST_STORAGE_KEY);
+
+    if (!savedState) {
+        return {};
+    }
+
+    try {
+
+        const parsed =
+            JSON.parse(savedState);
+
+        if (
+            !parsed ||
+            parsed.version !== QUEST_STATE_VERSION
+        ) {
+            return {};
+        }
+
+        return parsed.quests || {};
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load quest state:",
+            error
+        );
+
+        return {};
+    }
+}
+
+
+/* =======================================================
+   SAVE STATE
+   ======================================================= */
+
+function saveQuestState() {
+
+    localStorage.setItem(
+        QUEST_STORAGE_KEY,
+        JSON.stringify({
+            version: QUEST_STATE_VERSION,
+            quests: questState
+        })
+    );
+}
+
+
+/* =======================================================
+   QUEST CHANGE EVENT
+   ======================================================= */
+
+function notifyQuestChange() {
+
+    if (typeof window !== "undefined") {
+
+        window.dispatchEvent(
+            new CustomEvent(
+                "spacescape-quest-change"
+            )
+        );
+    }
+}
+
+
+/* =======================================================
+   START QUEST
+   ======================================================= */
+
+export function startQuest(questId) {
+
+    const quest =
+        getQuest(questId);
+
+    if (!quest) {
+        return false;
+    }
+
+    const existingState =
+        questState[questId];
+
+    if (
+        existingState &&
+        existingState.status !==
+            QUEST_STATUS.NOT_STARTED
+    ) {
+        return false;
+    }
+
+    questState[questId] =
+        createInitialQuestState(quest);
+
+    questState[questId].status =
+        QUEST_STATUS.IN_PROGRESS;
+
+    saveQuestState();
+
+    notifyQuestChange();
+
+    return true;
+}
+
+
+/* =======================================================
+   GET QUEST
+   ======================================================= */
+
+export function getQuest(questId) {
+
+    return Object.values(QUESTS)
+        .find(quest => quest.id === questId)
+        || null;
+}
+
+
+/* =======================================================
+   GET QUEST STATE
+   ======================================================= */
+
+export function getQuestState(questId) {
+
+    const quest =
+        getQuest(questId);
+
+    if (!quest) {
+        return null;
+    }
+
+    if (!questState[questId]) {
+
+        questState[questId] =
+            createInitialQuestState(quest);
+    }
+
+    return questState[questId];
+}
+
+
+/* =======================================================
+   GET ALL QUEST STATES
+   ======================================================= */
+
+export function getAllQuestStates() {
+
+    return questState;
+}
+
+
+/* =======================================================
+   QUEST STATUS HELPERS
+   ======================================================= */
+
+export function isQuestInProgress(questId) {
+
+    const state =
+        getQuestState(questId);
+
+    return (
+        state &&
+        state.status === QUEST_STATUS.IN_PROGRESS
+    );
+}
+
+
+export function isQuestCompleted(questId) {
+
+    const state =
+        getQuestState(questId);
+
+    return (
+        state &&
+        state.status === QUEST_STATUS.COMPLETED
+    );
+}
+
+
+/* =======================================================
+   COMPLETE OBJECTIVE
+   ======================================================= */
+
+export function completeQuestObjective(
+    questId,
+    objectiveId
+) {
+
+    const state =
+        getQuestState(questId);
+
+    if (!state) {
+        return false;
+    }
+
+    if (
+        state.status !==
+        QUEST_STATUS.IN_PROGRESS
+    ) {
+        return false;
+    }
+
+    const objective =
+        state.objectives.find(
+            obj => obj.id === objectiveId
+        );
+
+    if (!objective) {
+        return false;
+    }
+
+    if (objective.completed) {
+        return false;
+    }
+
+    if (!objective.available) {
+        return false;
+    }
+
+    objective.current =
+        objective.required;
+
+    objective.completed = true;
+
+    /*
+     * Unlock the next objective.
+     */
+    const objectiveIndex =
+        state.objectives.indexOf(objective);
+
+    const nextObjective =
+        state.objectives[
+            objectiveIndex + 1
+        ];
+
+    if (nextObjective) {
+
+        nextObjective.available = true;
+
+    } else {
+
+        /*
+         * There are no objectives left.
+         * The quest is now complete.
+         */
+        state.status =
+            QUEST_STATUS.COMPLETED;
+    }
+
+    saveQuestState();
+
+    notifyQuestChange();
+
+    return true;
+}
+
+
+/* =======================================================
+   GET CURRENT OBJECTIVE
+   ======================================================= */
+
+export function getCurrentQuestObjective(
+    questId
+) {
+
+    const state =
+        getQuestState(questId);
+
+    if (!state) {
+        return null;
+    }
+
+    return (
+        state.objectives.find(
+            objective =>
+                objective.available &&
+                !objective.completed
+        ) || null
+    );
+}
+
+
+/* =======================================================
+   GET OBJECTIVES
+   ======================================================= */
+
+export function getQuestObjectives(
+    questId
+) {
+
+    const state =
+        getQuestState(questId);
+
+    if (!state) {
+        return [];
+    }
+
+    return state.objectives;
+}
+
+
+/* =======================================================
+   QUESTS AVAILABLE FROM NPC
+   ======================================================= */
+
+export function getAvailableQuestForNPC(
+    npcId
+) {
+
+    return Object.values(QUESTS)
+        .filter(quest => {
+
+            if (quest.giverId !== npcId) {
+                return false;
+            }
+
+            const state =
+                getQuestState(quest.id);
+
+            return (
+                state.status ===
+                QUEST_STATUS.NOT_STARTED
+            );
+        });
+}
+
+
+/* =======================================================
+   QUESTS COMPLETABLE AT NPC
+   ======================================================= */
+
+export function getCompletableQuestForNPC(
+    npcId
+) {
+
+    return Object.values(QUESTS)
+        .filter(quest => {
+
+            if (quest.giverId !== npcId) {
+                return false;
+            }
+
+            const state =
+                getQuestState(quest.id);
+
+            if (
+                state.status !==
+                QUEST_STATUS.IN_PROGRESS
+            ) {
+                return false;
+            }
+
+            const objective =
+                getCurrentQuestObjective(
+                    quest.id
+                );
+
+            return (
+                objective &&
+                objective.id ===
+                    "return_to_kael"
+            );
+        });
+}
+
+
+/* =======================================================
+   RESET QUEST
+   ======================================================= */
+
+export function resetQuestState(
+    questId
+) {
+
+    const quest =
+        getQuest(questId);
+
+    if (!quest) {
+        return false;
+    }
+
+    delete questState[questId];
+
+    saveQuestState();
+
+    notifyQuestChange();
+
+    return true;
+}
+
+
+/* =======================================================
+   RESET ALL QUESTS
+   ======================================================= */
+
+export function resetAllQuestStates() {
+
+    questState = {};
+
+    saveQuestState();
+
+    notifyQuestChange();
+}

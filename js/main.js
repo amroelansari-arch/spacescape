@@ -4,6 +4,13 @@ import {
 } from "./characterInterface.js";
 
 import {
+    startQuest,
+    completeQuestObjective,
+    getQuestState,
+    QUEST_STATUS
+} from "./quests.js";
+
+import {
     player,
     updatePlayerMovement,
     drawPlayer,
@@ -143,6 +150,23 @@ const closeButton =
    ======================================================= */
 
 const keys = {};
+
+
+/* =======================================================
+   MISSING MINERS QUEST
+   ======================================================= */
+
+const MISSING_MINERS_QUEST_ID =
+    "missing_miners";
+
+const INVESTIGATE_XENIUM_OBJECTIVE_ID =
+    "investigate_xenium_fields";
+
+const RETURN_TO_KAEL_OBJECTIVE_ID =
+    "return_to_kael";
+
+const COMMANDER_KAEL_NPC_ID =
+    "commander_kael";
 
 
 /* =======================================================
@@ -1005,6 +1029,119 @@ function initializeResourceNodes() {
 
 
 /* =======================================================
+   QUEST INTERACTION
+   ======================================================= */
+
+function handleCommanderKaelQuestInteraction() {
+
+    const questState =
+        getQuestState(
+            MISSING_MINERS_QUEST_ID
+        );
+
+
+    if (!questState) {
+
+        return;
+
+    }
+
+
+    /*
+     * Start the Missing Miners quest when
+     * the player first speaks with Commander Kael.
+     */
+
+    if (
+        questState.status ===
+        QUEST_STATUS.NOT_STARTED
+    ) {
+
+        const started =
+            startQuest(
+                MISSING_MINERS_QUEST_ID
+            );
+
+
+        if (started) {
+
+            console.log(
+                "The Missing Miners quest has started."
+            );
+
+            showGameMessage(
+                "Quest started: The Missing Miners"
+            );
+
+            refreshCharacterInterface();
+
+        }
+
+        return;
+
+    }
+
+
+    /*
+     * If the player has investigated the Xenium
+     * fields, returning to Commander Kael completes
+     * the second objective.
+     */
+
+    if (
+        questState.status ===
+        QUEST_STATUS.IN_PROGRESS
+    ) {
+
+        const returnObjective =
+            questState.objectives.find(
+                objective =>
+                    objective.id ===
+                    RETURN_TO_KAEL_OBJECTIVE_ID
+            );
+
+
+        const investigateObjective =
+            questState.objectives.find(
+                objective =>
+                    objective.id ===
+                    INVESTIGATE_XENIUM_OBJECTIVE_ID
+            );
+
+
+        if (
+            investigateObjective &&
+            investigateObjective.completed &&
+            returnObjective &&
+            !returnObjective.completed
+        ) {
+
+            completeQuestObjective(
+                MISSING_MINERS_QUEST_ID,
+                RETURN_TO_KAEL_OBJECTIVE_ID
+            );
+
+
+            console.log(
+                "Returned to Commander Kael."
+            );
+
+
+            showGameMessage(
+                "Quest objective completed: Return to Commander Kael"
+            );
+
+
+            refreshCharacterInterface();
+
+        }
+
+    }
+
+}
+
+
+/* =======================================================
    WORLD OBJECT INTERACTION
    ======================================================= */
 
@@ -1573,6 +1710,63 @@ function updateMiningAction() {
 
     }
 
+    /*
+     * Missing Miners quest progress.
+     *
+     * The Xenium Ore node is the first objective.
+     * Only successful completion of the mining action
+     * counts toward the quest.
+     */
+
+    if (
+        resourceNode.resourceId ===
+        "xenium_ore"
+    ) {
+
+        const questState =
+            getQuestState(
+                MISSING_MINERS_QUEST_ID
+            );
+
+
+        if (
+            questState &&
+            questState.status ===
+            QUEST_STATUS.IN_PROGRESS
+        ) {
+
+            const objective =
+                questState.objectives.find(
+                    currentObjective =>
+                        currentObjective.id ===
+                        INVESTIGATE_XENIUM_OBJECTIVE_ID
+                );
+
+
+            if (
+                objective &&
+                !objective.completed
+            ) {
+
+                completeQuestObjective(
+                    MISSING_MINERS_QUEST_ID,
+                    INVESTIGATE_XENIUM_OBJECTIVE_ID
+                );
+
+
+                showGameMessage(
+                    "Quest objective completed: Investigate the Xenium fields"
+                );
+
+
+                refreshCharacterInterface();
+
+            }
+
+        }
+
+    }
+
     stopMining();
 
     console.log(
@@ -1589,6 +1783,8 @@ function updateMiningAction() {
     );
 
 }
+
+
 /* =======================================================
    SALVAGING ACTION UPDATE
    ======================================================= */
@@ -2076,7 +2272,7 @@ function updateInteractionCursor(event) {
                         interactable.position.y,
                         2
                     )
-            );
+                );
 
         if (distance <= 60) {
 
@@ -2507,7 +2703,7 @@ function handleNPCClick(event) {
                         interactable.position.y,
                         2
                     )
-            );
+                );
 
         if (distance <= 60) {
 
@@ -2945,6 +3141,24 @@ function handleInteraction() {
         );
 
     if (interactable) {
+
+        /*
+         * Commander Kael is the giver of
+         * The Missing Miners quest.
+         *
+         * Quest state is updated before the
+         * dialogue window is opened.
+         */
+
+        if (
+            interactable.id ===
+            COMMANDER_KAEL_NPC_ID
+        ) {
+
+            handleCommanderKaelQuestInteraction();
+
+        }
+
 
         dialogueController.openDialogue(
             interactable

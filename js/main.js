@@ -157,7 +157,7 @@ const keys = {};
    ======================================================= */
 
 const MISSING_MINERS_QUEST_ID =
-    "missing_miners";
+    "MISSING_MINERS";
 
 const INVESTIGATE_XENIUM_OBJECTIVE_ID =
     "investigate_xenium_fields";
@@ -1116,23 +1116,28 @@ function handleCommanderKaelQuestInteraction() {
             !returnObjective.completed
         ) {
 
-            completeQuestObjective(
-                MISSING_MINERS_QUEST_ID,
-                RETURN_TO_KAEL_OBJECTIVE_ID
-            );
+            const completed =
+                completeQuestObjective(
+                    MISSING_MINERS_QUEST_ID,
+                    RETURN_TO_KAEL_OBJECTIVE_ID
+                );
 
 
-            console.log(
-                "Returned to Commander Kael."
-            );
+            if (completed) {
+
+                console.log(
+                    "Returned to Commander Kael."
+                );
 
 
-            showGameMessage(
-                "Quest objective completed: Return to Commander Kael"
-            );
+                showGameMessage(
+                    "Quest completed: The Missing Miners"
+                );
 
 
-            refreshCharacterInterface();
+                refreshCharacterInterface();
+
+            }
 
         }
 
@@ -1719,7 +1724,7 @@ function updateMiningAction() {
      */
 
     if (
-        resourceNode.resourceId ===
+        resourceNode.id ===
         "xenium_ore"
     ) {
 
@@ -1748,18 +1753,23 @@ function updateMiningAction() {
                 !objective.completed
             ) {
 
-                completeQuestObjective(
-                    MISSING_MINERS_QUEST_ID,
-                    INVESTIGATE_XENIUM_OBJECTIVE_ID
-                );
+                const completed =
+                    completeQuestObjective(
+                        MISSING_MINERS_QUEST_ID,
+                        INVESTIGATE_XENIUM_OBJECTIVE_ID
+                    );
 
 
-                showGameMessage(
-                    "Quest objective completed: Investigate the Xenium fields"
-                );
+                if (completed) {
+
+                    showGameMessage(
+                        "Quest objective completed: Investigate the Xenium fields"
+                    );
 
 
-                refreshCharacterInterface();
+                    refreshCharacterInterface();
+
+                }
 
             }
 

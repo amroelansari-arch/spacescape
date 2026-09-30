@@ -105,6 +105,13 @@ import {
     renderResourceNodes
 } from "./resourceRenderer.js";
 
+import {
+    startQuest,
+    completeQuestObjective,
+    getQuestState,
+    QUEST_STATUS
+} from "./questSystem.js";
+
 
 /* =======================================================
    DOM ELEMENTS
@@ -340,6 +347,232 @@ function stopSalvaging() {
 
 
 /* =======================================================
+   QUEST SYSTEM
+   ======================================================= */
+
+const MISSING_MINERS_QUEST_ID =
+    "missing_miners";
+
+const INVESTIGATE_XENIUM_OBJECTIVE_ID =
+    "investigate_xenium_fields";
+
+const RETURN_TO_KAEL_OBJECTIVE_ID =
+    "return_to_kael";
+
+const COMMANDER_KAEL_NPC_ID =
+    "commander_kael";
+
+const XENIUM_ORE_RESOURCE_ID =
+    "xenium_ore";
+
+
+function getMissingMinersQuestState() {
+
+    return getQuestState(
+        MISSING_MINERS_QUEST_ID
+    );
+
+}
+
+
+function getMissingMinersObjective(
+    objectiveId
+) {
+
+    const state =
+        getMissingMinersQuestState();
+
+    if (!state) {
+        return null;
+    }
+
+    return (
+        state.objectives.find(
+            objective =>
+                objective.id ===
+                objectiveId
+        ) ||
+        null
+    );
+
+}
+
+
+function handleCommanderKaelQuestInteraction(
+    npc
+) {
+
+    if (!npc) {
+        return false;
+    }
+
+    if (
+        npc.id !==
+        COMMANDER_KAEL_NPC_ID
+    ) {
+
+        return false;
+
+    }
+
+    const state =
+        getMissingMinersQuestState();
+
+    if (!state) {
+        return false;
+    }
+
+
+    /*
+     * First interaction with Commander Kael:
+     * start the quest.
+     */
+
+    if (
+        state.status ===
+        QUEST_STATUS.NOT_STARTED
+    ) {
+
+        const started =
+            startQuest(
+                MISSING_MINERS_QUEST_ID
+            );
+
+        if (started) {
+
+            showGameMessage(
+                "Quest started: The Missing Miners"
+            );
+
+            refreshCharacterInterface();
+
+        }
+
+        return started;
+
+    }
+
+
+    /*
+     * If the Xenium investigation has been
+     * completed, the next objective is to
+     * return to Commander Kael.
+     */
+
+    const investigationObjective =
+        getMissingMinersObjective(
+            INVESTIGATE_XENIUM_OBJECTIVE_ID
+        );
+
+    const returnObjective =
+        getMissingMinersObjective(
+            RETURN_TO_KAEL_OBJECTIVE_ID
+        );
+
+
+    if (
+        state.status ===
+            QUEST_STATUS.IN_PROGRESS &&
+        investigationObjective &&
+        investigationObjective.completed &&
+        returnObjective &&
+        !returnObjective.completed
+    ) {
+
+        const completed =
+            completeQuestObjective(
+                MISSING_MINERS_QUEST_ID,
+                RETURN_TO_KAEL_OBJECTIVE_ID
+            );
+
+        if (completed) {
+
+            showGameMessage(
+                "Quest complete: The Missing Miners"
+            );
+
+            refreshCharacterInterface();
+
+        }
+
+        return completed;
+
+    }
+
+
+    return false;
+
+}
+
+
+function handleXeniumQuestProgress(
+    resourceNode
+) {
+
+    if (!resourceNode) {
+        return false;
+    }
+
+    if (
+        resourceNode.id !==
+        XENIUM_ORE_RESOURCE_ID
+    ) {
+
+        return false;
+
+    }
+
+    const state =
+        getMissingMinersQuestState();
+
+    if (!state) {
+        return false;
+    }
+
+    if (
+        state.status !==
+        QUEST_STATUS.IN_PROGRESS
+    ) {
+
+        return false;
+
+    }
+
+    const objective =
+        getMissingMinersObjective(
+            INVESTIGATE_XENIUM_OBJECTIVE_ID
+        );
+
+    if (!objective) {
+        return false;
+    }
+
+    if (objective.completed) {
+        return false;
+    }
+
+    const completed =
+        completeQuestObjective(
+            MISSING_MINERS_QUEST_ID,
+            INVESTIGATE_XENIUM_OBJECTIVE_ID
+        );
+
+    if (completed) {
+
+        showGameMessage(
+            "Objective complete: Investigate the Xenium fields"
+        );
+
+        refreshCharacterInterface();
+
+    }
+
+    return completed;
+
+}
+
+
+/* =======================================================
    WORLD AMMO RESPAWN STATE
    ======================================================= */
 
@@ -492,10 +725,6 @@ function updateWorldAmmoRespawns() {
             continue;
 
         }
-
-
-        const existingItems =
-            findWorldItemById;
 
 
         createWorldItem(
@@ -1592,6 +1821,22 @@ function updateMiningAction() {
         player.inventory
     );
 
+
+    /*
+     * Quest progression:
+     *
+     * Successfully mining the Xenium Ore completes
+     * the first objective of The Missing Miners.
+     *
+     * This happens only after the player has actually
+     * received the mining reward and the resource node
+     * has successfully depleted.
+     */
+
+    handleXeniumQuestProgress(
+        resourceNode
+    );
+
 }
 
 
@@ -1778,6 +2023,8 @@ function updateSalvagingAction() {
     );
 
 }
+
+
 /* =======================================================
    RESOURCE NODE TARGET
    ======================================================= */
@@ -2075,11 +2322,11 @@ function updateInteractionCursor(event) {
                     interactable.position.x,
                     2
                 ) +
-                Math.pow(
-                    mouseY -
-                    interactable.position.y,
-                    2
-                )
+                    Math.pow(
+                        mouseY -
+                        interactable.position.y,
+                        2
+                    )
             );
 
         if (distance <= 60) {
@@ -2108,11 +2355,11 @@ function updateInteractionCursor(event) {
                     worldObject.position.x,
                     2
                 ) +
-                Math.pow(
-                    mouseY -
-                    worldObject.position.y,
-                    2
-                )
+                    Math.pow(
+                        mouseY -
+                        worldObject.position.y,
+                        2
+                    )
             );
 
         if (distance <= 60) {
@@ -2145,11 +2392,11 @@ function updateInteractionCursor(event) {
                     resourceNode.position.x,
                     2
                 ) +
-                Math.pow(
-                    mouseY -
-                    resourceNode.position.y,
-                    2
-                )
+                    Math.pow(
+                        mouseY -
+                        resourceNode.position.y,
+                        2
+                    )
             );
 
         if (distance <= 60) {
@@ -2506,11 +2753,11 @@ function handleNPCClick(event) {
                     interactable.position.x,
                     2
                 ) +
-                Math.pow(
-                    clickY -
-                    interactable.position.y,
-                    2
-                )
+                    Math.pow(
+                        clickY -
+                        interactable.position.y,
+                        2
+                    )
             );
 
         if (distance <= 60) {
@@ -2545,11 +2792,11 @@ function handleNPCClick(event) {
                 npc.position.x,
                 2
             ) +
-            Math.pow(
-                player.position.y -
-                npc.position.y,
-                2
-            )
+                Math.pow(
+                    player.position.y -
+                    npc.position.y,
+                    2
+                )
         );
 
     if (
@@ -2662,11 +2909,11 @@ function updateNPCTarget() {
                 npc.position.x,
                 2
             ) +
-            Math.pow(
-                player.position.y -
-                npc.position.y,
-                2
-            )
+                Math.pow(
+                    player.position.y -
+                    npc.position.y,
+                    2
+                )
         );
 
     if (
@@ -2949,6 +3196,22 @@ function handleInteraction() {
         );
 
     if (interactable) {
+
+        /*
+         * Commander Kael controls the progression
+         * of The Missing Miners.
+         *
+         * First interaction:
+         *     Start the quest.
+         *
+         * After investigating the Xenium fields:
+         *     Complete the return-to-Kael objective.
+         */
+
+        handleCommanderKaelQuestInteraction(
+            interactable
+        );
+
 
         dialogueController.openDialogue(
             interactable

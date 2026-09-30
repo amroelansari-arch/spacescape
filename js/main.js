@@ -989,8 +989,8 @@ function initializeResourceNodes() {
 
     createResourceNode(
         "xenium_ore",
-        1250,
-        800
+        4000,
+        3500
     );
 
     createResourceNode(
